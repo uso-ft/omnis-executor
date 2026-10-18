@@ -1,0 +1,21 @@
+# $dangerRoots(pExpr,pNames) -> 'a,b,' the variables pExpr uses as a ROOT, lower case, each followed by a comma.
+# pNames ',x,y,' keeps only those names; pNames '' keeps every root.
+# A root is a word not preceded by '.' or '$': in list.c1 only list, in $ref nothing.
+Calculate out as ''
+Calculate offset as 1
+Calculate hit as rxpos('[#\w]+',pExpr,kFalse,kFalse,matchLen,capRow)
+While hit>0
+	Calculate hit as offset+hit-1
+	Calculate token as low(mid(pExpr,hit,matchLen))
+	Calculate prevChar as mid(pExpr,hit-1,1)
+	Calculate offset as hit+matchLen
+	If hit=1|(prevChar<>'.'&prevChar<>'$')
+		If pos(left(token,1),'0123456789')=0
+			If len(pNames)=0|pos(con(',',token,','),pNames)>0
+				Calculate out as con(out,token,',')
+			End If
+		End If
+	End If
+	Calculate hit as rxpos('[#\w]+',mid(pExpr,offset),kFalse,kFalse,matchLen,capRow)
+End While
+Quit method out

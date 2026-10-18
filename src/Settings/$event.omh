@@ -1,0 +1,6 @@
+On evClose
+	If $cinst.$mayClose()
+		Quit event handler
+	Else
+		Quit event handler (Discard event)
+	End If

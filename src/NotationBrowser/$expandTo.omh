@@ -1,0 +1,17 @@
+# Recursively expand the tree downward; return the last expanded node.
+# strtok peels one path segment per call; the recursion stops when pObjectPath is empty.
+Working message {Expanding tree to////[pObjectPath]...}
+If len(pObjectPath)
+	Calculate name as strtok(nam(pObjectPath),'.')
+	Do iTreeRef.$findnodename(pNode,name) Returns node
+	If len(pObjectPath)
+		Do node.$expand
+	Else If pExpand_opt
+		Do node.$expand
+	End If
+	Do $cinst.$expandTo(pObjectPath,node,pExpand_opt) Returns node
+	Do node.$selected.$assign(kTrue)
+	Quit method node
+Else ## reached the end -> return the node we are on
+	Quit method pNode
+End If

@@ -1,0 +1,11 @@
+On evClick,evMouseDown,evMouseUp ## Workaround: the evClick- event is swallowed if a method editor is front, so use mouse events (Studio 10.22)
+	# Process event and continue ## Problems with correct view, calculate cView by hand.
+	If cView<>0
+		Calculate cView as 0
+		Do $cinst.$applyView()
+		Do $cinst.$redraw()
+		
+		# show cursor in script and select all
+		Queue set current field efScript
+		Queue keyboard event com-A
+	End If

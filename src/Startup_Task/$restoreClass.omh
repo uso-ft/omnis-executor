@@ -1,0 +1,87 @@
+# Brings ONE class back out of the vault into pTargetLibRef and returns a
+# protocol line.
+#
+# THE ORDER MATTERS. The COPY is asked first and the index second. The index
+# says what a copy cannot carry; it never says whether a copy is there. An
+# entry whose copy has gone is stale, and a restore that trusted it would
+# report success over nothing.
+#
+# REFUSAL IS A MEASUREMENT, NOT A LIST. A class with open instances is in use,
+# whatever its type - measured 2026-09-01: $insts() answers for every class
+# type in a library, folders and system classes included. A fixed list of
+# untouchable classes would forbid exactly what backups exist for, because the
+# classes being worked on are the ones that break.
+#
+# The refusal comes BEFORE anything is written, so a refused restore leaves
+# the library exactly as it found it.
+#
+# $copyClass does the dangerous part: it moves the old class aside, fills a
+# fresh one, seals it, and only then takes the old one away. The old class is
+# the net until the seal holds.
+
+If isclear(pTargetLibRef)
+	Quit method 'restoreClass: no target library - nothing restored. '
+End If
+If len(pClassName)=0
+	Quit method 'restoreClass: no class name - nothing restored. '
+End If
+
+Calculate vaultName as con('execBackup_',pTargetLibRef.$name)
+Calculate note as ''
+If pVaultRef
+	Set reference vaultRef to pVaultRef
+	Calculate vaultName as vaultRef.$name
+Else
+	Calculate note as $cinst.$ensureVault(vaultName)
+	Set reference vaultRef to $root.$libs.$findname(vaultName)
+End If
+If isclear(vaultRef)
+	Quit method con('restoreClass: ',note,'no vault - nothing restored. ')
+End If
+
+# the copy first
+Set reference bakRef to vaultRef.$classes.$findname(pClassName)
+If isclear(bakRef)
+	Quit method con('restoreClass: no copy of ',pClassName,' in the vault - nothing restored. ')
+End If
+
+# in use? the measurement
+Set reference tgtRef to pTargetLibRef.$classes.$findname(pClassName)
+If tgtRef
+	Calculate n as tgtRef.$insts().$count
+	If n>0
+		Quit method con('restoreClass: ',pClassName,' has ',n,' open instances and is in use - REFUSED, nothing touched. Close them and run it again. ')
+	End If
+End If
+
+# the entry second
+Calculate entry as $cinst.$indexGet(vaultRef,pClassName)
+
+Calculate netNote as 'no live class, so no net was needed'
+If tgtRef
+	Calculate netNote as $cinst.$netBefore(tgtRef,vaultRef)
+End If
+Calculate proto as $cinst.$copyClass(bakRef,pTargetLibRef)
+Set reference tgtRef to pTargetLibRef.$classes.$findname(pClassName)
+If isclear(tgtRef)
+	Quit method con('restoreClass: ',proto,' and nothing landed - nothing restored. ')
+End If
+
+# the four that do not travel with the class data
+If len(entry)=0
+	Calculate note as 'NO index entry, so desc, version, vcsrevision and the folder could NOT be restored'
+Else
+	Do tgtRef.$desc.$assign($cinst.$indexField(entry,'desc'))
+	Do tgtRef.$version.$assign($cinst.$indexField(entry,'version'))
+	Do tgtRef.$vcsrevision.$assign($cinst.$indexField(entry,'vcsrevision'))
+	Calculate id as $cinst.$ensureFolderPath(pTargetLibRef,$cinst.$indexField(entry,'folder'))
+	If id
+		Do tgtRef.$parentfolder.$assign(id)
+	End If
+	Calculate note as 'desc, version, vcsrevision and folder from the index'
+End If
+
+# who writes, saves
+Save class [con(pTargetLibRef.$name,'.',pClassName)]
+Calculate ok as #F
+Quit method con('restoreClass: ',proto,'from ',vaultName,'. ',note,'. ',netNote,'. saved ',ok,'. ')

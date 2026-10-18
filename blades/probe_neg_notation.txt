@@ -1,0 +1,13 @@
+# GENERATOR: neg_probe v1 — 2026-08-11 23:40 — Gegenprobe fuer Regel 4
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR console (v1.2 set)
+# END HEADER
+Calculate result as con('run ',#T,' — Gegenprobe')
+Do classRef.$methodlnes.$count() Returns count
+Do $cinst.$lineconut Returns n
+Do ref.$doesfilexist('x') Returns flag1
+Do ref.$SETEXECUTORVALUES()
+Do FileOps.$deletefile(name) Returns flag2
+Do classRef.$lib.$name Returns text

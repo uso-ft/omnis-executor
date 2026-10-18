@@ -1,0 +1,65 @@
+# $bumpBuild(pLibName) -> Character
+# Raise the build number of ONE library by one, in that library own $userinfo.
+#
+# Called once per library that a run actually CHANGED. The caller works that
+# out from mDiff, which is the only place where it is known -- at Save class
+# time nobody knows yet, and counting there would raise the number for every
+# declared library whether it changed or not.
+#
+# Format:   EXEC-BUILD=<n> <stamp>   on its own line.
+# The stamp has the same shape as a run folder name, so a number can be
+# matched to the run it came from by eye.
+#
+# Anything else already in $userinfo is left exactly where it is. Three
+# libraries carried hand notes when this was written and none of them may be
+# overwritten.
+#
+# A library $userinfo written by notation survives a hard kill of Omnis --
+# measured 2026-09-04. There is no Save library and none is needed.
+#
+# pLibName : char (param)   lib : ref   info newinfo stamp : char
+# num p q : int   ok : boolean
+Set reference lib to $root.$libs.$findname(pLibName)
+If isclear(lib)
+	Quit method con('[build  ] ',pLibName,' is not open — no number written')
+End If
+# Omnis has no function that reports the type of a value, so the guard is on
+# the OUTCOME: a sentinel goes in first and the read goes over it. V4COMPARE
+# holds a structure and throws on the read; then the sentinel survives and
+# nothing is written. A foreign structure is not ours to break.
+Calculate info as '###UNREAD###'
+Calculate info as lib.$userinfo
+If info='###UNREAD###'
+	Quit method con('[build  ] ',pLibName,' $userinfo is not character — left untouched')
+End If
+Calculate stamp as con(jst(#D,'D:y-M-D'),'_',jst(#T,'T:H-N-S'))
+Calculate p as pos('EXEC-BUILD=',info)
+If p=0
+	Calculate num as 1
+	If len(info)
+		Calculate newinfo as con(info,kCr,'EXEC-BUILD=1 ',stamp)
+	Else
+		Calculate newinfo as con('EXEC-BUILD=1 ',stamp)
+	End If
+Else
+	# the number runs from just after the tag to the next space
+	Calculate q as pos(' ',mid(info,p+11))
+	If q=0
+		Quit method con('[build  ] ',pLibName,' carries a malformed EXEC-BUILD tag — left untouched')
+	End If
+	Calculate num as mid(info,p+11,q-1)
+	Calculate num as num+1
+	# everything before the tag stays; so does everything from the end of its line
+	Calculate q as pos(kCr,mid(info,p))
+	If q=0
+		Calculate newinfo as con(mid(info,1,p-1),'EXEC-BUILD=',num,' ',stamp)
+	Else
+		Calculate newinfo as con(mid(info,1,p-1),'EXEC-BUILD=',num,' ',stamp,mid(info,p+q-1))
+	End If
+End If
+Do lib.$userinfo.$assign(newinfo) Returns ok
+If ok
+	Quit method con('[build  ] ',pLibName,' -> ',num,'  ',stamp)
+Else
+	Quit method con('[build  ] ',pLibName,' — the assign was REFUSED, number not raised')
+End If

@@ -1,0 +1,102 @@
+# $heightForText(pText,pMultilineObjRef) -> height in px, 0 = could not measure
+# Measures the minimum height for pText to be FULLY visible in pMultilineObjRef.
+# Measured on an invisible COPY of the field in the same window instance — the
+# copy inherits font, fieldstyle, borders and scrollbar, so it is the only
+# honest measuring stick. The original is NEVER touched.
+# The width comes from the original as it is NOW: if it changes, measure again.
+# No cap — what of the result fits is the caller's decision.
+# Condition: $firstvis=1 and $lastvis=len(pText) (both count CHARACTERS).
+If isclear(pMultilineObjRef)
+	Quit method 0 ## no reference
+End If
+Calculate textLen as len(pText)
+If textLen=0
+	Quit method 0 ## empty text has no minimum height
+End If
+Set reference windRef to pMultilineObjRef.$wind()
+If isclear(windRef)
+	Quit method 0 ## window instance not reachable
+End If
+
+# Copy into the window instance. Per help, $add(object) creates a copy of the
+# passed object; it lands congruent on the original.
+Do windRef.$objs.$add(pMultilineObjRef) Returns copyRef
+If isclear(copyRef)
+	Quit method 0 ## copy failed
+End If
+Do copyRef.$visible.$assign(kFalse) ## nobody should see it
+# Free it: otherwise the inherited $edgefloat governs the geometry and $height
+# cannot be set (kEFposnClient inflates the copy to full window size).
+Do copyRef.$edgefloat.$assign(kEFnone)
+Do copyRef.$width.$assign(pMultilineObjRef.$width) ## width as the original has it NOW
+
+# Content via #S1 and $dataname, $calculated off: with $calculated=kTrue, $text is a CALCULATION
+# and pText would be evaluated as a formula.
+Do copyRef.$calculated.$assign(kFalse)
+
+Do copyRef.$dataname.$assign('#S1')
+# #S1 belongs to the user: the reversible block restores it on every exit. Keep the block tight,
+# everything inside is reversed. Only the Calculate form is reversible, $assign is not.
+Begin reversible block
+	Calculate #S1 as pText
+End reversible block
+
+Do copyRef.$redraw(kTrue,kTrue) ## once in full: load the content
+# Read-back check: can the height be set at all? If not, the copy is externally
+# governed and any measuring loop would spin without effect.
+Do copyRef.$height.$assign(100)
+Calculate readBack as copyRef.$height
+If readBack<>100
+	Do windRef.$objs.$remove(copyRef)
+	Quit method 0 ## height externally governed — not measurable
+End If
+
+# Estimate the start value: line height from the font engine.
+# $linecount is only a rough seed here; the measurement corrects any error.
+Calculate lineHeight as 0
+Do FontOps.$wintextheight(copyRef.$font,copyRef.$fontsize,copyRef.$fontstyle,copyRef.$linehtextra) Returns lineHeight
+If isnull(lineHeight)|lineHeight<=0
+	Calculate lineHeight as 14 ## fallback; the measurement corrects it anyway
+End If
+Calculate tryHeight as (copyRef.$linecount+1)*lineHeight ## deliberately OVERestimated
+If tryHeight<lineHeight
+	Calculate tryHeight as lineHeight
+End If
+Do copyRef.$height.$assign(tryHeight)
+Do copyRef.$redraw(kFalse,kTrue)
+
+# Derive the direction from the condition — the algorithm goes both ways.
+Calculate fits as copyRef.$firstvis=1&copyRef.$lastvis=textLen
+Calculate guard as 0
+If fits
+	# already fits: shrink coarsely until it breaks (coarse step = one line height,
+	# smaller steps would have no effect inside a plateau)
+	While fits&tryHeight>lineHeight&guard<500
+		Calculate tryHeight as tryHeight-lineHeight
+		Do copyRef.$height.$assign(tryHeight)
+		Do copyRef.$redraw(kFalse,kTrue)
+		Calculate fits as copyRef.$firstvis=1&copyRef.$lastvis=textLen
+		Calculate guard as guard+1
+	End While
+End If
+
+# grow finely: the first hit is the minimum height
+Calculate guard as 0
+While not(fits)&guard<5000
+	Calculate tryHeight as tryHeight+1
+	Do copyRef.$height.$assign(tryHeight)
+	Do copyRef.$redraw(kFalse,kTrue)
+	Calculate readBack as copyRef.$height
+	If readBack<>tryHeight
+		Do windRef.$objs.$remove(copyRef)
+		Quit method 0 ## height became externally governed on the way
+	End If
+	Calculate fits as copyRef.$firstvis=1&copyRef.$lastvis=textLen
+	Calculate guard as guard+1
+End While
+
+Do windRef.$objs.$remove(copyRef) ## clean up, on every exit
+If fits
+	Quit method tryHeight
+End If
+Quit method 0 ## guard tripped, condition never met

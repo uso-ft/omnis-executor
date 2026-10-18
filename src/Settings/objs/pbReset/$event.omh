@@ -1,0 +1,11 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	# Layout rescue (layout_reset v1): close the console and open it fresh with pReset.
+	# A fresh instance IS the class; $construct(pReset) empties every stored layout value first.
+	No/Yes message Reset window and container objects to default values ? (Sound bell)
+	If flag true
+		If $classes.ExecutorConsole.$insts().$first()
+			Do $classes.ExecutorConsole.$insts().$first().$close()
+		End If
+		Do $classes.ExecutorConsole.$openonce('*',kWindowCenter,kTrue)
+		Do $cinst.$redraw()
+	End If

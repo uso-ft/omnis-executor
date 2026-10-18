@@ -1,0 +1,75 @@
+# Creates a copy of the source method in the destination instance and then calls it.
+# Parameters are passed through accordingly, and the return value is passed back as binary
+# Method will be removed after execution.
+# First Parameter for Source method can be text only.
+
+# Close possible design editor of instance because process becomes very, very slow.
+If pDestinationInstance.$class
+	Close design [$cinst.$shortenClassPath(pDestinationInstance.$class().$fullname)]
+End If
+
+If pDestinationInstance.$subinst
+	Set reference instRef to pDestinationInstance.$subinst().$ref
+Else If pDestinationInstance.$class
+	Set reference instRef to pDestinationInstance.$ref
+Else
+	Set reference instRef to pDestinationInstance().$inst().$ref
+End If
+
+If pSourceMethodRef.$type=kCharacter
+	Calculate methodName as '$runtimeMethodAddedTemporarily'
+	Calculate methodText as pSourceMethodRef
+Else
+	Calculate methodName as pSourceMethodRef.$name
+	
+	Calculate methodText as pSourceMethodRef.$methodtext ## cumbersome, but doesn't work directly ?!
+	Calculate vars as pSourceMethodRef.$lvardefs.$makelist($ref.$name,$ref.$objtype,$ref.$objsubtype,$ref.$objsublen,$ref.$parmno,$ref.$objinitval,$ref.$desc,$ref.$userinfo,$ref.$initnull,$ref.$isindexed,$ref.$nonull,$ref.$odbcaccessmask)
+	Do vars.$sort($ref.c5) ## sort by parameter number
+End If
+
+# Remove if exists (may be stack was killed before)
+If instRef.$methods.$findname(methodName)
+	Set reference newMethod to instRef.$methods.$findname(methodName)
+	Do instRef.$methods.$remove(newMethod)
+End If
+
+# Create Method
+Set reference newMethod to instRef.$methods.$add(methodName) ## @SELF
+
+# Create local variables and parameters (order !)
+Do vars.$sendall($cinst.$setRef(ref,newMethod.$lvardefs.$add($sendallref.c1,$sendallref.c2,$sendallref.c3,$sendallref.c4,$sendallref.c5))+ref.$objinitval.$assign($sendallref.c6)+ref.$desc.$assign($sendallref.c7)+ref.$userinfo.$assign($sendallref.c8)+ref.$initnull.$assign($sendallref.c9)+ref.$isindexed.$assign($sendallref.c10)+ref.$nonull.$assign($sendallref.c11)+ref.$odbcaccessmask.$assign($sendallref.c12))
+
+# Method text assign (be aware: assigning a empty string removes all local variables, Omnis ST/PF/1528)
+Do newMethod.$methodtext.$assign(pick(pDoBreak,methodText,con('Breakpoint auto-step: line 1 of the injected script — step from here (End with Continue, not by killing the stack: a killed run leaves its vault backup on hold.)',kCr,methodText)))
+If len(newMethod.$methodtext)
+Else
+	# Do not kill the stack !!!
+	If pDoBreak
+		Breakpoint could not assign Methodtext,unable to execute Method (may be unknown Instance, class, task or file variable in method text)
+	End If
+	Do newMethod.$methodtext.$assign('; Breakpoint  ;; Could not assign method text: maybe unknown variable or special Characters in method text ? ') ## if assignable it lets step inside
+End If
+
+# execute the method
+If newMethod.$cando ## ===>> do it
+	Do instRef.[methodName](pf1,pf2,pf3,pf4,pf5) Returns returnBinary
+Else
+	# Do not kill the stack !!!
+	If pDoBreak
+		Breakpoint cannot execute
+	End If
+End If
+
+# Remove Method
+Do instRef.$methods.$remove(newMethod)
+
+Quit method returnBinary
+
+
+# pClassRef_unused was an optional STATIC class reference: if passed, the class was taken
+# directly instead of being derived from the instance. Currently not used — kept for reference:
+# If pClassRef_unused.$class()
+#   Set reference classRef to pClassRef_unused.$ref
+# Else
+#   ... derive classRef from pDestinationInstanz ...
+# End If

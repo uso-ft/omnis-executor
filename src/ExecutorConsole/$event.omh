@@ -1,0 +1,6 @@
+On evResized
+	Do $cinst.$fitJumpListDivider()
+	If cView>0 ## the grid is hidden in Script view
+		Do $cinst.$adjustJumpLineHeight()
+	End If
+	Do $cinst.$redraw()

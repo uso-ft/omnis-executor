@@ -1,0 +1,3 @@
+Calculate list2 as ref.$lvardefs.$makelist($ref.$name,$ref.$type,$ref.$subtype)
+Calculate list2 as ref.$lvardefs.$makelist($ref.$name,$ref.$objtype*1,$ref.$objsubtype)
+Calculate n as ref.$type

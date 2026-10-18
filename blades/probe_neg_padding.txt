@@ -1,0 +1,3 @@
+Do list.$add('Bibliothek',            '$root.$libs.Executor',kTrue)
+Calculate text3 as con(text3,'leer    | ')
+Calculate result as con('run ',#T)

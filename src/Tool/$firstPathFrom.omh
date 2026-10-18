@@ -1,0 +1,14 @@
+# substring from pStartPos to end
+Calculate result as mid(pStr,pStartPos)
+# cut at the first CR or LF (isolate the first line)
+If pos(kCr,result)
+	Calculate result as mid(result,1,pos(kCr,result)-1)
+End If
+If pos(kLf,result)
+	Calculate result as mid(result,1,pos(kLf,result)-1)
+End If
+# strip any trailing CR/LF/space that remains
+While len(result)>0&(right(result,1)=kCr|right(result,1)=kLf|right(result,1)=' ')
+	Calculate result as left(result,len(result)-1)
+End While
+Quit method result

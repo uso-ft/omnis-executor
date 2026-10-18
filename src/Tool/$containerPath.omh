@@ -1,0 +1,10 @@
+# Workaround for Omnis bug ST/BE/344, fixed in Studio 5 (ST500-003) Oct 2008.
+
+If pObjRef.$objtype=kBobj
+	Calculate path as pObjRef.$fullname
+	Calculate containerPath as mid(path,1,rpos('.$objs',path)-1)
+Else
+	Calculate containerPath as pObjRef.$container().$fullname
+End If
+
+Quit method containerPath

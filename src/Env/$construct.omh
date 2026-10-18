@@ -1,0 +1,23 @@
+# Env is the door for a SCRIPT to lay files beside its protocol.
+# It computes NOTHING. The run folder belongs to the vessel, which fixes
+# cRunFolder once per run in $runExecutor; this class only asks for it.
+# One source for the path. Cookbook D6c.
+# A $construct cannot abort the method that entered, so a failure is
+# CARRIED in $ok and $why instead of raised. A script that writes must
+# ask $ok, or it will believe an empty path.
+# env_class v1 (2026-08-29).
+Calculate iOk as kFalse
+Calculate iWhy as ''
+Calculate iPath as ''
+Calculate count as $clib.$classes.ExecutorConsole.$insts().$count
+If count=1
+	Set reference ref to $clib.$classes.ExecutorConsole.$insts().$first()
+	Calculate iPath as ref.$runFolder()
+	If len(iPath)
+		Calculate iOk as kTrue
+	Else
+		Calculate iWhy as 'the console has no run folder for this run yet'
+	End If
+Else
+	Calculate iWhy as con(count,' console instances are open, so this run cannot be attributed to one')
+End If

@@ -1,0 +1,123 @@
+# =============================================
+# Opens the value window of the corresponding entity for the parameter name pVariableName
+#
+# Simple field name (character, date, etc.):
+# - Show the corresponding list, file or instance variable
+
+# Field name is list or row: (MyList.MyCollist, #L1)
+# - Show this corresponding list or row
+
+# To display the values, the OpenValues command must be called INSIDE the corresponding class
+# trial and error: not every variable form is resolved
+# =============================================
+# @US/11.08.2014
+# =============================================
+Set reference varRef to [pVariableName].$ref
+Calculate variableName as varRef.$name ## sometimes evaluates differently from the reference e.g. MyList.MyCol ==> MyCol
+Calculate fullname as varRef.$fullname
+Calculate type as varRef.$type
+Set reference classRef to [pVariableName].$class().$ref
+Set reference instRef to [pVariableName].$inst().$ref
+
+# the $group hierarchy
+Do hierarchieList.$define()+hierarchieList.$cols.$add('$name',kCharacter,kSimplechar)+hierarchieList.$cols.$add('$type',kCharacter,kSimplechar)+hierarchieList.$cols.$add('$fullname',kCharacter,kSimplechar)+hierarchieList.$cols.$add('$group',kCharacter,kSimplechar)
+
+Calculate path as ''
+While len(varRef.[path]$fullname())
+	Do hierarchieList.$add(varRef.[path]$name,varRef.[path]$type,varRef.[path]$fullname(),con(path))
+	Calculate path as con(path,'$group().')
+End While
+
+# reference to the instance holding the variable
+Do hierarchieList.$search($ref.c2='list'|$ref.c2='row',kTrue,kFalse,kFalse,kFalse)
+Set reference instanceRef to [hierarchieList.c3].$group().$inst().$ref
+Calculate listname as hierarchieList.c1
+Set reference ref to [hierarchieList.c3].$ref
+
+# On the last line is the topmost main group in the class
+Calculate groupType as [hierarchieList.[hierarchieList.$linecount].c3].$name
+
+If varRef.$name='unnamed_value' ## Note: $class() does not always work e.g. iMdEntityRef.MY_ROW
+	# $fulldataname could still work here
+	Calculate filename as mid(pVariableName,rxpos('.*\..*\.',pVariableName,kTrue,kFalse,lenFound),lenFound-1)
+	Set reference ref to [filename].$ref
+	If varRef.$class()
+		Breakpoint ?
+	Else If varRef().$class()
+		Breakpoint ?
+	Else If [fullname].$class() ## this sometimes works
+		Breakpoint ?
+	Else If [filename].$class().$classtype()=kFile ## pVariableName= MyFile.MyColumnRef.MyValueSomewhere
+		# Omnis cannot resolve the full string Library.MyTable.MyField. Probably depends on the tokenize setting.
+		Calculate variableName as filename
+		Do $cinst.$OpenValues($cinst,pVariableName)
+		Quit method
+	Else
+		# does not work:
+		# - WiBaClasses.WiBaPublic.WiUserEinstellungenRef.iEinstellungen.c1
+		If pErrorMsg
+			OK message Not found: type= [type] [varRef.$type*1] [pVariableName] {p=[fullname]}
+		End If
+		Quit method
+	End If
+Else
+	# the variable resolves locally, by name
+End If
+
+Calculate #S1 as varRef.$group().$type
+
+If varRef.$type*1=kList|varRef.$type*1=kRow ## MyList, MyListRef, MyFile.MyList, #Lx  = All references to lists
+	# List or Row, Show exactly this list
+	Do $cinst.$OpenInstanceValue($cinst,pVariableName)
+	
+Else If groupType='$hashvars' ## #S1, #L1
+	
+	If $hashvardefs.[listname].$cando ## #Lx.c1
+		Do $cinst.$OpenInstanceValue($cinst,listname) ## show exactly this list
+		
+	Else If $hashvardefs.[variableName].$cando ## #S..#Z variables
+		Do $cinst.$OpenValues($cinst,variableName) ## show all #-vars
+	End If
+	
+Else If varRef.$group().$type*1=126 ## iE. iMdEntityRef.MY_ROW, cList.Col
+	# RefVariable to list or row
+	If instanceRef.$class()&len(listname) ## iMdEntityRef.MY_ROW
+		Do $cinst.$OpenInstanceValue(instanceRef,listname)
+		
+	Else If groupType='$cvars' ## cList.col
+		Do $cinst.$OpenInstanceValue($cinst,listname)
+	Else
+		If pErrorMsg
+			OK message Not found: type= [type] [varRef.$type*1] [pVariableName] {p=[fullname]}
+		End If
+	End If
+	
+Else If varRef.$group().$type*1=kList|varRef.$group().$type*1=kRow ## ListRef.Col
+	# ListRef.Col but set via field reference parameter
+	
+	# The reference can only be resolved in the target and this instance name is unknown here in $cinst.
+	# therefore the name of the list or the row is found by stripping the path
+	Calculate variableName as $cinst.$stripLastChain(fullname)
+	Do $cinst.$OpenInstanceValue($cinst,variableName)
+	
+Else If classRef.$classtype*1=kFile ## MyLib.MyFile.Col
+	# For a file, the full variable name pVariableName and $OpenValueS must be selected
+	# Otherwise it opens a window for each field.
+	Do $cinst.$OpenValues($cinst,pVariableName)
+	
+Else
+	# If no list or row variable ==> show ALL values of the surrounding entity
+	
+	# the following twist is necessary for itemrefs
+	Calculate variableName as varRef.$name
+	Set reference instanceRef to [fullname].$inst().$ref
+	
+	If instanceRef.$class()&len(variableName)
+		Do $cinst.$OpenValues(instanceRef,variableName)
+		
+	Else ## at least display the field individually.
+		Do $cinst.$OpenInstanceValue($cinst,pVariableName)
+	End If
+	Quit method kTrue
+End If
+Quit method

@@ -1,0 +1,22 @@
+# Writes one file into the run folder of this run. Returns '' on success, a protocol note otherwise.
+# A failed write never ends the run. cRunFolder is set by $runExecutor; the line below is a fallback.
+# The folder is made by the static FileOps (its return is an error code, so the file system is asked),
+# the file is written through the FileOps object, which has no $createdir (lore 7.7).
+If len(cRunFolder)=0
+	Calculate cRunFolder as $cinst.$runFolderPath()
+End If
+Do FileOps.$createdir(cRunFolder,kTrue)
+If FileOps.$doesfileexist(cRunFolder)
+Else
+	Quit method con('[folder] could not be created at [',cRunFolder,'] - nothing written. ')
+End If
+Do iFileOps.$createfile(con(cRunFolder,pName)) Returns ok
+If ok
+	Do iFileOps.$writecharacter(kUniTypeUTF8,pText,kFalse,kFalse) Returns ok
+	Do iFileOps.$closefile()
+	If ok
+		Quit method ''
+	End If
+End If
+Do iFileOps.$getlasterror(errText) Returns errCode
+Quit method con('[file] ',pName,' FAILED: ',errText,' ')

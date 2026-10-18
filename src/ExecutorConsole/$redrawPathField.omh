@@ -1,0 +1,22 @@
+# Marks a path field blue, with a tooltip, when its path does not resolve.
+#
+# Blue, not red: an unresolved path is a state (half typed, or a class about to be created).
+#
+# Every branch assigns BOTH colour and tooltip. A colour set once stays
+# set, so the reset is the half that must not be forgotten.
+#
+# $pathToRefQuiet never puts an unknown name into notation, so this runs
+# on every redraw without writing anything into the error log.
+If len(pPath)=0
+	Do pFieldRef.$textcolor.$assign(kBlack)
+	Do pFieldRef.$tooltip.$assign('')
+Else
+	Set reference ref to iTools.$pathToRefQuiet(pPath)
+	If isclear(ref)
+		Do pFieldRef.$textcolor.$assign(kBlue)
+		Do pFieldRef.$tooltip.$assign('path does not resolve at the moment')
+	Else
+		Do pFieldRef.$textcolor.$assign(kBlack)
+		Do pFieldRef.$tooltip.$assign('')
+	End If
+End If

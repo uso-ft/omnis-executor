@@ -1,0 +1,20 @@
+# Helper for $shortcutTextToCode (no regex).
+# If pModName occurs in pString: OR pModBit into pfModifierCode (by reference)
+# and remove the modifier word plus ONE adjacent delimiter ('+' or '-').
+# Uses replace (first occurrence) — a modifier appears at most once.
+# Returns the cleaned string.
+If pos(pModName,pString)
+	Calculate pfModifierCode as bitor(pfModifierCode,pModBit)
+	
+	If pos(con(pModName,'+'),pString)
+		Calculate pString as replace(pString,con(pModName,'+'),'') ## "Mod+" → ""
+	Else If pos(con(pModName,'-'),pString)
+		Calculate pString as replace(pString,con(pModName,'-'),'') ## "Mod-" → ""
+	Else
+		# Modifier is the last/only token (no trailing delimiter)
+		Calculate pString as replace(pString,con('+',pModName),'') ## "+Mod" → ""
+		Calculate pString as replace(pString,con('-',pModName),'') ## "-Mod" → ""
+		Calculate pString as replace(pString,pModName,'') ## standalone "Mod"
+	End If
+End If
+Quit method pString

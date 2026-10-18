@@ -1,0 +1,13 @@
+# Keeps the current text as a stamped row in the log (pbTextToLog). Sets no marker, that is done with dlMark.
+Calculate cLog.$line as cLog.$linecount
+If cLog.execDate
+	# should not occur
+	Sound bell
+Else
+	# With a time stamp the log line is secured
+	Calculate cLog.execDate as #T
+End If
+
+Do $cinst.$logSetValues()
+Do $cinst.$selectCurrentLogRow()
+Do $cinst.$redraw()

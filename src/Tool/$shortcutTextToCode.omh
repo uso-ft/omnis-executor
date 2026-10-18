@@ -1,0 +1,59 @@
+# Create the $winshortcutkey or $macshortcutkey code from a shortcut key string.
+# Inverse of $shortcutCodeToText. Token-based: named modifiers are extracted
+# first, the remainder is the key — so '+' and '-' work as key tokens too.
+# Letters are upper-cased (the editor stores all letters as upper case, e.g. ä → Ä).
+# Verified: Shift=131072, Ctrl/Com/Cmnd=65536, Opt/Alt=262144, F1..F12=1..12,
+#           Cmnd+Shift+Opt+A = 458817, Alt+Ä = 262340
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+If isclear(pShortcutString)
+	Quit method ''
+End If
+Calculate string as pShortcutString
+Calculate modifierCode as 0
+
+# --- Extract named modifiers --------------------------------------------------
+# Each call strips the modifier word plus ONE adjacent delimiter and OR-adds its bit.
+Do $cinst.$removeModifier(string,'Cmnd',65536,modifierCode) Returns string
+Do $cinst.$removeModifier(string,'Ctrl',65536,modifierCode) Returns string
+Do $cinst.$removeModifier(string,'Com',65536,modifierCode) Returns string
+Do $cinst.$removeModifier(string,'Shift',131072,modifierCode) Returns string
+Do $cinst.$removeModifier(string,'Opt',262144,modifierCode) Returns string
+Do $cinst.$removeModifier(string,'Alt',262144,modifierCode) Returns string
+
+# --- Trim a stray leading/trailing delimiter (only if >1 char remains) -------
+If len(string)>1
+	If (left(string,1)='+')|(left(string,1)='-')
+		Calculate string as mid(string,2)
+	End If
+End If
+If len(string)>1
+	If (right(string,1)='+')|(right(string,1)='-')
+		Calculate string as mid(string,1,len(string)-1)
+	End If
+End If
+Calculate keyToken as string
+
+# --- Resolve key token → key code --------------------------------------------
+Calculate keyCode as 0
+Switch keyToken
+	Case 'Minus'
+		Calculate keyCode as 45
+	Case 'Space'
+		Calculate keyCode as 32
+	Case 'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'
+		Calculate keyCode as int(mid(keyToken,2)) ## 'F3' → 3
+		# --- named navigation keys (@VERIFY codes), e.g.:
+		# Case 'Up'   : Calculate keyCode as <CODE>
+		# Case 'Down' : Calculate keyCode as <CODE>
+	Default
+		If len(keyToken)=1
+			Calculate keyCode as asc(upp(keyToken),1) ## letters (incl. umlauts), digits, '+', '-', '%', ...
+		End If
+End Switch
+
+If keyCode=0
+	# Breakpoint Wrong or unknown shortcut key passed
+	Quit method ''
+End If
+Calculate shortcutCode as modifierCode+keyCode
+Quit method shortcutCode

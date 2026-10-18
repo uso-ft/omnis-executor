@@ -1,0 +1,8 @@
+# Converts a notation path string into a reference, or '' when it does not resolve.
+
+If pos('.$bobjs.',pPath) ## is Background object
+	Set reference ref to $cinst.$bobjPathToRef(pPath).$ref
+Else
+	Set reference ref to [pPath].$ref
+End If
+Quit method ref

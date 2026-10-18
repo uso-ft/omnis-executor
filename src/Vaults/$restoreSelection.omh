@@ -1,0 +1,70 @@
+# $restoreSelection v1 2026-09-09 (restorenet v1) — brings the SELECTED classes
+# back out of their vault. The grid allows more than one selected row, so the
+# loop reads $selected() and never the current line.
+#
+# THE DIALOG IS THE POINT. The question before a restore is never WHICH class —
+# that is on the screen. It is whether this is the RIGHT copy. So every row is
+# shown twice: what the vault holds, from the index, and what the library holds
+# now, asked straight from the class. Three numbers each, no parsing, and it
+# works for every class type — unlike a line-by-line comparison, which would
+# be silent for windows, reports and tasks.
+#
+# THE TARGET LIBRARY. A vault is named execBackup_ plus the library name, so
+# the target is what stands after the eleventh character. It must be OPEN: this
+# window opens vaults from disk, never the libraries they belong to, and
+# opening a library in order to overwrite a class in it, unasked, is more
+# automation than a restore should carry. A closed one is named and skipped.
+#
+# THE VAULT GOES WITH THE CALL. $restoreClass would otherwise rebuild the vault
+# name from the target library and find whichever library of that name happens
+# to be open — not necessarily the one whose row was clicked. The row knows.
+Calculate vOut as ''
+Calculate vList as ''
+Calculate vCount as 0
+For iClasses.$line from 1 to iClasses.$linecount step 1
+	If iClasses.$selected()
+		Calculate vCount as vCount+1
+		Calculate vName as mid(iClasses.vault,12,len(iClasses.vault)-11)
+		Set reference vLibRef to $root.$libs.$findname(vName)
+		Calculate vList as con(vList,kCr,iClasses.ref().$name,'  copy: ',iClasses.methods,' m, ',iClasses.bytes,' B, ',iClasses.when)
+		If pos('_before',iClasses.ref().$name)
+			Calculate vList as con(vList,kCr,'      NOTE: this is a NET, not a backup. It lands under ITS OWN name, ending in _before, and does not replace the class it was made from. Rename it by hand afterwards.')
+		End If
+		If isclear(vLibRef)
+			Calculate vList as con(vList,kCr,'      now: ',vName,' is NOT OPEN - this line will be skipped')
+		Else
+			Set reference vTgtRef to vLibRef.$classes.$findname(iClasses.ref().$name)
+			If isclear(vTgtRef)
+				Calculate vList as con(vList,kCr,'      now: the class is not in ',vName,' any more - it will be created')
+			Else
+				Calculate vList as con(vList,kCr,'      now: ',vTgtRef.$methods.$count,' m, ',vTgtRef.$disksize,' B')
+			End If
+		End If
+	End If
+End For
+If vCount=0
+	OK message Restore (Icon) {Nothing selected.//Select one or more classes in the list below.}
+	Quit method
+End If
+Yes/No message Restore (Icon) {[vCount] class(es) will be REPLACED by their vault copy:/[vList]////The class as it stands NOW is kept in the vault as <name>_before.//A class that is in use is refused and left untouched.//Continue?}
+If flag false
+	Quit method
+End If
+Calculate vOut as con('restore ',#T,kCr)
+For iClasses.$line from 1 to iClasses.$linecount step 1
+	If iClasses.$selected()
+		Calculate vName as mid(iClasses.vault,12,len(iClasses.vault)-11)
+		Set reference vLibRef to $root.$libs.$findname(vName)
+		If isclear(vLibRef)
+			Calculate vOut as con(vOut,'the library ',vName,' is not open - skipped. ',kCr)
+		Else
+			Calculate vOut as con(vOut,$itasks.Executor.$restoreClass(vLibRef,iClasses.ref().$name,iClasses.ref().$lib()),kCr)
+		End If
+	End If
+End For
+Send to trace log [vOut]
+Calculate iRestoreLog as vOut
+# the index has moved on: read it again rather than show what was true before
+Do $cinst.$loadClasses()
+Do $cinst.$redraw()
+Quit method

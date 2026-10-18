@@ -1,0 +1,4 @@
+Do list.$define(classRef,name)
+Calculate text as list.classRef.$name
+Calculate text2 as list.classRef().$name
+Calculate text3 as list.name.$x

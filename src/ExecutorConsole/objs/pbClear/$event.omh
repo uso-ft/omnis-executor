@@ -1,0 +1,18 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	Calculate cScript as ''
+	Calculate cTargetPath as ''
+	Calculate cSourcePath as ''
+	Calculate cLogTitle as ''
+	Calculate iTextAssigned as kFalse
+	Calculate cResult as ''
+	Calculate cLog.$line as cLog.$linecount
+	If cLog.execDate|cLog.$linecount=0
+		# a row that ran (or no row at all): it stays sealed
+	Else
+		Do cLog.0.$clear() ## clears the open draft row only
+	End If
+	Do cJumpLinks.$clear()
+	Do iErrorsRef.$clear()
+	Do cTraceLog.$clear()
+	Do iBackupsRef.$clear()
+	Do $cinst.$redraw()

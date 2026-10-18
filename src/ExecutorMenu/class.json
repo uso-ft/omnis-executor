@@ -1,0 +1,39 @@
+{
+	"classtype": "kMenu",
+	"omnisversion": "10.2",
+	"internalversion": 16,
+	"designtaskname": "Startup_Task",
+	"nextident": 1017,
+	"cvardefs": [
+
+	],
+	"ivardefs": [
+
+	],
+	"properties": {
+		"canremotedebugwhenlocked": false,
+		"collectperformancedata": false,
+		"componenticon": 0,
+		"componenttype": "kCompStoreHidden",
+		"createdate": "2026-09-06 20:59:37",
+		"desc": "",
+		"editor": "",
+		"editordata": "",
+		"enabled": true,
+		"external": true,
+		"helpfile": 0,
+		"helptext": "",
+		"inheritedorder": 0,
+		"issupercomponent": false,
+		"moddate": "2026-09-28 16:33:07",
+		"showascheckedout": false,
+		"title": {
+			"type": 0,
+			"calc": "Executor"
+		},
+		"userinfo": "",
+		"users": "12345678",
+		"vcsrevision": 2,
+		"version": "1.0.0"
+	}
+}

@@ -1,0 +1,42 @@
+# Append child nodes to pNodeRef.
+If pNodeRef.$count ## node already expanded -> nothing to do
+	Quit method
+End If
+Set reference itemRef to pNodeRef.$tag().$ref
+Do list.$define(name,canassign,group,ref)
+
+If itemRef.$first.$cando ## $first.$cando is true only for GROUPS -> distinguishes group from leaf
+	Calculate list as itemRef.$makelist($ref.$name,$ref.$canassign,kTrue,$ref.$ref)
+	Do list.$redefine(name,canassign,group,ref)
+	Calculate isGroup as kTrue
+	If cFilterSystemClasses&itemRef().$name='$classes'
+		Do list.$search(list.ref.$classtype=kSystemtable,kTrue,kFalse,kTrue,kTrue)
+		Do list.$remove(kListDeleteSelected)
+	End If
+	
+Else If itemRef.$attcount>1
+	# must go via a list -- $next does not work with attributes
+	Calculate list as itemRef.$attributes.$makelist($ref.$name,$ref.$canassign,$ref.$first.$cando,$ref.$ref)
+	Do list.$redefine(name,canassign,group,ref)
+	# these attributes are often missing from the makelist, add them explicitly
+	Do list.$add('$desc',itemRef.$desc.$canassign,kFalse,itemRef.$desc.$ref)
+	Do list.$add('$userinfo',itemRef.$userinfo.$canassign,kFalse,itemRef.$userinfo.$ref)
+	# keep only assignable attributes or groups, then drop the $attributes meta-entry itself
+	Do list.$search(($ref.canassign+$ref.group)>0,kTrue,kFalse,kTrue,kTrue)
+	Do list.$remove(kListKeepSelected)
+	Do list.$search($ref.name='$attributes',kTrue,kFalse,kTrue,kTrue)
+	Do list.$remove(kListDeleteSelected)
+	If list.$linecount=0
+		Quit method ## nothing to append
+	End If
+	
+Else
+	Quit method
+End If
+Do list.$sort($ref.C1)
+For list.$line from 1 to list.$linecount step 1
+	Set reference newChild to pNodeRef.$add(con(list.name))
+	Do newChild.$tag.$assign(list.ref)
+	Do newChild.$showexpandalways.$assign(kTrue)
+End For
+Quit method

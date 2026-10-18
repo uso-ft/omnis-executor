@@ -1,0 +1,143 @@
+#
+# Takes an executor script and DESCRIBES its header. Decides nothing.
+# Returns a two-column list (field,value); rows appear only when found:
+#   family name version stamp desc marker endheader
+#   plus one row per block field, value RAW and untouched.
+# A row named note carries what could not be read.
+#
+# Order matters:
+#   - block fields come LAST, with their own variables bp/bq/braw.
+#   - the header line is cut at the colon.
+#   - markers are removed first, so an @name before the version is not part of the name.
+#
+# Pattern matching without regex: every digit becomes d, then pos finds
+# dddd-dd-dd for the stamp and  vd for the version.
+Do out.$define(field,value)
+Calculate work as con(kCr,pText,kCr)
+If pos(con(kCr,'# END HEADER'),work)
+	Do out.$add('endheader','yes')
+End If
+Calculate fam as ''
+Calculate p as pos(con(kCr,'# GENERATOR:'),work)
+If p
+	Calculate fam as 'GENERATOR'
+End If
+If len(fam)=0
+	Calculate p as pos(con(kCr,'# READER:'),work)
+	If p
+		Calculate fam as 'READER'
+	End If
+End If
+If len(fam)=0
+	Calculate p as pos(con(kCr,'# PROBE:'),work)
+	If p
+		Calculate fam as 'PROBE'
+	End If
+End If
+If len(fam)=0
+	Do out.$add('note','no family line found - GENERATOR, READER and PROBE all absent')
+Else
+	Do out.$add('family',fam)
+	Calculate rest as mid(work,p+1)
+	Calculate q as pos(kCr,rest)
+	If q
+		Calculate rest as mid(rest,1,q-1)
+	End If
+	Calculate q as pos(':',rest)
+	Calculate rest as trim(mid(rest,q+1),kTrue,kTrue,kSp)
+	Calculate p as pos('@',rest)
+	While p
+		Calculate q as p+1
+		While q<=len(rest)
+			If mid(rest,q,1)=' '
+				Break to end of loop
+			End If
+			Calculate q as q+1
+		End While
+		Do out.$add('marker',mid(rest,p+1,q-p-1))
+		Calculate rest as trim(con(mid(rest,1,p-1),' ',mid(rest,q)),kTrue,kTrue,kSp)
+		Calculate p as pos('@',rest)
+	End While
+	Calculate shape as rest
+	Calculate shape as replaceall(shape,'0','d')
+	Calculate shape as replaceall(shape,'1','d')
+	Calculate shape as replaceall(shape,'2','d')
+	Calculate shape as replaceall(shape,'3','d')
+	Calculate shape as replaceall(shape,'4','d')
+	Calculate shape as replaceall(shape,'5','d')
+	Calculate shape as replaceall(shape,'6','d')
+	Calculate shape as replaceall(shape,'7','d')
+	Calculate shape as replaceall(shape,'8','d')
+	Calculate shape as replaceall(shape,'9','d')
+	Calculate q as pos('dddd-dd-dd',shape)
+	Calculate n as 0
+	If q
+		Calculate n as q+9
+		If pos(' dd:dd',mid(shape,n+1,6))=1
+			Calculate n as n+6
+		End If
+		Do out.$add('stamp',mid(rest,q,n-q+1))
+	End If
+	Calculate i as pos(' vd',shape)
+	If i
+		Calculate p as i+2
+		While mid(shape,p+1,1)='d'
+			Calculate p as p+1
+		End While
+		Do out.$add('version',mid(rest,i+1,p-i))
+	End If
+	Calculate p as len(rest)+1
+	If q
+		If q<p
+			Calculate p as q
+		End If
+	End If
+	If i
+		If i<p
+			Calculate p as i
+		End If
+	End If
+	Calculate value as trim(mid(rest,1,p-1),kTrue,kTrue,kSp)
+	Calculate guard as 0
+	While guard<3
+		Calculate guard as guard+1
+		If pos(low(mid(value,len(value),1)),'abcdefghijklmnopqrstuvwxyz0123456789)')=0
+			Calculate value as trim(mid(value,1,len(value)-1),kTrue,kTrue,kSp)
+		End If
+	End While
+	If len(value)
+		Do out.$add('name',value)
+	End If
+	If n
+		Calculate value as trim(mid(rest,n+1),kTrue,kTrue,kSp)
+		Calculate guard as 0
+		While guard<3
+			Calculate guard as guard+1
+			If pos(low(mid(value,1,1)),'abcdefghijklmnopqrstuvwxyz0123456789$#')=0
+				Calculate value as trim(mid(value,2),kTrue,kTrue,kSp)
+			End If
+		End While
+		If len(value)
+			Do out.$add('desc',value)
+		End If
+	End If
+End If
+# Block fields LAST, own variables. Values RAW - judging them is the caller.
+Do flds.$define(field)
+Do flds.$add('CREATES')
+Do flds.$add('MODIFIES')
+Do flds.$add('REMOVES')
+Do flds.$add('RUNS-IN')
+For flds.$line from 1 to flds.$linecount step 1
+	Calculate braw as con(kCr,'# ',flds.field,':')
+	Calculate bp as pos(braw,work)
+	If bp
+		Calculate braw as mid(work,bp+len(braw))
+		Calculate bq as pos(kCr,braw)
+		If bq
+			Calculate braw as mid(braw,1,bq-1)
+		End If
+		Do out.$add(flds.field,trim(braw,kTrue,kTrue,kSp))
+	End If
+End For
+Quit method out

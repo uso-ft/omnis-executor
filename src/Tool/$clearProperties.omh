@@ -1,0 +1,10 @@
+# $clearProperties() -> Boolean
+# Clears the Property Manager display (e.g. when a tree node is selected
+# that represents no object). Uses the shell idiom: a DEFINED but EMPTY
+# list passed with isList=kTrue empties the panel (source: oVCS
+# $iconclicked). Returns kTrue if the panel was visible and cleared.
+Do $root.$modes.$dotoolmethod(kEnvToolBrowser,46) Returns ret ## visible? @CORE
+If ret
+	Do $root.$modes.$dotoolmethod(kEnvToolBrowser,1,emptyList,kTrue,kFalse) ## @CORE
+End If
+Quit method ret

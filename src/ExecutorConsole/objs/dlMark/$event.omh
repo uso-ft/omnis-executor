@@ -1,0 +1,14 @@
+On evMouseEnter
+	Calculate $cobj.$listheight as iMarkPick.$linecount
+	
+On evClick
+	# the chosen marker line becomes the marker of the current log row
+	If cLog.$linecount
+		Calculate line as cLog.$line
+		Do cLog.$sendall($sendallref.execMark.$assign(iMarkPick.markno),$sendallref.$selected())
+		Calculate cLog.$line as line
+		Do $cinst.$objs.scrExecutionLog.$objs.hlLog.$redraw()
+		Do $cinst.$objs.scrExecutionLog.$objs.dlLogNavigator.$redraw()
+	Else
+		Sound bell
+	End If

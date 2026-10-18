@@ -1,0 +1,5 @@
+# probe_neg_arity -- rule 7 of check_notation. Must FAIL.
+# pos() with four arguments passed every blade until then (handover stalekey, item 3).
+Calculate count as pos('a',text,1,kTrue)
+Calculate n as mid(text,2,3,4)
+Calculate n as pos('x',con(text,text))

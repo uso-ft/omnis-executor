@@ -1,0 +1,5 @@
+# Opens all possible vault libraries and displays contained classes got from $backupPath
+
+Do $cinst.$loadLibraries()
+Do $cinst.$loadClasses()
+Quit method

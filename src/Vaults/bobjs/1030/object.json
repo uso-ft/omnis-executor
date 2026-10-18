@@ -1,0 +1,30 @@
+{
+	"ident": 1030,
+	"order": 16386,
+	"objtype": "kBackComponent",
+	"componentlib": "StringTable",
+	"componentctrl": "String Label",
+	"properties": {
+		"::text": "Restore log",
+		"align": "kLeftJst",
+		"backcolor": "kColorWindow",
+		"backpattern": 1,
+		"designactive": true,
+		"edgefloat": "kEFrightTopBottom",
+		"fieldstyle": "",
+		"font": 1,
+		"fontsize": 10,
+		"fontstyle": "kPlain",
+		"forecolor": "kBlack",
+		"height": 13,
+		"left": 6,
+		"objlink": 0,
+		"rowid": "",
+		"textcolor": "kColorWindowText",
+		"top": 445,
+		"userinfo": "",
+		"vertcentertext": false,
+		"visible": true,
+		"width": 158
+	}
+}

@@ -1,0 +1,210 @@
+# $edit(pAddress) -> '' when an editor was opened, otherwise a sentence for the protocol.
+# Never raises, never shows a message: called from a double-click and from a script.
+#
+# Two address shapes:
+#   notation, e.g. Lib.$classes.X.$methods.//$y//.$methodlines.3 ($root, or a bare group in front, works too)
+#   the Omnis short form of trace log and stack, e.g. Lib.Class/$method+0015, rewritten into notation
+#
+# The item is resolved, then asked for $group().$name, one branch per group:
+#   (the item IS its class)  -> $modify(ref,kTrue)
+#   a class + .$methods      -> $modify(ref,kTrue), the method editor
+#   a class + .$objs         -> $modify(ref,kFalse), the class design
+#   $methods                 -> $modifyMethod at line 1
+#   $methodlines             -> $modifyMethod at the line, clamped to $methodlines.$count
+#   $objs                    -> first method opened twice, then the modifyThisClass shortcut
+#                               selects the object; without methods the class design (CLASS ref, T8)
+#   $lvardefs                -> owner method, then Parameters or Locals by $parmno
+#   $ivardefs / $cvardefs / $tvardefs -> first method of the class, then the variable pane
+#   $libs                    -> the browser, F2
+# The shortcuts come from $getPrefsKey, so rebound keys keep working.
+#
+# Not resolved: the last segment of addr is cut once. A property segment shows the properties
+# of the item; otherwise the first member of the group stands in (a shrunk method still opens).
+# Never creates, assigns or closes anything.
+
+
+Calculate addr as trim(pAddress)
+If isclear(addr)
+	Quit method '[edit] no address given. '
+End If
+
+# --- the Omnis short form, rewritten into notation ---
+Calculate p1 as pos('/',addr)
+Calculate p2 as pos('+',addr)
+If (p1>0)&(p2>p1)&(pos('$classes',addr)=0)&(pos('$windows',addr)=0)&(pos('$libs',addr)=0)
+	Calculate lib as mid(addr,1,p1-1)
+	Calculate meth as mid(addr,p1+1,p2-p1-1)
+	Calculate line as mid(addr,p2+1,len(addr)-p2)
+	Calculate p1 as pos('.',lib)
+	If p1=0
+		Quit method con('[edit] cannot read the short form ',addr,'. ')
+	End If
+	Calculate cls as mid(lib,p1+1,len(lib)-p1)
+	Calculate lib as mid(lib,1,p1-1)
+	Calculate addr as con(lib,'.$classes.',cls,'.$methods.//',meth,'//.$methodlines.',line)
+End If
+
+
+# --- a class plus a bare group: .$methods opens the method editor, .$objs the class design ---
+If (right(addr,9)='.$methods')|(right(addr,6)='.$objs')
+	Set reference ref to $cinst.$pathToRefQuiet(mid(addr,1,rpos('.',addr)-1))
+	If not(isclear(ref))
+		If ref.$fullname=ref.$class().$fullname
+			# .$methods: the first method, as for the bare class below
+			Set reference ref2 to ref.$methods.$first().$ref
+			If (right(addr,9)='.$methods')&not(isclear(ref2))
+				Do $cinst.$modifyMethod(ref2,1)
+			Else
+				Do $cinst.$modify(ref,right(addr,9)='.$methods')
+			End If
+			Quit method ''
+		End If
+	End If
+End If
+
+# --- an attribute of the item, e.g. Lib.$classes.X.$objs.1017.$text: decided by NAME, never by resolving ---
+# A property resolves to its VALUE and a value of 0 comes back clear (attributes_probe v1, 2026-09-29), so resolving says nothing.
+# $attributes lists properties, groups and methods by name, with the $. The groups this method routes are taken out first.
+Calculate lastSeg as mid(addr,rpos('.',addr)+1)
+If (left(lastSeg,1)='$')&(pos(con(',',low(lastSeg),','),',$classes,$methods,$methodlines,$objs,$bobjs,$lvardefs,$ivardefs,$cvardefs,$tvardefs,$libs,')=0)
+	Set reference ref to $cinst.$pathToRefQuiet(mid(addr,1,rpos('.',addr)-1))
+	If isclear(ref)
+		Quit method con('[edit] cannot resolve ',mid(addr,1,rpos('.',addr)-1),'. ')
+	End If
+	Do ref.$attributes.$makelist($ref.$name) Returns attrList
+	Do attrList.$search(low(attrList.c1)=low(lastSeg),kTrue,kFalse,kFalse,kFalse) Returns line
+	If line=0
+		Quit method con('[edit] ',lastSeg,' is no attribute of ',ref.$fullname,'. ')
+	End If
+	If not($cinst.$showProperties(ref))
+		Quit method con('[edit] ',lastSeg,' is an attribute of ',ref.$fullname,', but the Property Manager is not open. ')
+	End If
+	Quit method ''
+End If
+
+# --- resolve ---
+Set reference ref to $cinst.$pathToRefQuiet(addr)
+If isclear(ref)
+	
+	# --- a property of the item, e.g. myItem.$myProperty ---
+	If pos('.$',mid(addr,rpos('.',addr)))
+		# a property: strip it and show the properties of the item
+		# method names are wrapped in //, so they never look like a property
+		Calculate errorTail as mid(addr,rpos('.',addr)+1)
+		Calculate addr as mid(addr,1,rpos('.',addr)-1)
+		Set reference ref to $cinst.$pathToRefQuiet(addr)
+		Do $cinst.$showProperties(ref)
+		Quit method ''
+	Else
+		# fallback: the address without its last segment (a shrunk method still opens)
+		Calculate addr as mid(addr,1,rpos('.',addr)-1)
+		Set reference ref to $cinst.$pathToRefQuiet(addr)
+		If isclear(ref)
+			Quit method con('[edit] cannot resolve ',addr,'. ')
+		End If
+		# an object that is not there gets no stand-in: $first selected the wrong one (jump 056)
+		If right(addr,6)='.$objs'
+			Quit method con('[edit] no object ',lastSeg,' in ',addr,'. ')
+		End If
+		If ref.$first.$cando
+			# $group() on a group token gives NULL (see below), so select $first
+			Set reference ref to ref.$first
+		End If
+	End If
+	
+	
+End If
+
+If ref.$fullname=ref.$class().$fullname
+	# pure class, every type
+	# the first method, not $modify(ref,kTrue): toolbar, remote form and remote menu open their design there (jumptest_allclasses, 2026-09-29)
+	Set reference ref2 to ref.$methods.$first().$ref
+	If isclear(ref2)
+		Do $cinst.$modify(ref,kTrue)
+	Else
+		Do $cinst.$modifyMethod(ref2,1)
+	End If
+	
+Else If ref.$group().$name='$methods'
+	# method
+	Do $cinst.$modifyMethod(ref,1)
+	
+Else If ref.$group().$name='$methodlines'
+	# method line. The address ages, so clamp instead of refusing.
+	Set reference ref2 to ref.$method().$ref
+	Calculate line as ref.$ident
+	If line>ref2.$methodlines.$count
+		Calculate line as ref2.$methodlines.$count ## the address has aged
+	Else If (errorTail<>line)&len(errorTail)
+		Calculate line as ref2.$methodlines.$count ## the address has aged
+		Do $cinst.$modifyMethod(ref2,line)
+	Else
+		Do $cinst.$modifyMethod(ref2,line)
+	End If
+	
+	
+	
+Else If ref.$group().$name='$objs'
+	# object
+	Set reference ref2 to ref.$methods.$first().$ref
+	If isclear(ref2)
+		# no method so resolve direct to design of class
+		Do $cinst.$modify(ref.$class().$ref,kFalse) ## class design editor, CLASS ref - T8
+	Else
+		# has methods ==> edit method and switch to design using shortcut key 'modifyThisClass' ==> $obj is selected
+		Do $cinst.$modifyMethod(ref2,1)
+		Do $cinst.$modifyMethod(ref2,1)
+		Queue keyboard event $cinst.$shortcutEditorToQueue($cinst.$getPrefsKey('modifyThisClass')) ## @IDE
+	End If
+	
+Else If ref.$group().$name='$lvardefs'
+	# local var of method
+	Set reference ref2 to ref.$method().$ref
+	Do $cinst.$modifyMethod(ref2,1)
+	If ref.$parmno
+		Queue keyboard event $cinst.$shortcutEditorToQueue($cinst.$getPrefsKey('gotoParameters')) ## @IDE
+	Else
+		Queue keyboard event $cinst.$shortcutEditorToQueue($cinst.$getPrefsKey('gotoLocalVariables')) ## @IDE
+	End If
+	
+Else If ref.$group().$name='$ivardefs'
+	# instance variable of class, open Editor of first method
+	Set reference ref2 to ref.$class().$methods.$first().$ref
+	If isclear(ref2)
+		Do $cinst.$modify(ref.$class().$ref,kFalse) ## class design editor, CLASS ref - T8
+	Else
+		Do $cinst.$modifyMethod(ref2,1)
+		Queue keyboard event $cinst.$shortcutEditorToQueue($cinst.$getPrefsKey('gotoInstanceVariables')) ## @IDE
+	End If
+	
+Else If ref.$group().$name='$cvardefs'
+	# class variable of class, open Editor of first method
+	Set reference ref2 to ref.$class().$methods.$first().$ref
+	If isclear(ref2)
+		Do $cinst.$modify(ref.$class().$ref,kFalse) ## class design editor, CLASS ref - T8
+	Else
+		Do $cinst.$modifyMethod(ref2,1)
+		Queue keyboard event $cinst.$shortcutEditorToQueue($cinst.$getPrefsKey('gotoClassVariables')) ## @IDE
+	End If
+	
+Else If ref.$group().$name='$tvardefs'
+	# task variable, open Editor of first method
+	Set reference ref2 to ref.$class().$methods.$first().$ref
+	If isclear(ref2)
+		Do $cinst.$modify(ref.$class().$ref,kFalse) ## class design editor, CLASS ref - T8
+	Else
+		Do $cinst.$modifyMethod(ref2,1)
+		Queue keyboard event $cinst.$shortcutEditorToQueue($cinst.$getPrefsKey('gotoTaskVariables')) ## @IDE
+	End If
+	
+Else If ref.$group().$name='$libs'
+	# Library has only Browser as Editor
+	Queue keyboard event F2 ## @IDE
+	
+Else
+	# no branch matched: say so instead of reporting an opened editor
+	Quit method con('[edit] ',addr,' resolves, but there is no editor for a ',ref.$group().$name,'. ')
+End If
+
+
+Quit method ''

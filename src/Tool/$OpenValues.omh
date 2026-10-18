@@ -1,0 +1,5 @@
+# Shows the values of all instance variables — runs the "Open Values List..." command INSIDE the instance.
+# Attention: self-modifying code !!!
+Calculate methodtext as con('Variable menu command: Open Values List... ',pVariableName)
+Do $cinst.$cloneMethodToAndExecute(methodtext.$ref,pInstance.$class().$ref,pInstance.$ref,,pVariableName) ## @SELF
+Quit method

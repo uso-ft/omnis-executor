@@ -1,0 +1,27 @@
+# Find last possible Variable in the pCalculation.
+# e.g. con(iMyInstVarName) returns iMyInstVar
+# Test is done by iInstance.MyInstVarName.$cando.
+
+Calculate temp as pCalculation
+
+Calculate pos as len(temp)
+Calculate char as chr(asc(temp,pos))
+
+While len(temp)
+	Calculate name as mid(temp,rxpos('[a-zA-Z0-9_%#.]*$',temp,kTrue,kFalse,lenFound),lenFound)
+	If len(name)&mid(name,len(name),1)<>'.'
+		Calculate temp as mid(temp,1,len(temp)-lenFound)
+		If pInstRef.[name].$cando ## is a valid name in the instance
+			Quit method name
+			
+		Else If [name].$cando&isnull($constants.$findname(name))&name<>'#NULL' ## #HASH-Variables
+			Quit method name
+			
+		End If
+	Else
+		Calculate temp as mid(temp,1,len(temp)-1)
+	End If
+	
+End While
+
+Quit method ''

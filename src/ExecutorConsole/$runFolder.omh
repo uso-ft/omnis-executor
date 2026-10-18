@@ -1,0 +1,4 @@
+# The folder of THIS run, or empty before $runExecutor has fixed it.
+# The only door to cRunFolder from outside the console. env asks here.
+# Returns the path, ending in a separator.
+Quit method cRunFolder

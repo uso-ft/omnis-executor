@@ -1,0 +1,18 @@
+# Returns the number of error rows collected for this run.
+# NOT deduplicated - $handleError adds every error it is handed, filtered
+# only by cIgnoreCodes. The word unique stood here until 2026-09-01 and
+# described a condition that had already been removed; the dead # End If
+# under the $add was its scar. A comment that outlives its code is worse
+# than no comment: it was read as a promise and sent a search the wrong way.
+If cErrors.$linecount.$cando
+	# rows with errcode danger are findings of the danger scan, not errors of the run
+	Calculate vCount as 0
+	For vN from 1 to cErrors.$linecount step 1
+		If (cErrors.[vN].errcode<>'danger')&(cErrors.[vN].errcode<>'ignored')
+			Calculate vCount as vCount+1
+		End If
+	End For
+	Quit method vCount
+Else
+	Quit method 0
+End If

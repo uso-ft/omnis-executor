@@ -1,0 +1,9 @@
+# =============================================
+# Returns a signature of the current TOP window from sys(194), used to detect whether
+# an action changed the top window (a new window opened OR an existing one brought to front).
+# Must use sys(194) — C++ windows (value, find, ...) do not appear in $topwind/$iwindows.
+# Signature = windowname of the top row + classitem name + isMethodEditor flag.
+# Residual limit: two windows with an identical signature are indistinguishable.
+# =============================================
+Calculate allWindows as sys(194)
+Quit method con(allWindows.1.windowname,'|',allWindows.1.classitem().$name,'|',allWindows.1.isMethodEditor)

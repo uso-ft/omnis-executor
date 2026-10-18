@@ -1,0 +1,9 @@
+On evAfter
+	Do $cinst.$logSetValues()
+	
+On evKey
+	If pSystemKey=kTabKey&#SHIFT
+		Queue set current field efScript
+	Else If pSystemKey=kTabKey
+		Queue set current field efTargetPath
+	End If

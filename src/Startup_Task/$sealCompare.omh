@@ -1,0 +1,35 @@
+# $sealCompare(pSourceRef,pTargetRef) -> 'OK (m, v, o, om, b)' or 'FAILED (where)' (sealwalk v1).
+# The seal of $copyClass: the rows of $sealRows for source and target, compared ROW BY ROW -
+# kind, key and body. Not by name: nameless objects have an empty path and names repeat.
+# The same order after a binary $classdata copy is expected, measured by sealprobe v1 -
+# if it is wrong, the seal FAILS and the copy rolls back, the safe direction.
+# The answer starts with OK only when every row matched; $copyClass tests exactly that.
+Do $cinst.$sealRows(pSourceRef,srcList)
+Do $cinst.$sealRows(pTargetRef,tgtList)
+Calculate ok as srcList.$linecount=tgtList.$linecount
+Calculate failAt as con('rows ',tgtList.$linecount,'/',srcList.$linecount)
+Calculate cntM as 0
+Calculate cntV as 0
+Calculate cntO as 0
+Calculate cntOM as 0
+Calculate cntB as 0
+Calculate n as 1
+While ok&n<=srcList.$linecount
+	Calculate srcList.$line as n
+	Calculate tgtList.$line as n
+	If srcList.kind=tgtList.kind&srcList.key=tgtList.key&srcList.body=tgtList.body
+		Calculate cntM as cntM+pick(srcList.kind='m',0,1)
+		Calculate cntV as cntV+pick(srcList.kind='v',0,1)
+		Calculate cntO as cntO+pick(srcList.kind='o',0,1)
+		Calculate cntOM as cntOM+pick(srcList.kind='om',0,1)
+		Calculate cntB as cntB+pick(srcList.kind='b',0,1)
+	Else
+		Calculate ok as kFalse
+		Calculate failAt as con('row ',n,' of ',srcList.$linecount,': ',srcList.kind,' ',srcList.key)
+	End If
+	Calculate n as n+1
+End While
+If ok
+	Quit method con('OK (m ',cntM,', v ',cntV,', o ',cntO,', om ',cntOM,', b ',cntB,')')
+End If
+Quit method con('FAILED (',failAt,')')

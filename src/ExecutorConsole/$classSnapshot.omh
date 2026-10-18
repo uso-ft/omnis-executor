@@ -1,0 +1,29 @@
+#
+# Snapshot of every class, for comparison before and after a run.
+# Returns libName, clsName, moddate.
+#
+# Finds changed classes the text scan cannot name. It reports, it does not protect.
+#
+# pLibName_opt empty = every open library, with a name = only that one (faster).
+Do out.$define(libName,clsName,moddate)
+Do $root.$libs.$makelist($ref.$name) Returns libs
+For libs.$line from 1 to libs.$linecount step 1
+	Calculate take as kTrue
+	If len(pLibName_opt)
+		If low(libs.C1)=low(pLibName_opt)
+		Else
+			Calculate take as kFalse
+		End If
+	End If
+	If take
+		Set reference libRef to $root.$libs.$findname(libs.C1)
+		If isclear(libRef)
+		Else
+			Do libRef.$classes.$makelist($ref.$name,$ref.$moddate) Returns cls
+			For cls.$line from 1 to cls.$linecount step 1
+				Do out.$add(libs.C1,cls.C1,cls.C2)
+			End For
+		End If
+	End If
+End For
+Quit method out

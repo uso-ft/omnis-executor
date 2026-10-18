@@ -1,0 +1,9 @@
+# $dangerMark(pfStage,pfRule,pStage,pRule) keeps the strongest finding of a line:
+# A over B, and within a stage the first rule found. An empty pStage changes nothing.
+If len(pStage)=0|pfStage='A'
+	Quit method
+End If
+If pStage='A'|pfStage=''
+	Calculate pfStage as pStage
+	Calculate pfRule as pRule
+End If

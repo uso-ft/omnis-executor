@@ -1,0 +1,19 @@
+# Shows or hides the jump list and sizes it to its row count unless cFixJumpList is set.
+
+Set reference gridRef to $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.cgrJumpList
+
+If cView=2|(cView=1&cJumpLinks.$linecount>0)
+	Do gridRef.$visible.$assign(kTrue)
+	
+	If not(cFixJumpList)&cView=1 ## Jump: the grid is the client, its height is not assigned
+		If cJumpLinks.$linecount
+			# Let the JumpLinks list take 3/4 of the place
+			Calculate linksHeight as cJumpLinks.$linecount*gridRef.$rowheight()+gridRef.$headerheight()
+			Calculate linksHeight as min(linksHeight,$cinst.$objs.scrEditor.$objs.scrScriptText.$height/4*3)
+			Do gridRef.$height.$assign(linksHeight)
+			
+		End If
+	End If
+Else
+	Do gridRef.$visible.$assign(kFalse)
+End If

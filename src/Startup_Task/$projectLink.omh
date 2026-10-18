@@ -1,0 +1,4 @@
+# $projectLink() -> Character
+# The project page of the Executor (GitHub). Shown in About.
+# Change it HERE only: About reads it from this method.
+Quit method 'https://github.com/uso-ft/omnis-executor'

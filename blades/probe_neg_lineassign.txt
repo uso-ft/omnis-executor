@@ -1,0 +1,75 @@
+# PROBE: probe_neg_lineassign v1 — 2026-09-07 02:10 — one method LINE rewritten in place, with a name the target does not have
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR console (v1.3 variable set)
+# ROAD: ordinary — this probe writes nothing anywhere; it exists to be REFUSED by check_emitted_vars, which must read the two lines below as generated code and report zzzNotAVariable against Tool.$collectObjects.
+
+# ============================================================================
+# ============================================================================
+#
+#          T E S T   F I L E   —   D O   N O T   R U N   T H I S
+#
+#   This file is NOT a script for the Executor. It is a NEGATIVE PROBE: a
+#   counter-example that the blade `check_emitted_vars.py` must REJECT. Its
+#   whole purpose is to fail.
+#
+#   IT BELONGS IN THE PROJECT KNOWLEDGE, beside the other probe_neg_*.txt
+#   files and beside the blades themselves. Upload it there and leave it
+#   alone. Nothing here needs to be executed, ever.
+#
+#   Running it does nothing useful and is not entirely harmless: it names a
+#   REAL method, Tool.$collectObjects, and takes a REAL line reference. The
+#   operative lines are wrapped in `If 0` so Omnis skips them — that guard was
+#   there because a run would reach line 1 of that method, refused with
+#   25208 only because the names in it are invented.
+#
+# ============================================================================
+# ============================================================================
+
+
+#
+# check_emitted_vars must FAIL this file. It reconstructs the emitted body from
+# form 3 — a literal handed to <ref>.$text.$assign, directly or through a
+# variable — and checks every name in it against the target method. pList and
+# node belong to $collectObjects; zzzNotAVariable does not, and nothing here
+# adds it.
+# A blade that does not read form 3 reports "no emitted body found" here.
+
+Calculate result as con('run ',#T,' — probe_neg_lineassign v1',kCr)
+
+# EVERYTHING BELOW SITS INSIDE `If 0` ON PURPOSE. A negative probe is a file for
+# the BLADE, but it is also a script somebody will paste and run — and this one
+# names a REAL method and takes a REAL line reference. Run at 09:11 in its first
+# shape it did exactly that: two $text.$assign calls reached line 1 of
+# Tool.$collectObjects and were refused with 25208 only because the names were
+# invented. Valid names would have overwritten the method's header comment.
+# The blade reads TEXT and does not follow control flow, so it still sees both
+# emission lines; Omnis never executes them.
+If 0
+   Set reference methodRef to Executor.$classes.Tool.$methods.//$collectObjects//
+   Set reference ref to methodRef.$methodlines.$first()
+
+   Calculate text3 as 'Do pList.$add(node.$ref,zzzNotAVariable)'
+   Do ref.$text.$assign(text3) Returns flag1
+
+   Do ref.$text.$assign('Calculate zzzAlsoNotAVariable as node.$name')
+End If
+
+Quit method result
+
+## ===== JUMP LINKS =====
+# the method whose variables the two lines above are checked against
+# Do Executor.$classes.Tool.$methods.//$collectObjects//.$modify(92)
+
+
+# ============================================================================
+# ============================================================================
+#
+#          E N D   O F   T E S T   F I L E   —   D O   N O T   R U N
+#
+#   Belongs in the project knowledge as probe_neg_lineassign.txt.
+#   check_emitted_vars.py must report it as FAIL; every other blade passes it.
+#
+# ============================================================================
+# ============================================================================

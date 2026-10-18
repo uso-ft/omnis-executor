@@ -1,0 +1,3 @@
+Do methodRef.$methodtext.$assign('') Returns flag1
+Do methodRef.$methodtext.$assign('#') Returns flag1
+Do methodRef2.$methodtext.$assign(text) Returns flag1

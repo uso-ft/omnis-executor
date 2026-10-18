@@ -1,0 +1,34 @@
+# $containerRef  — direct spatial container of a placed field pRef.
+# Returns the IMMEDIATE parent (Container object, Subwindow, or Window).
+#
+# Difference to system $container(): $container() SKIPS intermediate
+# containers and jumps straight to the enclosing window/subwindow. This
+# method returns the true direct owner (one level up, via the object
+# group) — that one-level, no-skip behaviour is the whole point.
+#
+# Only meaningful for $objs/$bobjs objects. Any other reference has no
+# spatial container → big Else raises a hard error instead of guessing.
+#
+# pRef : ref (param) — object to resolve   ref : ref (local) — result
+
+If pRef.$group().$name='$bobjs' ## background objects — same handling as $objs; kept separate for possible future differences
+	If pRef.$group().$obj().$class ## owner of the group is an object → Container field or Subwindow
+		Set reference ref to pRef.$group().$obj()
+	Else If pRef.$group().$wind().$class ## owner of the group is a window
+		Set reference ref to pRef.$group().$wind()
+	End If
+	
+Else If pRef.$group().$name='$objs' ## foreground objects (US/21.12.2016)
+	If pRef.$group().$obj().$class ## owner of the group is an object → Container field or Subwindow
+		Set reference ref to pRef.$group().$obj()
+	Else If pRef.$group().$wind().$class ## owner of the group is a window
+		Set reference ref to pRef.$group().$wind()
+	End If
+	
+Else ## not a placed $objs/$bobjs object → there is no spatial container
+	# pRef points at something without a spatial container (method, var def,
+	# class, $iwindows entry, …). Do not fabricate one via $container().
+	Breakpoint ## INVALID OBJECT: $containerRef called on a non-field reference
+	OK message $containerRef {Invalid object: [pRef.$fullname] is not a placed $objs/$bobjs object, it has no spatial container.}
+End If
+Quit method ref

@@ -1,0 +1,84 @@
+# $copyClass(pSourceRef,pTargetLibRef) — the ONE safe class-to-class copy.
+# Used by both directions: backup (live -> vault) and restore (vault -> live).
+# REBIRTH, always (§A8.12c): an in-place $classdata.$assign onto an EXISTING
+# window class is a silent no-op — flag YES, moddate frozen. A FRESH target has
+# no such wall, whatever the class type. So whatever stands at the target name
+# is renamed ASIDE and kept as the net until the seal holds.
+# Only $classdata travels. Measured 2026-08-31 in execScratch:
+#   $userinfo TRAVELS — left alone here, it round-trips for free
+#   $desc, $version, $vcsrevision, $parentfolder do NOT travel
+# The CALLER puts those four back; this method never touches them.
+# Seal: $sealCompare, structural per class type — class methods, variables, and the
+# objects with their methods where the type has them (sealwalk v1, thread 040). A copy
+# is a fresh birth and cdif can never acquit it (§A8.12d). Method text normalised for
+# the requalification law on BOTH $ctask. and $cinst.
+# On a failed seal the newborn goes and the net comes back: NOTHING changed.
+# Returns the protocol text.
+# The note does NOT name this method. It is called only from other methods,
+# never from the console, so its line is always preceded by the caller's own
+# name — a second prefix in front of the first is noise. Every branch ends the
+# same way: a sentence, a full stop, a space, so a caller can embed it and add
+# nothing. Same rule as the vault note.
+If pSourceRef
+Else
+	Quit method 'source empty — nothing copied. '
+End If
+If pSourceRef.$classtype*1>0
+Else
+	Quit method con(chr(91),pSourceRef.$name,chr(93),' is not a class (group or object reference?) — nothing copied. ')
+End If
+If pTargetLibRef
+Else
+	Quit method 'target library empty — nothing copied. '
+End If
+Calculate cName as pSourceRef.$name
+Calculate asideName as con(cName,'_aside')
+Calculate proto as ''
+# a leftover aside means an earlier run died mid-flight — say so, then clear it
+If pTargetLibRef.$classes.$findname(asideName)
+	Do pTargetLibRef.$classes.$remove(pTargetLibRef.$classes.$findname(asideName).$ref)
+	Calculate proto as con('leftover [',asideName,'] from an earlier run removed; ')
+End If
+Calculate had as kFalse
+If pTargetLibRef.$classes.$findname(cName)
+	Set reference oldRef to pTargetLibRef.$classes.$findname(cName)
+	Do oldRef.$name.$assign(asideName)
+	If pTargetLibRef.$classes.$findname(asideName)
+		Calculate had as kTrue
+	Else
+		Quit method con(proto,'could not move ',chr(91),cName,chr(93),' aside — NOTHING changed. ')
+	End If
+End If
+Set reference tgtRef to pTargetLibRef.$classes.$add(pSourceRef.$classtype,cName)
+If tgtRef
+Else
+	If had
+		Do pTargetLibRef.$classes.$findname(asideName).$name.$assign(cName)
+	End If
+	Quit method con(proto,'could not create ',chr(91),cName,chr(93),' — rolled back, NOTHING changed. ')
+End If
+Do tgtRef.$classdata.$assign(pSourceRef.$classdata) Returns ok
+# FRESH-PATH SEAL (§A8.6): never read through the add-returned reference
+Set reference tgtRef to pTargetLibRef.$classes.$findname(cName)
+Calculate sealText as $cinst.$sealCompare(pSourceRef,tgtRef)
+Calculate ok as pos('OK',sealText)=1 ## the answer starts with OK only when every row matched
+Calculate proto as con(proto,'seal ',sealText) ## keeps the token seal OK that $backupClass searches
+If ok
+	# who writes, saves (persistence law) — only a sealed copy earns the disk
+	Save class [con(pTargetLibRef.$name,'.',cName)]
+	Calculate ok as #F ## honest save flag: read straight after the save, not later
+	Calculate proto as con(proto,', saved [',ok,']')
+End If
+If ok
+	If had
+		Do pTargetLibRef.$classes.$remove(pTargetLibRef.$classes.$findname(asideName).$ref)
+	End If
+	Quit method con(cName,' -> ',pTargetLibRef.$name,', ',proto,pick(had,', no net was needed, the target name was free',', net removed'),'. ')
+Else
+	# ROLLBACK — the newborn goes, the net comes back under the original name
+	Do pTargetLibRef.$classes.$remove(pTargetLibRef.$classes.$findname(cName).$ref)
+	If had
+		Do pTargetLibRef.$classes.$findname(asideName).$name.$assign(cName)
+	End If
+	Quit method con(proto,' — ROLLED BACK, ',chr(91),cName,chr(93),' is as it was. ')
+End If

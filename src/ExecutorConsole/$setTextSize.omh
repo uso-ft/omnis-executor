@@ -1,0 +1,24 @@
+# applies cTextSize to the field styles execData and execCode, every platform
+# execFix is NOT moved: fixed captions do not scale (styles 13).
+# No object is touched: the style is what draws.
+If cTextSize<6
+	Calculate cTextSize as 10
+End If
+Set reference libRef to $cinst.$class().$lib()
+Set reference styleRef to libRef.$fieldstyles.$findname('execData')
+If not(isclear(styleRef))
+	Set reference platRef to styleRef.$platforms.$first()
+	While not(isclear(platRef))
+		Do platRef.$fontsize.$assign(cTextSize)
+		Set reference platRef to styleRef.$platforms.$next(platRef)
+	End While
+End If
+Set reference styleRef to libRef.$fieldstyles.$findname('execCode')
+If not(isclear(styleRef))
+	Set reference platRef to styleRef.$platforms.$first()
+	While not(isclear(platRef))
+		Do platRef.$fontsize.$assign(cTextSize)
+		Set reference platRef to styleRef.$platforms.$next(platRef)
+	End While
+End If
+Do $cinst.$redraw()

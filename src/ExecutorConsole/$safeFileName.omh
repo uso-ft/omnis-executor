@@ -1,0 +1,14 @@
+# Makes pText safe to use as a file or folder name: letters, digits,
+# dash and underscore survive, everything else becomes an underscore.
+# cLogTitle is free text and goes into a path, so it has to pass here.
+# Returns the cleaned text.
+Calculate out as ''
+For n from 1 to len(pText) step 1
+	Calculate ch as mid(pText,n,1)
+	If pos(low(ch),'abcdefghijklmnopqrstuvwxyz0123456789-_')
+		Calculate out as con(out,ch)
+	Else
+		Calculate out as con(out,'_')
+	End If
+End For
+Quit method out

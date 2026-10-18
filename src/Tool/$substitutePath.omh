@@ -1,0 +1,14 @@
+# Replaces the first chain links in pPath with pSubstitute.
+# @? the // marks should still be taken into account here: $root.$methods.//myname.$blabla//
+While len(pSubstitute)
+	Do strtok(nam(pSubstitute),'.') Returns subchain
+	Do strtok(nam(pPath),'.') Returns dummy
+	Calculate returnString as con(returnString,'.',subchain)
+End While
+
+Calculate returnString as mid(returnString,2,100000000)
+If len(pPath)
+	Calculate returnString as con(returnString,'.',pPath)
+End If
+
+Quit method returnString

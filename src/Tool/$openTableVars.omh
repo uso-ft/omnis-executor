@@ -1,0 +1,3 @@
+# Opens the variable window of the table class.
+Do $cinst.$cloneMethodToAndExecute($cinst.$methods.$findname('$prototypeOpenTableVars').$ref,pInstance().$class().$ref,pInstance.$ref,,pVariableName) ## @SELF
+Quit method

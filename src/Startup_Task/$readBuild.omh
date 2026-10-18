@@ -1,0 +1,33 @@
+# $readBuild(pLibName) -> Character
+# Reads the build number of ONE library out of its own $userinfo. It WRITES
+# NOTHING - that is the whole difference to $bumpBuild, which is called only
+# for a library a run really changed and therefore says nothing at all on a
+# run that changed nothing. Two probe runs on 2026-09-06 carried no build
+# line, and a protocol that cannot say which build produced it is worth less
+# than one that can.
+#
+# Format read: EXEC-BUILD=<n> <stamp>  on its own line (see $bumpBuild).
+# The sentinel guard is the same one and for the same reason: a $userinfo that
+# is not character throws on the read, and a foreign structure is not ours to
+# break.
+#
+# pLibName : char (param)   lib : ref   info : char   num p q : int
+Set reference lib to $root.$libs.$findname(pLibName)
+If isclear(lib)
+	Quit method con('[build  ] ',pLibName,' is not open')
+End If
+Calculate info as '###UNREAD###'
+Calculate info as lib.$userinfo
+If info='###UNREAD###'
+	Quit method con('[build  ] ',pLibName,' $userinfo is not character')
+End If
+Calculate p as pos('EXEC-BUILD=',info)
+If p=0
+	Quit method con('[build  ] ',pLibName,' carries no build number yet')
+End If
+Calculate q as pos(' ',mid(info,p+11))
+If q=0
+	Quit method con('[build  ] ',pLibName,' carries a malformed EXEC-BUILD tag')
+End If
+Calculate num as mid(info,p+11,q-1)
+Quit method con('[build  ] ',pLibName,' at ',num)

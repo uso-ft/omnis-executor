@@ -1,0 +1,155 @@
+# ===============================================================
+# Creates ALL predefined variables of Executor.$execute (the executor work surface).
+# Separate maintenance script in ExecutorConsole — run it to (re)build the variable set.
+# Idempotent: remove-then-add each. #S1 holds the $lvardefs path (no dependency on the set itself).
+# These generic pairs are the only work surface executor snippets have — you cannot declare
+# new locals inside $execute, so everything a snippet needs must live here.
+# ===============================================================
+Calculate #S1 as $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$fullname
+
+# --- PARAMETERS (order = parameter number) ---
+Do [#S1].$remove([#S1].$findname('targetRef').$ref)
+Do [#S1].$add('targetRef',kItemref,kSimplechar,0,kTrue) Returns #F ## param 1 — the target class/instance to act on
+Do [#S1].$remove([#S1].$findname('sourceRef').$ref)
+Do [#S1].$add('sourceRef',kItemref,kSimplechar,0,kTrue) Returns #F ## param 2 — an optional source reference
+
+# --- the Tool object (helpers shared with the executor) ---
+Do [#S1].$remove([#S1].$findname('tools').$ref)
+Do [#S1].$add('tools',kObject,'Tool') Returns #F ## kObject subtyped to the Tool class
+
+# --- the FileOps object (file read/write/list for snippets) ---
+Do [#S1].$remove([#S1].$findname('fileOps').$ref)
+Do [#S1].$remove([#S1].$findname('files').$ref)
+Do [#S1].$add('files',kObject,'.FileOps.FileOps') Returns #F ## kObject subtyped to FileOps
+
+# --- working references (pairs) ---
+Do [#S1].$remove([#S1].$findname('ref').$ref)
+Do [#S1].$add('ref',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('ref2').$ref)
+Do [#S1].$add('ref2',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('ref3').$ref)
+Do [#S1].$add('ref3',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('ref4').$ref)
+Do [#S1].$add('ref4',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('classRef').$ref)
+Do [#S1].$add('classRef',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('classRef2').$ref)
+Do [#S1].$add('classRef2',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('methodRef').$ref)
+Do [#S1].$add('methodRef',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('methodRef2').$ref)
+Do [#S1].$add('methodRef2',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('objRef').$ref)
+Do [#S1].$add('objRef',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('objRef2').$ref)
+Do [#S1].$add('objRef2',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('group').$ref)
+Do [#S1].$add('group',kItemref) Returns #F
+Do [#S1].$remove([#S1].$findname('group2').$ref)
+Do [#S1].$add('group2',kItemref) Returns #F
+
+# --- lists / rows ---
+Do [#S1].$remove([#S1].$findname('list').$ref)
+Do [#S1].$add('list',kList) Returns #F
+Do [#S1].$remove([#S1].$findname('list2').$ref)
+Do [#S1].$add('list2',kList) Returns #F
+Do [#S1].$remove([#S1].$findname('row').$ref)
+Do [#S1].$add('row',kRow) Returns #F
+Do [#S1].$remove([#S1].$findname('row2').$ref)
+Do [#S1].$add('row2',kRow) Returns #F
+
+# --- character work variables ---
+Do [#S1].$remove([#S1].$findname('name').$ref)
+Do [#S1].$add('name',kCharacter,kSimplechar,100000000) Returns #F
+Do [#S1].$remove([#S1].$findname('name2').$ref)
+Do [#S1].$add('name2',kCharacter,kSimplechar,100000000) Returns #F
+Do [#S1].$remove([#S1].$findname('text').$ref)
+Do [#S1].$add('text',kCharacter,kSimplechar,100000000) Returns #F
+Do [#S1].$remove([#S1].$findname('text2').$ref)
+Do [#S1].$add('text2',kCharacter,kSimplechar,100000000) Returns #F
+
+# --- counters / numbers ---
+Do [#S1].$remove([#S1].$findname('count').$ref)
+Do [#S1].$add('count',kInteger,k32bitint) Returns #F
+Do [#S1].$remove([#S1].$findname('count2').$ref)
+Do [#S1].$add('count2',kInteger,k32bitint) Returns #F
+Do [#S1].$remove([#S1].$findname('n').$ref)
+Do [#S1].$add('n',kInteger,k32bitint) Returns #F
+Do [#S1].$remove([#S1].$findname('n2').$ref)
+Do [#S1].$add('n2',kInteger,k32bitint) Returns #F
+
+# --- flags ---
+Do [#S1].$remove([#S1].$findname('flag1').$ref)
+Do [#S1].$add('flag1',kBoolean,0,) Returns #F
+Do [#S1].$remove([#S1].$findname('flag2').$ref)
+Do [#S1].$add('flag2',kBoolean,0,) Returns #F
+
+# --- result ---
+Do [#S1].$remove([#S1].$findname('result').$ref)
+Do [#S1].$add('result',kCharacter,kSimplechar,100000000) Returns #F
+# --- CONTRACT V1 BLOCK: triads and vars, see cookbook A1 ---
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('binary')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('binary',kBinary) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('binary2')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('binary2',kBinary) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('binary3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('binary3',kBinary) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('classRef3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('classRef3',kItemref) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('group3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('group3',kItemref) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('methodRef3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('methodRef3',kItemref) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('objRef3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('objRef3',kItemref) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('count3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('count3',kInteger,k32bitint) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('n3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('n3',kInteger,k32bitint) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('flag3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('flag3',kBoolean) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('list3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('list3',kList) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('row3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('row3',kRow) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('vars')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('vars',kRow) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('name3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('name3',kCharacter,kSimplechar,100000000) Returns #F
+End If
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('text3')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('text3',kCharacter,kSimplechar,100000000) Returns #F
+End If
+# --- v1.3: the run environment ---
+If $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$findname('env')
+Else
+	Do $clib.$codes.Executor.$methods.//$execute//.$lvardefs.$add('env',kObject,'Env') Returns #F
+End If

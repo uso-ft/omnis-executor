@@ -1,0 +1,20 @@
+# Returns the factory marker list: the twelve icons of before, lines 1-12. Writes nothing.
+# Called by $initClassVars, and as a code method by Settings (default button, empty store).
+# The LINE NUMBER is what cLog.execMark stores. An emptied row keeps iconid 0 and its number.
+Do list.$define()
+Do list.$cols.$add('iconid',kInteger,k32bitint,0)
+Do list.$cols.$add('label',kCharacter,kSimplechar,1000) ## optional
+Do list.$add(1010001,'')
+Do list.$add(1010002,'')
+Do list.$add(1010003,'')
+Do list.$add(1010011,'')
+Do list.$add(1010012,'')
+Do list.$add(1010013,'')
+Do list.$add(1010021,'')
+Do list.$add(1010022,'')
+Do list.$add(1010023,'')
+Do list.$add(1010031,'')
+Do list.$add(1010032,'')
+Do list.$add(1010033,'')
+Calculate list.$line as 1
+Quit method list

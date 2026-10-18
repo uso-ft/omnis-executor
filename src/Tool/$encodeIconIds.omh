@@ -1,0 +1,23 @@
+# Encode comma-separated decimal ids -> ESC icon string, built directly from chr().
+# pStyleType=8 (default): style/kEscBmp form  chr(27) chr(8) <8-digit hex text> chr(35)
+# pStyleType=16        : IOptionsIcons form   chr(27) chr(22) <decimal text> chr(35)
+Calculate esc as ''
+Calculate rest as pCsv
+While len(rest)
+	If pos(',',rest)
+		Calculate tok as mid(rest,1,pos(',',rest)-1)
+		Calculate rest as mid(rest,pos(',',rest)+1)
+	Else
+		Calculate tok as rest
+		Calculate rest as ''
+	End If
+	Calculate tok as jst(tok,'-')
+	If len(tok)
+		If pStyleType=16
+			Calculate esc as con(esc,chr(27),chr(22),tok,chr(35))
+		Else
+			Calculate esc as con(esc,chr(27),chr(8),upp(bintohex(binfromint32(tok*1))),chr(35))
+		End If
+	End If
+End While
+Quit method esc

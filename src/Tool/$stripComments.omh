@@ -1,0 +1,24 @@
+# Removes Omnis method comments from text, so a class/lib name mentioned only in a comment
+# is not mistaken for a target. Handles full-line comments (# …) and inline comments (## …).
+# @? a '##' inside a string literal ('… ## …') is treated as a comment too — ignored as unlikely
+# pText → the method text. Returns the text with comment portions removed (line structure kept).
+
+Calculate lines as split(pText,kCr,kTrue) ## one row per line
+Calculate result as ''
+For loop from 1 to lines.$linecount step 1
+	Calculate oneLine as lines.[loop].C1
+	
+	# inline comment: drop everything from '##' to end of line
+	If pos('##',oneLine)
+		Calculate oneLine as mid(oneLine,1,pos('##',oneLine)-1)
+	End If
+	
+	# full-line comment: a line that (after leading whitespace) starts with '#' → blank it
+	If left(jst(oneLine,'-'),1)='#'
+		Calculate oneLine as ''
+	End If
+	
+	Calculate result as con(result,oneLine,kCr)
+End For
+
+Quit method result

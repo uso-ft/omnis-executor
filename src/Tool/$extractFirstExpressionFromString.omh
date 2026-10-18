@@ -1,0 +1,50 @@
+# Finds the first expression in the string that contains a method.
+# Walks back from the first '$' to the start, then forward, collecting the
+# whole expression incl. balanced () and //name// notation-quoting.
+# Returns the expression, or '' if the string contains no '$'.
+Calculate temp as pString
+If pos('$',temp)=0 ## no '$' -> no method expression
+	Quit method ''
+End If
+# find first possible $method, then walk backwards to the expression start
+Calculate pos as pos('$',temp)-1
+Calculate char as chr(asc(temp,pos))
+Calculate expr as ''
+While chk(char,'a','z')|chk(char,'A','Z')|chk(char,'0','9')|char='_'|char='.'|char='#'
+	Calculate pos as pos-1
+	Calculate char as chr(asc(temp,pos))
+End While
+Calculate pos as pos+1
+Calculate char as chr(asc(temp,pos))
+# walk forwards: () balanced via level, //name// via inQuote (init both!)
+Calculate level as 0
+Calculate inQuote as kFalse
+While pos<=len(temp)
+	If mid(temp,pos,2)='//' ## toggle //...// quote; consume BOTH slashes
+		Calculate inQuote as not(inQuote)
+		Calculate expr as con(expr,'//')
+		Calculate pos as pos+2
+		Calculate char as chr(asc(temp,pos))
+	Else If inQuote ## inside //...// everything belongs to the name
+		Calculate expr as con(expr,char)
+		Calculate pos as pos+1
+		Calculate char as chr(asc(temp,pos))
+	Else If char=')'&level>0
+		Calculate level as level-1
+		Calculate expr as con(expr,char)
+		Calculate pos as pos+1
+		Calculate char as chr(asc(temp,pos))
+	Else If char='('
+		Calculate level as level+1
+		Calculate expr as con(expr,char)
+		Calculate pos as pos+1
+		Calculate char as chr(asc(temp,pos))
+	Else If chk(char,'a','z')|chk(char,'A','Z')|chk(char,'0','9')|char='_'|char='.'|char='$'|level>0
+		Calculate expr as con(expr,char)
+		Calculate pos as pos+1
+		Calculate char as chr(asc(temp,pos))
+	Else
+		Break to end of loop
+	End If
+End While
+Quit method expr

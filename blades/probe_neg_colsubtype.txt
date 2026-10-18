@@ -1,0 +1,4 @@
+Do list.$cols.$add('pt',kInteger,'',0)
+Do list2.$cols.$add('amount',kNumber,'',0)
+Do list3.$cols.$add('flag',kBoolean,'',0)
+Do list.$add(10)

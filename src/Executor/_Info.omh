@@ -1,0 +1,2 @@
+# Delibratly choosen code class to execute code.
+# Has no problems with difference between methods in instances vs methods stored in class. Remark: these methods can differ !

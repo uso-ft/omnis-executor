@@ -1,0 +1,5 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	Calculate cSourcePath as ''
+	Set reference iSourceRef to ''
+	Queue set current field efSourcePath
+	Do $cinst.$redraw()

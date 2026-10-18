@@ -1,0 +1,45 @@
+# Toggle pane $height depending on the expanded state
+If eval(pObjRef.$dataname())
+	# checkbox is now checked → expand
+	Calculate minHeight as pObjRef.$container().$container().$minHeight
+	Calculate lastExpandedHeight as pObjRef.$userinfo
+	If isclear(lastExpandedHeight)
+		# never expanded before → fall back to the minimum
+		Calculate lastExpandedHeight as minHeight
+	End If
+	Calculate toHeight as max(minHeight,lastExpandedHeight)
+	
+	# Probe how much height we could get, without applying it yet
+	Calculate grantedHeight as $cinst.$expandContainer(pObjRef.$container().$container,toHeight-pObjRef.$height,kFalse,kTrue)
+	
+	If grantedHeight>=minHeight-pObjRef.$height
+		Calculate grantedHeight as $cinst.$expandContainer(pObjRef.$container().$container,grantedHeight,kFalse,kFalse)
+		Do pObjRef().$container().$container().$height.$assign(grantedHeight+pObjRef.$height)
+		Do pObjRef().$container().$container().$dragborder.$assign(kTrue)
+	Else
+		OK message Not enough room to expand ! (Sound bell) {Please close or resize some regions}
+		Do [pObjRef.$dataname()].$assign(not([pObjRef.$dataname()]))
+		Do $cinst.$redraw()
+		Quit method
+	End If
+	
+	# Show the find fields
+	Do pObjRef.$container().$objs.$sendall($sendallref.$visible.$assign(kTrue),$sendallref.$objtype=kScrollbox)
+	
+	
+Else
+	# checkbox is now unchecked → collapse
+	# Remember the expanded height on the instance $userinfo; $destruct saves it to cPaneHeights
+	Calculate pObjRef.$userinfo as pObjRef.$container().$container().$height
+	
+	# Collapse to checkbox height, no more dragging
+	Do pObjRef.$container().$container().$height.$assign(pObjRef.$height)
+	Do pObjRef().$container().$container().$dragborder.$assign(kFalse)
+	
+	# Hide the find fields
+	Do pObjRef.$container().$objs.$sendall($sendallref.$visible.$assign(kFalse),$sendallref.$objtype=kScrollbox)
+	
+End If
+
+Do $cinst.$redraw()
+Quit method

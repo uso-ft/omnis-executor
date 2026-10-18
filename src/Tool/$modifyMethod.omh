@@ -1,0 +1,50 @@
+# Opens the method editor for the given parameter reference.
+
+Set reference classRef to pMethodRef.$class
+Calculate fullname as pMethodRef.$fullname
+Set reference ref to pMethodRef.$obj
+
+If classRef.$classtype=kWindow&not(pos('.$methods.',fullname))
+	# Windows must be handled a bit differently, because the $class attribute returns one level too high.
+	# This only applies when the path has the form: ...$objs.$myMethod... or ...swPane.$myMethod
+	# (e.g. NOT for $root.$libs.TACS.$windows.ErfassungTacsEinstellungenPane.$methods.//$construct//)
+	Set reference classRef to pMethodRef.$obj
+	Set reference classRef to classRef.$subinst().$class().$ref
+End If
+
+If pMethodRef.$methodtext<>'' ## valid reference
+	Do pMethodRef.$modify(pMethodLine)
+	Quit method
+End If
+
+Calculate methodName as pMethodRef.$name
+
+If classRef.$class
+	
+	If classRef.$methods.$findname(methodName) ## found
+		Do classRef.$methods.$findname(methodName).$modify(pMethodLine)
+		Quit method
+	End If
+	
+	Calculate superclass as classRef.$superclass
+	Calculate library as strtok(nam(superclass),'.')
+	While superclass<>''
+		Set reference classRef to $libs.[library].$classes.[superclass]
+		
+		If classRef.$methods.$findname(methodName) ## found
+			Do classRef.$methods.$findname(methodName).$modify(pMethodLine)
+			Quit method
+		End If
+		
+		Calculate superclass as classRef.$superclass
+		
+		If pos('.',superclass)
+			Calculate library as strtok(nam(superclass),'.')
+		Else
+			Calculate library as classRef.$lib().$name
+		End If
+	End While
+End If
+
+Sound bell
+Quit method

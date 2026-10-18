@@ -1,0 +1,10 @@
+# PROBE: probe_neg_runsin v1 — 2026-10-14 22:45 — check_header rule 2: an Executor version that cannot be read
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR 1.x
+#
+# Negative probe of check_header rule 2 (since 1.0): 'EXECUTOR' followed by something that is not
+# <major>.<minor> must FAIL. With '# RUNS-IN:  EXECUTOR 1.0' the same text passes.
+Calculate result as con('run ',#T,' — probe_neg_runsin v1',kCr)
+Quit method result

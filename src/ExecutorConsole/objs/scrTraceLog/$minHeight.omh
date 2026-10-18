@@ -1,0 +1,3 @@
+# Returns the design-mode $height of this field's class — its minimum height.
+# Override this method to impose a fixed value.
+Quit method iTools.$instanceRefToClassRef($cfield).$height

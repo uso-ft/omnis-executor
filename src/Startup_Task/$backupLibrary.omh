@@ -1,0 +1,68 @@
+#
+# Backs up EVERY class of pLibRef into its per-library vault, and creates
+# the folder structure alongside. Returns one protocol line; the per-class
+# detail lands in the backup list with bytes and ticks.
+#
+# Folders do NOT go through $backupClass: that would find the folder in the
+# vault, remove it and add it again, orphaning the classes inside. They go
+# through $ensureFolder, which creates what is missing and touches nothing
+# else. Folders carry 0 bytes anyway.
+#
+# ORDER IN THE LOOP MATTERS: elapsed is computed FIRST, then the cancel
+# test, then the work. Computing it at the end left the test running
+# against the previous round - and against an empty value in round 1.
+#
+# Cancel is tested BETWEEN classes only: Disable cancel test at loops inside
+# a reversible block, so no class is ever left half written. Cancelling
+# aborts the whole run - a skipped backup must not leave the script running
+# unprotected. abs() because #CT wraps after about 414 days of uptime.
+If isclear(pLibRef)
+	Quit method 'backupLibrary: no library reference - nothing backed up. '
+End If
+Begin reversible block
+	Disable cancel test at loops
+End reversible block
+Calculate startTicks as #CT
+Calculate shown as kFalse
+Calculate done as 0
+Calculate skipped as 0
+Calculate bytes as 0
+Calculate elapsed as 0
+Do pLibRef.$classes.$makelist($ref.$name,$ref.$classtype*1) Returns clist
+Calculate total as clist.$linecount
+For clist.$line from 1 to clist.$linecount step 1
+	Calculate elapsed as abs(#CT-startTicks)
+	If shown
+		Redraw working message
+		If canceled (No refresh)
+			Close working message
+			Calculate text as con('backupLibrary: CANCELLED after ',done,' of ',total,' - run NOT started. ')
+			Do cBackups.$add(text,pLibRef.$name,pLibRef.$name,'',bytes,elapsed,'library')
+			Quit method text
+		End If
+	Else
+		If elapsed>120
+			Working message Backup (Cancel button) {[pLibRef.$name]: [done] / [total]}
+			Calculate shown as kTrue
+		End If
+	End If
+	Calculate cName as clist.C1
+	Set reference itemRef to pLibRef.$classes.$findname(cName)
+	If itemRef
+		If clist.C2=kFolder
+			Do $cinst.$ensureFolder(itemRef.$ref)
+			Calculate skipped as skipped+1
+		Else
+			Calculate bytes as bytes+itemRef.$disksize
+			Calculate text as $cinst.$backupClass(itemRef.$ref)
+			Calculate done as done+1
+		End If
+	End If
+End For
+If shown
+	Close working message
+End If
+Calculate elapsed as abs(#CT-startTicks)
+Calculate text as con('backupLibrary: ',pLibRef.$name,' - ',done,' classes, ',skipped,' folders, ',bytes,' bytes, ',elapsed,' ticks. ')
+Do cBackups.$add(text,pLibRef.$name,pLibRef.$name,'',bytes,elapsed,'library')
+Quit method text

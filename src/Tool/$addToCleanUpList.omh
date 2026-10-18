@@ -1,0 +1,12 @@
+# add item to the CleanUp list
+# this is a list of temporarily added items
+
+If cCleanUpList.$colcount
+Else
+	Do cCleanUpList.$define()
+	Do cCleanUpList.$cols.$add('ref',kItemref)
+	Do cCleanUpList.$cols.$add('path',kCharacter)
+	Do cCleanUpList.$cols.$add('designWasOpen',kBoolean)
+End If
+
+Do cCleanUpList.$add(pItemRef,pItemRef.$fullname,pDesignWasOpen)

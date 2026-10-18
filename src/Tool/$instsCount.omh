@@ -1,0 +1,8 @@
+# Counts instances of type kObject.
+# Omnis creates copies of objects on incorrect referencing, which heavily hurt performance.
+# This method can monitor that.
+# Object references can be counted directly via $listrefs().$linecount
+
+Calculate insts as 0
+Do $libs.$sendall($ref.$classes.$sendall($ref.$insts.$sendall(insts.$assign(insts+1))))
+Quit method insts

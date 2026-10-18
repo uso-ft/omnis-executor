@@ -1,0 +1,8 @@
+# Searches specified text in specified list, redraws the list and sets focus to list
+Do $cinst.$findInLists(cFindErrorText,iErrorsRef.$ref,pDirection_opt,pSoundBell_opt) Returns line
+If line
+	Set reference ref to $cfield.$container().$container().$objs.scrErrorLogStack.$objs.hlErrors
+	Do ref.$sendevent(evClick)
+	Do ref.$redraw()
+	Calculate $ctarget as ref
+End If

@@ -1,0 +1,14 @@
+# Return Reference to $bobj by parameter path
+
+Set reference rBobjs to [$cinst.$stripLastChain(pBobjPath)]
+
+Set reference ref to rBobjs.$first()
+While ref.$ident
+	If ref.$fullname=pBobjPath
+		# Seems sometimes to be the only way to get back a living reference from a $fullname of a background object.
+		Quit method ref
+	End If
+	Set reference ref to rBobjs.$next(ref)
+End While
+
+Quit method ''

@@ -1,0 +1,30 @@
+# Returns the reference to the first method expression found in a source-code string (or '').
+# Extracts the expression, strips the trailing bracket pair (so it is NOT executed),
+# then resolves it to a method reference.
+
+Calculate temp as pString
+
+If pos('code method',temp) ## e.g. Do code method UpdateScripts_80/$createIndex_BEWOHNER_FALL_HITLISTE (iSessionRef.$ref)
+	Do $cinst.$extractFirstExpressionFromString(temp) Returns expr
+	Set reference classRef to $cinst.$getFirstClassRefFromString(temp)
+	If classRef.$class
+		Set reference pClassRef to classRef
+	End If
+	Set reference ref to pClassRef.$methods.$findname(expr)
+	Quit method ref.$ref
+	
+Else
+	Do $cinst.$extractFirstExpressionFromString(temp) Returns expr
+End If
+
+# remove the last bracket pair: $myMethod() ==> $myMethod
+# IMPORTANT! so that this method is NOT executed (we only want the name, not to run it)!
+Calculate expr as $cinst.$removeLastBrackets(expr)
+If len(expr)
+	Set reference ref to $cinst.$getMethodRefOfExpr(pClassRef,expr)
+End If
+If ref.$class
+	Quit method ref
+End If
+
+Quit method ''

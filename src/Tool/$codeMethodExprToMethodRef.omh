@@ -1,0 +1,42 @@
+# Resolves 'Do code method Class/Method (args) Returns x' to the method ref.
+Calculate classPart as pExpr
+# strip leading 'code method ' (case-insensitive)
+Calculate p as pos('code method ',low(classPart))
+If p>0
+	Calculate classPart as mid(classPart,p+12)
+End If
+# cut everything from '(' or ' returns' onward
+Calculate p as pos('(',classPart)
+If p>0
+	Calculate classPart as mid(classPart,1,p-1)
+End If
+Calculate p as pos(' returns',low(classPart))
+If p>0
+	Calculate classPart as mid(classPart,1,p-1)
+End If
+# split at the first '/'
+Calculate p as pos('/',classPart)
+If p=0
+	Quit method '' ## not code-method syntax
+End If
+Calculate methodPart as trim(mid(classPart,p+1))
+Calculate classPart as trim(mid(classPart,1,p-1))
+# [..] class part is runtime-bound, cannot resolve statically
+If pos('[',classPart)
+	Quit method '' ## runtime-bound class
+End If
+Set reference classRef to $cinst.$classRefOfName(classPart)
+If isclear(classRef)
+	Quit method '' ## class not found
+End If
+# $findname is case-insensitive; try with AND without leading '$'
+If left(methodPart,1)<>'$'
+	Calculate methodPart as con('$',methodPart)
+End If
+If classRef.$methods.$findname(methodPart)
+	Quit method classRef.$methods.$findname(methodPart).$ref
+End If
+If classRef.$methods.$findname(mid(methodPart,2))
+	Quit method classRef.$methods.$findname(mid(methodPart,2)).$ref
+End If
+Quit method '' ## method not found

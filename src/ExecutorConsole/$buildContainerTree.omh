@@ -1,0 +1,59 @@
+# Load all container $objs into the iContainerTree list
+# and marks the containers that have an expander checkbox
+
+Do iTools.$collectObjects($cinst,iContainerTree)
+
+# Select Container objs
+Do iContainerTree.$search(pos(con(iContainerTree.c1().$objtype,','),low('kScrollbox,kGroupbox,kPagedPane,kTabpane,kComplexgrid,kSubwindow')),kTrue,kFalse,kTrue,kTrue)
+Do iContainerTree.$remove(kListKeepSelected)
+
+# Sort by level
+Do iContainerTree.$sort($ref.level,kFalse)
+
+Do iContainerTree.$cols.$add(ExpanderRef)
+Do iContainerTree.$cols.$add(canExpand)
+Do iContainerTree.$cols.$add(canDragBorder)
+Do iContainerTree.$cols.$add(isExpanded)
+Do iContainerTree.$cols.$add(storedHeight)
+Do iContainerTree.$cols.$add(minHeight)
+Do iContainerTree.$cols.$add(collapsedHeight)
+Do iContainerTree.$cols.$add(floatChar)
+Do iContainerTree.$cols.$add(floatInt)
+
+# set minHeight from opening height via $minheight, in expanded state just after opening the window, the design settings
+Do iContainerTree.$sendall($ref.minHeight.$assign($sendallref.c1.$minheight))
+Do iContainerTree.$sendall($ref.floatChar.$assign(con($sendallref.c1.$edgefloat)))
+Do iContainerTree.$sendall($ref.floatInt.$assign(con($sendallref.c1.$edgefloat*1)))
+Do iContainerTree.$sendall($ref.canDragBorder.$assign($sendallref.c1.$dragborder))
+
+If iExpanderList.$linecount
+	For iExpanderList.$line from 1 to iExpanderList.$linecount step 1
+		
+		If iContainerTree.$search(iContainerTree.c1=iExpanderList.c1().$container().$container(),kTrue,kFalse,kFalse,kFalse)
+			Calculate iContainerTree.ExpanderRef as iExpanderList.c1()
+			Calculate iContainerTree.collapsedHeight as iExpanderList.c1().$height
+			Calculate iContainerTree.canExpand as kTrue
+			Calculate iContainerTree.isExpanded as eval(iExpanderList.c1().$dataname)
+			
+		Else
+			OK message Something went wrong ! (Sound bell)
+			# no Breakpoint: a rescue path must not stop
+		End If
+	End For
+End If
+
+If cSavedContainerHeights.$linecount
+	For cSavedContainerHeights.$line from 1 to cSavedContainerHeights.$linecount step 1
+		
+		If iContainerTree.$search(iTools.$instanceRefToClassRef(iContainerTree.c1).$fullname=cSavedContainerHeights.c1,kTrue,kFalse,kFalse,kFalse)
+			Calculate iContainerTree.storedHeight as cSavedContainerHeights.c2
+		Else
+			OK message Layout (Sound bell) {Container objects were renamed or removed. The stored heights are discarded and the class heights are used.}
+			Do cSavedContainerHeights.$clear()
+			Do iContainerTree.$sendall($ref.storedHeight.$assign(''))
+			Quit method
+		End If
+	End For
+End If
+
+Quit method

@@ -1,0 +1,13 @@
+$add
+$assign
+$canassign
+$chaincount
+$default
+$findname
+$ident
+$isinherited
+$makelist
+$name
+$ref
+$serialize
+$wind

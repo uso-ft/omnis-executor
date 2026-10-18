@@ -1,0 +1,6 @@
+If iExpanderList.$colcount
+Else
+	Do iExpanderList.$define(ExpanderRef)
+End If
+Do iExpanderList.$add(pCollapserRef)
+Quit method

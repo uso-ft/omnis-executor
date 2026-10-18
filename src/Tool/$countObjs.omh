@@ -1,0 +1,3 @@
+# Counts the sub-objects of a reference (recursively).
+Do prObj.$objs.$sendall(count.$assign(count+$cinst.$countObjs($sendallref)))
+Quit method count

@@ -1,0 +1,26 @@
+# $showProperties(pRef[,pIsList=kFalse,pToFront=kTrue]) -> Boolean
+# Feeds the Property Manager with pRef (core, undocumented, reverse
+# engineered from the IDE shell). Returns kTrue if shown, kFalse if the
+# Property Manager panel is not visible (nothing done then).
+#
+# Core commands used:
+#   $dotoolmethod(kEnvToolBrowser,47) = PREPARE, ensures panel exists
+#   $dotoolmethod(kEnvToolBrowser,46) = ISVISIBLE, gate before feeding
+#   $dotoolmethod(kEnvToolBrowser,1,ref,isList,toFront) = SHOW
+#
+# pRef: any notation reference (class, object, group, $prefs, instance).
+# pIsList=kTrue: pRef is a LIST of objects (multi-selection) — itemrefs
+#   must sit in COLUMN 5, rows to show must be $selected=kTrue
+#   (shell pattern: Do list.$define(,,,,item) + $sendall select).
+# pToFront=kTrue brings the panel to front.
+#
+# Note: runtime properties render green regardless of pRef being a live
+# instance — that is a PM display state (context menu: Show Runtime
+# Properties), not controllable by parameter.
+# See also $clearProperties. Source: oDatafiles/oLibraries doprops @2026
+Do $root.$modes.$dotoolmethod(kEnvToolBrowser,47) Returns ret ## prepare @CORE
+Do $root.$modes.$dotoolmethod(kEnvToolBrowser,46) Returns ret ## visible? @CORE
+If ret
+	Do $root.$modes.$dotoolmethod(kEnvToolBrowser,1,pRef,pIsList,pToFront) ## @CORE
+End If
+Quit method ret

@@ -1,0 +1,16 @@
+# $dangerInside(pText,pOpen) -> the text inside the bracket that opens at pOpen, up to its partner.
+# ( and [ nest together. Literals are masked by the caller, so no quote is counted.
+# An unbalanced line returns the rest of the line.
+Calculate depth as 0
+For charNo from pOpen to len(pText) step 1
+	Calculate oneChar as mid(pText,charNo,1)
+	If oneChar='('|oneChar='['
+		Calculate depth as depth+1
+	Else If oneChar=')'|oneChar=']'
+		Calculate depth as depth-1
+		If depth=0
+			Quit method mid(pText,pOpen+1,charNo-pOpen-1)
+		End If
+	End If
+End For
+Quit method mid(pText,pOpen+1)

@@ -1,0 +1,5 @@
+# Bring Omnis notation path from short form to long form.
+# e.g. #  ZIDETOOLS.ToolModifyClass.$xyz  →   $root.$libs.ZIDETOOLS.$classes.ToolModifyClass.$xyz
+Calculate tail as pShortPath
+Calculate path as strtok(nam(tail),'.')
+Quit method con(path,'.$classes.',tail)

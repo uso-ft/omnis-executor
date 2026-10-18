@@ -1,0 +1,26 @@
+# Removes the trailing balanced bracket pair, so only the name remains.
+# e.g. $myMethod(456,myvar) ==> $myMethod ,  $do('a b') ==> $do ,  $do(a(b)) ==> $do
+# IMPORTANT: keeps the args out so a parsed method name is never executed with parameters.
+# Works for ANY bracket content (quotes, spaces, nesting) — scans from the end, balancing.
+
+Calculate name as pString
+
+# only act if the string ends in a closing bracket
+If mid(name,len(name),1)=')'
+	Calculate level as 0
+	Calculate pos as len(name)
+	While pos>0
+		If mid(name,pos,1)=')'
+			Calculate level as level+1
+		Else If mid(name,pos,1)='('
+			Calculate level as level-1
+			If level=0 ## matching opening bracket found
+				Calculate name as mid(name,1,pos-1) ## cut from here to the end
+				Break to end of loop
+			End If
+		End If
+		Calculate pos as pos-1
+	End While
+End If
+
+Quit method name

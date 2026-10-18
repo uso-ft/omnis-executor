@@ -1,0 +1,3 @@
+On evClick
+	Process event and continue
+	Do $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.efScript.$horzscroll.$assign(cHorizScroll)

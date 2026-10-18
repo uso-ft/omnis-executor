@@ -1,0 +1,9 @@
+# Keeps the last divider of cgrJumpList at its design distance from the right edge:
+# the last column keeps its class width, the column before it takes the rest.
+# Called from $event evResized and from $construct - opening the window at its stored
+# width sends no evResized (observed by the owner, 2026-09-25). fitdivider v1.
+Set reference designGridRef to $clib.$windows.ExecutorConsole.$objs.scrEditor.$objs.scrScriptResult.$objs.scrScript.$objs.scrScriptText.$objs.cgrJumpList ## $clib, not the name: the file may be renamed
+Calculate count as designGridRef.$dividers.$count
+Calculate gap as designGridRef.$width-designGridRef.$dividers.[count].$posn
+Calculate $cinst.$objs.cgrJumpList.$dividers.[count].$posn as $cinst.$objs.cgrJumpList.$width-gap
+Quit method

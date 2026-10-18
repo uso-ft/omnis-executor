@@ -1,0 +1,23 @@
+# A short title from pPath.
+# group / container names to drop -- but only as INTERMEDIATE tokens; the LAST token is
+# the target itself and is always kept (e.g. a trailing $methods or $objs).
+Calculate groups as ',$root,$libs,$classes,$windows,$codes,$reports,$menus,$tables,$toolbars,$objs,$methods,$cvardefs,$ivardefs,$tvardefs,$lvardefs,'
+Calculate out as ''
+Calculate prevWasLibs as kFalse
+Calculate parts as split(pPath,'.')
+For parts.$line from 1 to parts.$linecount step 1
+	Calculate tok as parts.C1
+	If prevWasLibs|(parts.$line=1&parts.$linecount>1&left(tok,1)<>'$') ## after $libs, or first of Lib.Class: the library name -> drop
+		Calculate prevWasLibs as kFalse
+	Else If tok='$libs'
+		Calculate prevWasLibs as kTrue
+	Else If pos(con(',',tok,','),groups)>0&parts.$line<parts.$linecount ## group name, not the last token -> drop
+		Do 1
+	Else
+		Calculate tok as replaceall(tok,'//','')
+		If len(tok)>0
+			Calculate out as con(out,pick(len(out)=0,'.',''),tok)
+		End If
+	End If
+End For
+Quit method out

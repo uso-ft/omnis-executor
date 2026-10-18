@@ -1,0 +1,476 @@
+;  Comment
+AND selected and saved
+Accept advise requests
+Accept commands
+Accept field requests
+Accept field values
+Add line to list
+Advise on OK
+Advise on find/next/previous
+Advise on redraw
+Begin critical block
+Begin print job
+Begin reversible block
+Begin statement
+Begin text block
+Break to end of loop
+Break to end of switch
+Breakpoint
+Bring window instance to front
+Build export format list
+Build externals list
+Build field names list
+Build file list
+Build indexes
+Build installed menu list
+Build list columns list
+Build list from file
+Build menu list
+Build open window list
+Build report list
+Build search list
+Build window list
+CGIDecode
+CGIEncode
+Calculate
+Call DLL
+Call external routine
+Cancel advises
+Cancel async method
+Cancel prepare for update
+Case
+Change user password
+Check data
+Check menu line
+Clear DDE channel item names
+Clear all files
+Clear check data log
+Clear class variables
+Clear data
+Clear find table
+Clear line in list
+Clear list
+Clear main & connected
+Clear main file
+Clear method stack
+Clear range of fields
+Clear search class
+Clear selected files
+Clear sort fields
+Clear timer method
+Clear trace log
+Close DDE channel
+Close all designs
+Close all windows
+Close check data log
+Close data file
+Close design
+Close import file
+Close library
+Close lookup file
+Close other windows
+Close port
+Close print or export file
+Close task instance
+Close top window
+Close trace log
+Close window instance
+Close working message
+Context help
+Copy list definition
+Copy to clipboard
+Create data file
+Create library
+Cut to clipboard
+Default
+Define list
+Define list from SQL class
+Delete
+Delete class
+Delete data
+Delete line in list
+Delete selected lines
+Delete with confirmation
+Deselect list line(s)
+Disable all menus and toolbars
+Disable cancel test at loops
+Disable enter & escape keys
+Disable fields
+Disable menu line
+Disable relational finds
+Do
+Do async method
+Do code method
+Do default
+Do inherited
+Do method
+Do not flush data
+Do not wait for semaphores
+Do redirect
+Drop indexes
+Duplicate class
+Else
+Else If calculation
+Else If flag false
+Else If flag true
+Enable all menus and toolbars
+Enable cancel test at loops
+Enable enter & escape keys
+Enable fields
+Enable menu line
+Enable relational finds
+Enclose exported text in quotes
+End For
+End If
+End Switch
+End While
+End critical block
+End export
+End import
+End print
+End print job
+End reversible block
+End statement
+End text block
+Enter data
+Export data
+Export fields
+External file command error codes
+FTPChmod
+FTPConnect
+FTPCwd
+FTPDelete
+FTPDisconnect
+FTPGet
+FTPGetBinary
+FTPGetLastStatus
+FTPList
+FTPMkdir
+FTPPut
+FTPPutBinary
+FTPPwd
+FTPReceiveCommandReplyLine
+FTPRename
+FTPSendCommand
+FTPSetConfig
+FTPSite
+FTPType
+Find
+Find first
+Find last
+Floating default data file
+Flush data
+Flush data now
+For each line in list
+For field value
+Get statement
+Get text block
+Go to next selected line
+HTTPClose
+HTTPGet
+HTTPHeader
+HTTPMethod
+HTTPOpen
+HTTPPage
+HTTPParse
+HTTPPost
+HTTPRead
+HTTPSend
+HTTPServer
+HTTPSetAuthentication
+HTTPSetProxyServer
+HTTPSplitHTML
+HTTPSplitURL
+Hide docking area
+Hide fields
+IMAPCheck
+IMAPConnect
+IMAPCopyMessage
+IMAPCreateMailbox
+IMAPDeleteMailbox
+IMAPDisconnect
+IMAPExpungeMessages
+IMAPListMailboxes
+IMAPListMessages
+IMAPListSubscribedMailboxes
+IMAPNoOp
+IMAPRecvHeaders
+IMAPRecvMessage
+IMAPRenameMailbox
+IMAPSelectMailbox
+IMAPSetMessageFlags
+IMAPSubscribeMailbox
+IMAPUnsubscribeMailbox
+If calculation
+If canceled
+If flag false
+If flag true
+Import data
+Import field from file
+Import field from port
+Import fields
+Insert line in list
+Install menu
+Install toolbar
+Invert selection for line(s)
+JavaScript:
+Jump to start of loop
+Launch program
+Line:
+Load connected records
+Load error handler
+Load event handler
+Load external routine
+Load from list
+Load page setup
+MailSplit
+Maximize window instance
+Merge list
+Message timeout
+Minimize window instance
+Modify class
+Modify methods
+New class
+Next
+No/Yes message
+OK message
+OR selected and saved
+On
+On default
+Open DDE channel
+Open check data log
+Open data file
+Open library
+Open lookup file
+Open runtime data file browser
+Open task instance
+Open trace log
+Open window instance
+Optimize method
+POP3Connect
+POP3DeleteMessage
+POP3Disconnect
+POP3ListMessages
+POP3MessageCount
+POP3Recv
+POP3RecvHeaders
+POP3RecvMessage
+POP3Stat
+POP3UndoDeletes
+Paste from clipboard
+Popup menu
+Popup menu from list
+Prepare for edit
+Prepare for export to file
+Prepare for export to port
+Prepare for import from client
+Prepare for import from file
+Prepare for import from port
+Prepare for insert
+Prepare for insert with current values
+Prepare for print
+Previous
+Print check data log
+Print class
+Print record
+Print report
+Print report from disk
+Print report from memory
+Print top window
+Print trace log
+Process event and continue
+Prompt for data file
+Prompt for destination
+Prompt for import file
+Prompt for input
+Prompt for library
+Prompt for page setup
+Prompt for port name
+Prompt for print or export file
+Prompted find
+Queue OK
+Queue bring to top
+Queue cancel
+Queue click
+Queue close
+Queue double-click
+Queue keyboard event
+Queue quit
+Queue scroll
+Queue set current field
+Queue tab
+Quick check
+Quit Omnis
+Quit all if canceled
+Quit all methods
+Quit event handler
+Quit method
+ReadBinFile
+Redefine list
+Redraw
+Redraw lists
+Redraw menus
+Redraw toolbar
+Redraw working message
+Register DLL
+Reinitialize search class
+Remove all menus
+Remove final menu
+Remove menu
+Remove toolbar
+Rename class
+Rename data
+Reorganize data
+Repeat
+Replace line in list
+Replace standard Edit menu
+Replace standard File menu
+Request advises
+Request field
+Restore selection for line(s)
+Revert class
+SEA continue execution
+SEA repeat command
+SEA report fatal error
+SMTPSend
+Save class
+Save selection for line(s)
+Search list
+Select list line(s)
+Select printer
+Send advises now
+Send command
+Send field
+Send to DDE channel
+Send to a window field
+Send to clipboard
+Send to file
+Send to page preview
+Send to port
+Send to printer
+Send to screen OBSOLETE COMMAND
+Send to trace log
+Set 'About...' method
+Set DDE channel item name
+Set DDE channel number
+Set Omnis window title
+Set advise options
+Set bottom margin
+Set break calculation
+Set class description
+Set closed files
+Set current data file
+Set current list
+Set default data file
+Set export format
+Set final line number
+Set import file name
+Set label width
+Set labels across page
+Set left margin
+Set lines per page
+Set main file
+Set memory-only files
+Set page width
+Set port name
+Set port parameters
+Set print or export file name
+Set read-only files
+Set read/write files
+Set record spacing
+Set reference
+Set repeat factor
+Set report main file
+Set report main list
+Set report name
+Set right margin
+Set search as calculation
+Set search name
+Set server mode
+Set sort field
+Set timer method
+Set top margin
+Set top window title
+Show 'About...' window
+Show Omnis maximized
+Show Omnis minimized
+Show Omnis normal
+Show docking area
+Show fields
+Signal error
+Single file find
+Sort list
+Sound bell
+Sta:
+Standard menu command
+Start program maximized
+Start program minimized
+Start program normal
+Start server
+Stop server
+Swap lists
+Swap selected and saved
+Switch
+TCPAccept
+TCPAddr2Name
+TCPBind
+TCPBlock
+TCPClose
+TCPConnect
+TCPGetMyAddr
+TCPGetMyPort
+TCPGetRemoteAddr
+TCPListen
+TCPName2Addr
+TCPPing
+TCPReceive
+TCPSend
+TCPSocket
+Test check data log
+Test clipboard
+Test data with search class
+Test for a current record
+Test for a unique index value
+Test for field enabled
+Test for field visible
+Test for menu installed
+Test for menu line checked
+Test for menu line enabled
+Test for only one user
+Test for program open
+Test for valid calculation
+Test for window open
+Test if file exists
+Test if list line selected
+Test if running in background
+Text:
+Trace off
+Trace on
+Transmit text to port
+Transmit text to print file
+UUDecode
+UUEncode
+Uncheck menu line
+Unload error handler
+Unload event handler
+Unload external routine
+Until break
+Until calculation
+Until flag false
+Until flag true
+Update data dictionary
+Update files
+Update files if flag set
+Variable menu command
+Wait for semaphores
+Web Command Error Codes
+WebDevGetSecureError
+WebDevSetConfig
+While calculation
+While flag false
+While flag true
+Working message
+WriteBinFile
+XOR selected and saved
+Yes/No message
+Yield to other threads

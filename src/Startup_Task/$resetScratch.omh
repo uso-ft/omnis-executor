@@ -1,0 +1,63 @@
+#
+# Empties the scratch library. CALLED BY HAND ONLY.
+#   pDeleteFile_opt kFalse (default) - remove the classes, library open; system classes and folders stay
+#   pDeleteFile_opt kTrue            - close it and DELETE THE FILE
+# $deletefile has no recycle bin and returns an ERROR CODE, not a flag.
+Calculate scratchName as 'execScratch'
+Calculate scratchPath as $cinst.$ensureScratch(kTrue)
+If pDeleteFile_opt
+	If pos('execScratch.lbs',scratchPath)=0
+		Quit method con('resetScratch: REFUSED, path is ',scratchPath)
+	End If
+	If $root.$libs.$findname(scratchName)
+		Close library [scratchName]
+	End If
+	# the vault of a throwaway is a throwaway. It goes BEFORE the scratch file, so
+	# the path guard above still leaves both standing when it refuses.
+	Calculate n as -1
+	If $root.$libs.$findname(con('execBackup_',scratchName))
+		Close library [con('execBackup_',scratchName)]
+	End If
+	If FileOps.$doesfileexist(con($cinst.$backupPath(),'execBackup_',scratchName,'.lbs'))
+		Calculate n as FileOps.$deletefile(con($cinst.$backupPath(),'execBackup_',scratchName,'.lbs'))
+	End If
+	If FileOps.$doesfileexist(scratchPath)
+		Calculate err as FileOps.$deletefile(scratchPath)
+		Quit method con('resetScratch: file deleted, code ',err,' where 0 is ok. vault ',pick(n<0,con('deleted, code ',n),'was not there'),'. ')
+	End If
+	Quit method con('resetScratch: no file at ',scratchPath,'. vault ',pick(n<0,con('deleted, code ',n),'was not there'),'. ')
+End If
+Do $cinst.$ensureScratch()
+Set reference libRef to $root.$libs.$findname(scratchName)
+If isclear(libRef)
+	Quit method 'resetScratch: scratch library not open. '
+End If
+# a list of names taken ONCE, never $first(): #ICONS cannot be removed, stayed $first() and the loop
+# ran into its bound (STOPPED after 501, 2026-09-24 21:37). System classes and folders stay, and n
+# counts only what is really gone. The type test is the form of $backupLibrary lines 31 and 52.
+Do libRef.$classes.$makelist($ref.$name,$ref.$classtype*1) Returns nameList
+Calculate n as 0
+For nameList.$line from 1 to nameList.$linecount step 1
+	If (nameList.C2=kSystemtable)|(nameList.C2=kFolder)
+	Else
+		Set reference itemRef to libRef.$classes.$findname(nameList.C1)
+		If not(isclear(itemRef))
+			Do libRef.$classes.$remove(itemRef.$ref)
+			If isclear(libRef.$classes.$findname(nameList.C1))
+				Calculate n as n+1
+			End If
+		End If
+	End If
+End For
+# the scratch vault goes too: a backup of a throwaway is a throwaway, and
+# nothing else ever emptied it — thirty stale copies, measured 2026-09-10.
+Calculate scratchName as con('execBackup_',scratchName)
+Calculate scratchPath as con($cinst.$backupPath(),scratchName,'.lbs')
+If $root.$libs.$findname(scratchName)
+	Close library [scratchName]
+End If
+If FileOps.$doesfileexist(scratchPath)
+	Calculate err as FileOps.$deletefile(scratchPath)
+	Quit method con('resetScratch: ',n,' classes removed, and ',scratchName,' deleted, code ',err,' where 0 is ok. ')
+End If
+Quit method con('resetScratch: ',n,' classes removed, no vault to delete. ')

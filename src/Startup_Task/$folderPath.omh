@@ -1,0 +1,48 @@
+# Returns the folder chain pClassRef sits in, as NAMES joined by /, and the
+# empty string for a class on the top level.
+#
+# NAMES and not idents: an ident is only valid inside the library that issued
+# it, and the index is read in a different library than the one it describes.
+#
+# The walk is the one $ensureFolder does on the vault side. It is repeated
+# here rather than shared, because $ensureFolder needs the chain innermost
+# first in order to create it, and this needs it outermost first in order to
+# print it. Sharing would mean one of the two turning its own list around.
+#
+# $parentfolder comes back EMPTY for top level, not 0 - hence the isclear.
+
+If isclear(pClassRef)
+	Quit method ''
+End If
+If pClassRef.$classtype*1=kFolder*1
+	Calculate id as pClassRef.$ident
+Else
+	Calculate id as pClassRef.$parentfolder
+End If
+If isclear(id)
+	Quit method ''
+End If
+Set reference libRef to pClassRef.$lib().$ref
+If isclear(libRef)
+	Quit method ''
+End If
+
+Calculate text as ''
+Calculate guard as 0
+While id<>0
+	Calculate guard as guard+1
+	If guard>50
+		Break to end of loop
+	End If
+	Set reference fRef to libRef.$classes.$findident(id)
+	If isclear(fRef)
+		Calculate id as 0
+	Else
+		Calculate text as pick(len(text)=0,con(fRef.$name,'/',text),fRef.$name)
+		Calculate id as fRef.$parentfolder
+		If isclear(id)
+			Calculate id as 0
+		End If
+	End If
+End While
+Quit method text

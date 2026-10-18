@@ -1,0 +1,40 @@
+# $applyView() -> the script pane after cView: 0 Script, 1 Split, 2 Jump.
+# One kEFposnClient per container: the old client goes to kEFnone before the new one is set.
+# Jump makes the grid the client. cFixJumpList is not touched, so Split keeps it; cFixJumpLine
+# is cleared where Jump is entered (rbViewJump, the automatic in $setExecutorValues), not here.
+# Jump without jump links shows an empty list.
+# While the grid is the client, its Split height is kept in its $userinfo.
+
+Set reference gridRef to $cinst.$objs.cgrJumpList
+Set reference scriptRef to $cinst.$objs.efScript
+Calculate line as cJumpLinks.$line
+If cView>0
+	Do $cinst.$parseJumpBlock() ## only when a view shows the list: parsing is slow
+End If
+Calculate jumpMode as cView=2
+If jumpMode
+	If scriptRef.$edgefloat*1=kEFposnClient*1
+		Calculate gridRef.$userinfo as gridRef.$height ## the Split height
+		Do scriptRef.$edgefloat.$assign(kEFnone)
+		Do scriptRef.$visible.$assign(kFalse)
+		Do gridRef.$edgefloat.$assign(kEFposnClient)
+	End If
+Else
+	If gridRef.$edgefloat*1=kEFposnClient*1
+		Do gridRef.$edgefloat.$assign(kEFnone)
+		Do scriptRef.$visible.$assign(kTrue)
+		Do scriptRef.$edgefloat.$assign(kEFposnClient)
+		Do gridRef.$edgefloat.$assign(kEFposnBottomToolBar)
+		If len(gridRef.$userinfo)>0
+			Do gridRef.$height.$assign(gridRef.$userinfo)
+		End If
+	End If
+End If
+Do $cinst.$setJumplistHeight() ## visible or not, and the height in Split
+If cView>0
+	Do $cinst.$adjustJumpLineHeight()
+End If
+Calculate cJumpLinks.$line as line
+Do $cinst.$objs.cbFixJumpLinks.$enabled.$assign(cView=1)
+Do $cinst.$objs.cbFixJumpLine.$enabled.$assign(cView>0)
+Quit method

@@ -1,0 +1,8 @@
+# Re-triggers a menu action by queueing its own shortcut key (platform-aware).
+# pMenuObjRef = the menu $obj whose shortcut should be fired (pass $cobj from the caller).
+If sys(6)='X'
+	Queue keyboard event $cinst.$shortcutCodeToText(pMenuObjRef.$macshortcutkey,kFalse)
+Else
+	Queue keyboard event $cinst.$shortcutCodeToText(pMenuObjRef.$winshortcutkey,kFalse)
+End If
+Quit method

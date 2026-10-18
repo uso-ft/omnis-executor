@@ -1,0 +1,28 @@
+# Returns the raw index LINE for pName, or the empty string when the vault
+# holds no index or no entry for that name.
+#
+# RAW on purpose: the values are still escaped. Only the caller knows which
+# fields it wants, and $indexClean is the one thing to mirror when it does.
+#
+# The leading kCr is the same trick $indexPut uses: it makes every line
+# start after one, so class=Tool can never be matched inside a value.
+
+If isclear(pVaultRef)
+	Quit method ''
+End If
+Set reference idxRef to pVaultRef.$classes.$findname('execVaultIndex')
+If isclear(idxRef)
+	Quit method ''
+End If
+Calculate text as con(kCr,idxRef.$userinfo)
+Calculate text2 as con(kCr,'class=',pName,kTab)
+Calculate n as pos(text2,text)
+If n=0
+	Quit method ''
+End If
+Calculate text as mid(text,n+1,len(text)-n)
+Calculate n as pos(kCr,text)
+If n>0
+	Calculate text as mid(text,1,n-1)
+End If
+Quit method text

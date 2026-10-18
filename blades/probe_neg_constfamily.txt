@@ -1,0 +1,5 @@
+Calculate count as kerrNotFond
+Calculate count as kcursArow
+Calculate count as kerrNotFound
+Calculate count as kcursArrow
+Calculate count as kmacOS

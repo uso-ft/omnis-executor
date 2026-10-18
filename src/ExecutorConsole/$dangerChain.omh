@@ -1,0 +1,37 @@
+# $dangerChain(pText,pPos) -> 'A', 'B' or '' for the notation chain that continues at pPos after a generic root.
+# A $remove / $add / $assign counts only when a notation segment other than list work
+# ($line $cols $linecount) stands between the root and the verb: list.$add is list work.
+#   A  $remove, or $classdata / $methodtext / $name on the way
+#   B  any other write
+Calculate result as ''
+Calculate middle as ','
+Calculate notation as kFalse
+Calculate charNo as pPos
+While mid(pText,charNo,1)='.'
+	If mid(pText,charNo+1,1)='['
+		Calculate segment as '[]'
+		Calculate charNo as charNo+3+len($cinst.$dangerInside(pText,charNo+1))
+	Else
+		Calculate hit as rxpos('^[#\w$]+',mid(pText,charNo+1),kFalse,kFalse,matchLen,capRow)
+		If hit=0
+			Quit method result
+		End If
+		Calculate segment as low(mid(pText,charNo+1,matchLen))
+		Calculate charNo as charNo+1+matchLen
+		If mid(pText,charNo,1)='('
+			Calculate charNo as charNo+2+len($cinst.$dangerInside(pText,charNo))
+		End If
+	End If
+	If segment='$remove'|segment='$add'|segment='$assign'
+		If notation
+			If segment='$remove'|pos(',$classdata,',middle)>0|pos(',$methodtext,',middle)>0|pos(',$name,',middle)>0
+				Quit method 'A'
+			End If
+			Calculate result as 'B'
+		End If
+	Else If left(segment,1)='$'&segment<>'$line'&segment<>'$cols'&segment<>'$linecount'
+		Calculate notation as kTrue
+	End If
+	Calculate middle as con(middle,segment,',')
+End While
+Quit method result

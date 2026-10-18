@@ -1,0 +1,5 @@
+Calculate result as con(str(n),'x')
+Calculate result as con(jst(n,'-6'),'x')
+Set reference group to ref().$group
+If canceled (No refresh)
+OK message created (Sound bell) {x}

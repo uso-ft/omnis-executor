@@ -1,0 +1,55 @@
+# $settingsSpec — returns nm/kind/fac for every class variable of this console.
+# Used by $resetLayout, $healSettings and $applySettingsFilter.
+#   setting    persisted, has a factory value
+#   data       persisted, shape defined elsewhere
+#   transient  never persisted, rebuilt when the console opens
+Do out.$cols.$add('nm',kCharacter,kSimplechar,1000)
+Do out.$cols.$add('kind',kCharacter,kSimplechar,20)
+Do out.$cols.$add('fac',kCharacter,kSimplechar,1000)
+Do out.$add('cBackupBeforeRun','setting','1')
+Do out.$add('cBreakIfError','setting','0')
+Do out.$add('cBreakText','setting','')
+Do out.$add('cCloseTargetClasses','setting','1')
+Do out.$add('cDangerWarnings','setting','1') ## Warn on danger: the dialog of the danger scan
+Do out.$add('cCopyResultToClipboard','setting','1')
+Do out.$add('cStep','setting','0')
+Do out.$add('cHorizScroll','setting','0')
+Do out.$add('cFixJumpLine','setting','0')
+Do out.$add('cFixJumpList','setting','0')
+# cView: 0 Script, 1 Split, 2 Jump. Factory since 049: Script view, no automatic switch, every pane folded
+Do out.$add('cView','setting','0')
+Do out.$add('cViewAuto','setting','0')
+Do out.$add('cFindInExecutionLog','setting','0')
+Do out.$add('cOverwritePathAndTitle','setting','0')
+Do out.$add('cExpandedResult','setting','0')
+Do out.$add('cExpandedExecutionLog','setting','0')
+Do out.$add('cExpandedBackupLog','setting','0')
+Do out.$add('cExpandedErrorLog','setting','0')
+Do out.$add('cExpandedTraceLog','setting','0')
+Do out.$add('cBackupColWidths','setting','')
+Do out.$add('cErrorColWidths','setting','')
+Do out.$add('cExecutionColWidths','setting','')
+Do out.$add('cTraceLogColWidths','setting','')
+Do out.$add('cFindBackupText','setting','')
+Do out.$add('cFindErrorText','setting','')
+Do out.$add('cFindExecutionLogText','setting','')
+Do out.$add('cFindResultText','setting','')
+Do out.$add('cFindScriptText','setting','')
+Do out.$add('cFindTraceLogText','setting','')
+Do out.$add('cTextSize','setting','10')
+Do out.$add('cSavedContainerHeights','setting','')
+Do out.$add('cWindowGeometry','setting','')
+Do out.$add('cPaneHeights','setting','')
+Do out.$add('cMarkList','setting','') ## the marker lookup, factory from $markListDefault
+Do out.$add('cScript','setting','')
+Do out.$add('cTargetPath','setting','')
+Do out.$add('cSourcePath','setting','')
+Do out.$add('cLogTitle','setting','')
+Do out.$add('cResult','setting','')
+Do out.$add('cVerdict','transient','') ## the judgement of ONE run
+Do out.$add('cRunTicks','transient','0') ## the duration of ONE run
+Do out.$add('cLog','data','')
+Do out.$add('cTraceLog','data','')
+Do out.$add('cJumpLinks','transient','')
+Do out.$add('cRunFolder','transient','') ## the folder of ONE run
+Quit method out

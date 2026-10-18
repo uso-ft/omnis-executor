@@ -1,0 +1,24 @@
+On evTreeExpand ## Event Parameters - pNodeItem( Itemreference )
+	# Load and append nodes before expanding
+	Do $cinst.$appendNodes(pNodeItem)
+	
+On evTreeCollapse ## Event Parameters - pNodeItem( Itemreference )
+	
+On evClick,evTreeNodeIconClicked ## Event Parameters - pNodeItem( Itemreference )
+	
+	Set reference itemRef to iTreeRef.$currentnode().$tag().$ref
+	Calculate iNotationPath as itemRef.$fullname
+	
+	Do $cinst.$redraw()
+	
+On evKey
+	# Return key expands or collapses tree
+	If pSystemKey=kReturn
+		If iTreeRef.$currentnode().$isexpanded
+			Do iTreeRef.$currentnode().$collapse()
+		Else
+			# Load and append nodes before expanding
+			Do $cinst.$appendNodes(iTreeRef.$currentnode())
+			Do iTreeRef.$currentnode().$expand()
+		End If
+	End If

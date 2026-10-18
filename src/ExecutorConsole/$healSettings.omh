@@ -1,0 +1,38 @@
+# Field-wise factory rescue, called at the end of $restoreSettings.
+# A setting that was NOT restored — absent from pRow because the package
+# predates it, or because there is no package at all — is set to the
+# factory value out of $settingsSpec. Everything that WAS restored is
+# left alone: a value the user chose is never second-guessed here.
+# Lists are skipped. An empty list cannot be told from a wrong one, and
+# pbReset is the rescue for the container layout.
+# Silent by design: one trace line only, there is no protocol at construct time.
+# Returns the number of fields set.
+Calculate spec as $cinst.$settingsSpec()
+Calculate names as ''
+Calculate healed as 0
+For spec.$line from 1 to spec.$linecount step 1
+	If spec.kind='setting'
+		Calculate missing as kTrue
+		If pRow.$colcount
+			If pRow.$cols.$findname(spec.nm)
+				Calculate missing as kFalse
+			End If
+		End If
+		If missing
+			Set reference defRef to $cclass.$cvardefs.$findname(spec.nm)
+			If isclear(defRef)
+			Else
+				If defRef.$objtype=kList
+				Else
+					Do eval([spec.nm].$assign(spec.fac))
+					Calculate healed as healed+1
+					Calculate names as con(names,pick(len(names)=0,', ',''),spec.nm)
+				End If
+			End If
+		End If
+	End If
+End For
+If healed
+	Send to trace log [con('[settings] ',healed,' field(s) set to factory at open: ',names)]
+End If
+Quit method healed

@@ -1,0 +1,18 @@
+# $dangerIsLiteral(pExpr,pConst) -> kTrue when pExpr is built only from masked literals (~L~), con(),
+# variables listed in pConst ',name,' and the own library name ($clib.$name, $clib().$name). An empty pExpr is literal.
+Calculate rest as replaceall(replaceall(low(pExpr),'$clib().$name','~l~'),'$clib.$name','~l~')
+If pos('[',rest)>0
+	Quit method kFalse
+End If
+Calculate offset as 1
+Calculate hit as rxpos('[#\w$.]+',rest,kFalse,kFalse,matchLen,capRow)
+While hit>0
+	Calculate hit as offset+hit-1
+	Calculate token as mid(rest,hit,matchLen)
+	Calculate offset as hit+matchLen
+	If token<>'con'&token<>'l'&pos(con(',',token,','),pConst)=0
+		Quit method kFalse
+	End If
+	Calculate hit as rxpos('[#\w$.]+',mid(rest,offset),kFalse,kFalse,matchLen,capRow)
+End While
+Quit method kTrue

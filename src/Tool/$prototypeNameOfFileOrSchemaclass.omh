@@ -1,0 +1,25 @@
+# Determines the file or schema class of the variable.
+# Must be resolved inside the instance so the variable is known.
+
+If [pVariableName].$sqlclassname.$cando ## try schema
+	Calculate tableClassName as [pVariableName].$sqlclassname
+	If len(tableClassName)
+		Quit method tableClassName
+	End If
+	
+Else If [pVariableName].$class().$classtype=kFile ## try fileclass
+	Calculate filename as [pVariableName].$class().$name
+	
+	If len(filename)
+		Quit method filename
+	End If
+	
+End If
+
+# Give a next try without possible col name
+If pos('.',pVariableName)
+	Calculate pVariableName as mid(pVariableName,1,rpos('.',pVariableName)-1)
+	Quit method $cinst.$prototypeNameOfFileOrSchemaclass(pVariableName)
+End If
+
+Quit method ''

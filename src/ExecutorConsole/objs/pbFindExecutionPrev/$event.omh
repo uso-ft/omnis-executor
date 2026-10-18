@@ -1,0 +1,2 @@
+On evClick
+	Do $cfield.$container().$find(-1,kTrue,kTrue)

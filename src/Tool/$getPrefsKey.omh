@@ -1,0 +1,21 @@
+# Returns the value of a single $prefs.$keys entry by name (current platform implicit).
+# pKeyName = the key's $name. Returns '' if not found.
+Calculate result as ''
+Calculate keys as $root.$prefs.$keys
+
+Set reference colRef to keys.$cols.$first
+While colRef
+	Calculate groupRow as keys.[colRef.$name]
+	Set reference groupColRef to groupRow.$cols.$first
+	While groupColRef
+		If groupColRef.$name=pKeyName
+			Calculate result as groupRow.[groupColRef.$name]
+			Quit method result
+		End If
+		Set reference groupColRef to groupRow.$cols.$next(groupColRef).$ref
+	End While
+	
+	Set reference colRef to keys.$cols.$next(colRef).$ref
+End While
+
+Quit method ''

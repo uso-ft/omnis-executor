@@ -1,0 +1,4 @@
+On evClick
+	Do $cinst.$loadClasses()
+	Do $cinst.$redraw()
+	Quit method

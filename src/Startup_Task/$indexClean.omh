@@ -1,0 +1,13 @@
+# Makes one value safe for a single tab separated line. The one place that
+# does this, so the reader has exactly one thing to mirror.
+#
+# LIMIT, named on purpose: the backslash itself is NOT escaped. A value that
+# already carried the two characters backslash and n comes back as a real
+# line break. Escaping the escape needs a scanner, and no $desc has yet
+# earned one. If one ever does, this method is the only thing to change.
+
+Calculate text as pText
+Calculate text as replaceall(text,kCr,'\n')
+Calculate text as replaceall(text,kLf,'\n')
+Calculate text as replaceall(text,kTab,'\t')
+Quit method text

@@ -1,0 +1,38 @@
+# ============================================================================
+# NotationBrowser -- pick a target from the Omnis notation tree
+# ============================================================================
+#
+# WHAT IT DOES
+#   A modal picker that lets you browse the whole Omnis notation hierarchy
+#   ($root -> $libs -> library -> $classes/$windows/.. -> objects/methods/..)
+#   in a lazy-loading tree and return the notation path of the chosen node.
+#   Used by the ExecutorConsole's "Target..." button to set a target by hand.
+#
+# MAIN FEATURES
+#   - Tree (trNotation)      : expands on demand via $appendNodes; each node holds
+#                             an item reference to the real notation object in its tag.
+#   - Path display           : the selected node's $fullname is shown in dNotationPath.
+#   - Filter checkbox        : hide / show #-system classes ($checkSystemClasses).
+#   - Select (pbSelectTarget): returns the chosen path to the caller and closes.
+#
+# HOW THE RETURN WORKS (callback)
+#   $construct(pExpandToPath, pCallbackRef) opens the tree expanded to a path and
+#   stores pCallbackRef.$ref -- a REFERENCE to the caller's callback method (it is
+#   held, NOT executed). Clicking a node sets iNotationPath = node.$tag().$ref.$fullname.
+#   pbSelectTarget then calls iCallbackRef(iNotationPath) and closes the window, so
+#   the caller (ExecutorConsole.$setTargetPathCallback) receives the picked path and
+#   runs it through its target-resolution apparatus.
+# ============================================================================
+
+Set reference iCallbackRef to pCallbackRef.$ref ## hold a REFERENCE to the callback method (do not call it)
+Calculate iInitialized as kTrue
+Do $cinst.$initTree
+# expand the tree and select pExpandToPath as the current node
+If [pExpandToPath].$lib()
+	Do $cinst.$expandTo(pExpandToPath,iTreeRef,iTreeRef) Returns node
+Else
+	# default: show at least the libraries
+	Do $cinst.$expandTo('$root.$libs',iTreeRef,iTreeRef) Returns node
+End If
+Do iTreeRef.$setcurrentnode(node)
+Quit method

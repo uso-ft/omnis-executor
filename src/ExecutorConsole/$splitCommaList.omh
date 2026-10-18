@@ -1,0 +1,22 @@
+# Splits a header value into its tokens.
+#
+# Semicolon and comma both separate: the header is typed by hand and both
+# spellings are in the vaults already.
+#
+# It does not handle the word 'nothing' or library prefixes: the two callers treat them differently.
+Do out.$define(tok)
+Calculate raw as replaceall(pText,';',',')
+While len(raw)
+	Calculate p as pos(',',raw)
+	If p
+		Calculate tok as trim(mid(raw,1,p-1),kTrue,kTrue,kSp)
+		Calculate raw as mid(raw,p+1)
+	Else
+		Calculate tok as trim(raw,kTrue,kTrue,kSp)
+		Calculate raw as ''
+	End If
+	If len(tok)
+		Do out.$add(tok)
+	End If
+End While
+Quit method out

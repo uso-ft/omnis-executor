@@ -1,0 +1,7 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	No/Yes message Marker list (Sound bell) {Replace the marker list with the default icons? Saved only with Save.}
+	If flag true
+		Do code method ExecutorConsole/$markListDefault Returns iMarkList
+		Calculate iMarkerModified as kTrue
+		Do $cinst.$redraw()
+	End If

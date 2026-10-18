@@ -1,0 +1,195 @@
+# $dangerFindings(pText) -> list lineno/stage/rule/linetext, one row per line that has a finding.
+# The danger scan, rule set cookbook §A6. pText is the method text of $execute: no indentation, kCr only (lore).
+#   stage A  the class is picked at run time and is removed, or its $classdata/$methodtext/$name is written
+#   stage B  a named class is removed, or a generic class is changed in any other way
+# Flow-sensitive: every assignment decides again whether its target is generic (taintNames)
+# or holds only literals (constNames). Both hold lower-case names between commas: ',list,ref3,'.
+# Literals are masked as ~L~ before anything else, so code a generator writes INTO a literal is not scanned.
+
+Do findings.$cols.$add('lineno',kInteger,k32bitint,0)
+Do findings.$cols.$add('stage',kCharacter,kSimplechar,1)
+Do findings.$cols.$add('rule',kCharacter,kSimplechar,100)
+Do findings.$cols.$add('linetext',kCharacter,kSimplechar,1000)
+Calculate groupRx as '\$(?P<G>classes|codes|fieldstyles|files|menus|objects|prefs|queries|remoteforms|remotemenus|remoteobjects|remotetasks|reports|schemas|searches|tables|tasks|toolbars|windows|libs)\.'
+Calculate quoteRx as con(chr(39),'[^',chr(39),']*',chr(39))
+Calculate quoteRx2 as con(chr(34),'[^',chr(34),']*',chr(34))
+Calculate taintNames as ','
+Calculate constNames as ','
+Calculate lines as split(pText,kCr)
+For lineNo from 1 to lines.$linecount step 1
+	Calculate oneLine as lines.[lineNo].C1
+	If left(oneLine,1)='#'
+		Calculate oneLine as '' ## full-line comment
+	End If
+	
+	# ====== mask literals first, then cut the inline comment: a ## inside a literal stays masked
+	Calculate hit as rxpos(quoteRx,oneLine,kFalse,kFalse,matchLen,capRow)
+	While hit>0
+		Calculate oneLine as con(mid(oneLine,1,hit-1),'~L~',mid(oneLine,hit+matchLen))
+		Calculate hit as rxpos(quoteRx,oneLine,kFalse,kFalse,matchLen,capRow)
+	End While
+	Calculate hit as rxpos(quoteRx2,oneLine,kFalse,kFalse,matchLen,capRow)
+	While hit>0
+		Calculate oneLine as con(mid(oneLine,1,hit-1),'~L~',mid(oneLine,hit+matchLen))
+		Calculate hit as rxpos(quoteRx2,oneLine,kFalse,kFalse,matchLen,capRow)
+	End While
+	If pos('##',oneLine)
+		Calculate oneLine as mid(oneLine,1,pos('##',oneLine)-1)
+	End If
+	
+	# ====== $extobjects.<x>.$objects is a component's group, not the library group $objects
+	Calculate hit as rxpos('\$extobjects\.(?:\[[^\]]*\]|[#\w]+)\.\$objects',oneLine,kTrue,kFalse,matchLen,capRow)
+	While hit>0
+		Calculate oneLine as con(mid(oneLine,1,hit-1),replace(low(mid(oneLine,hit,matchLen)),'$objects','$xobjects'),mid(oneLine,hit+matchLen))
+		Calculate hit as rxpos('\$extobjects\.(?:\[[^\]]*\]|[#\w]+)\.\$objects',oneLine,kTrue,kFalse,matchLen,capRow)
+	End While
+	
+	Calculate lowLine as low(oneLine)
+	Calculate stage as ''
+	Calculate rule as ''
+	Calculate srcGeneric as kFalse
+	
+	If len(trim(oneLine))>0
+		# ====== Delete class
+		If left(lowLine,12)='delete class'
+			If pos('[',oneLine)>0
+				If $cinst.$dangerIsLiteral(mid(oneLine,pos('[',oneLine)+1,rpos(']',oneLine)-pos('[',oneLine)-1),constNames)
+					Do $cinst.$dangerMark(stage,rule,'B','Delete class of a named class')
+				Else
+					Do $cinst.$dangerMark(stage,rule,'A','Delete class with a calculated name')
+				End If
+			Else
+				Do $cinst.$dangerMark(stage,rule,'B','Delete class of a named class')
+			End If
+		End If
+		
+		# ====== eval with a generic variable
+		If pos('eval(',lowLine)>0
+			If len($cinst.$dangerRoots(oneLine,taintNames))>0
+				Do $cinst.$dangerMark(stage,rule,'A','eval with a generic variable')
+			End If
+		End If
+		
+		# ====== methods of a library group: sources, $remove, $sendall
+		Calculate offset as 1
+		Calculate hit as rxpos(con(groupRx,'\$(?P<M>remove|sendall|makelist|appendlist|insertlist|first|next|findname|findident)(?P<E>[^#\w$]|$)'),oneLine,kTrue,kFalse,matchLen,capRow)
+		While hit>0
+			Calculate hit as offset+hit-1
+			Calculate groupName as low(capRow.G)
+			Calculate methName as low(capRow.M)
+			Calculate charNo as hit+matchLen-len(capRow.E) ## the first character after the method name
+			Calculate offset as charNo
+			Calculate args as ''
+			If mid(oneLine,charNo,1)='('
+				Calculate args as $cinst.$dangerInside(oneLine,charNo)
+			End If
+			
+			If methName='remove'
+				If groupName<>'libs' ## $libs.$remove closes a library, it deletes nothing
+					Calculate arg1 as $cinst.$dangerArg(args,1)
+					Calculate arg2 as $cinst.$dangerArg(args,2)
+					If len($cinst.$dangerRoots(arg1,taintNames))>0|rxpos('(?:^|[^.\w$])\$(?:sendall)?ref(?:[^\w]|$)',arg1,kTrue,kFalse,innerLen,capRow2)>0
+						Do $cinst.$dangerMark(stage,rule,'A','group.$remove of a generic class')
+					Else If len(arg2)>0&low(arg2)<>'kfalse'
+						Do $cinst.$dangerMark(stage,rule,'A','recursive group.$remove')
+					Else
+						Do $cinst.$dangerMark(stage,rule,'B','group.$remove of a named class')
+					End If
+				End If
+			Else If methName='findname'|methName='findident'
+				If not($cinst.$dangerIsLiteral(args,constNames))
+					Calculate srcGeneric as kTrue
+				End If
+			Else
+				Calculate srcGeneric as kTrue ## an enumerator: makelist appendlist insertlist sendall first next
+				If methName='appendlist'|methName='insertlist'
+					Calculate taintNames as con(taintNames,$cinst.$dangerRoots($cinst.$dangerArg(args,1),''))
+				End If
+				If methName='sendall'
+					# the message writes through $ref / $sendallref
+					Calculate args as $cinst.$dangerArg(args,1)
+					Calculate offset2 as 1
+					Calculate hit2 as rxpos('(?:^|[^.\w$])\$(?:sendall)?ref(?:\(\))?',args,kTrue,kFalse,innerLen,capRow2)
+					While hit2>0
+						Calculate hit2 as offset2+hit2-1
+						Calculate offset2 as hit2+innerLen
+						Do $cinst.$dangerMark(stage,rule,$cinst.$dangerChain(args,offset2),'$sendall writing through $ref')
+						Calculate hit2 as rxpos('(?:^|[^.\w$])\$(?:sendall)?ref(?:\(\))?',mid(args,offset2),kTrue,kFalse,innerLen,capRow2)
+					End While
+				End If
+			End If
+			Calculate hit as rxpos(con(groupRx,'\$(?P<M>remove|sendall|makelist|appendlist|insertlist|first|next|findname|findident)(?P<E>[^#\w$]|$)'),mid(oneLine,offset),kTrue,kFalse,matchLen,capRow)
+		End While
+		
+		# ====== a calculated name directly after a library group is a source
+		Calculate offset as 1
+		Calculate hit as rxpos(con(groupRx,'\[(?P<IN>[^\]]*)\]'),oneLine,kTrue,kFalse,matchLen,capRow)
+		While hit>0
+			Calculate hit as offset+hit-1
+			Calculate offset as hit+matchLen
+			If not($cinst.$dangerIsLiteral(replaceall(capRow.IN,'//',''),constNames))
+				Calculate srcGeneric as kTrue
+			End If
+			Calculate hit as rxpos(con(groupRx,'\[(?P<IN>[^\]]*)\]'),mid(oneLine,offset),kTrue,kFalse,matchLen,capRow)
+		End While
+		
+		# ====== [expr] holding a generic variable, followed by a write
+		Calculate offset as 1
+		Calculate hit as rxpos('\[(?P<IN>[^\]]*)\]\.',oneLine,kFalse,kFalse,matchLen,capRow)
+		While hit>0
+			Calculate hit as offset+hit-1
+			Calculate offset as hit+matchLen
+			If len($cinst.$dangerRoots(capRow.IN,taintNames))>0
+				Do $cinst.$dangerMark(stage,rule,$cinst.$dangerChain(oneLine,offset-1),'notation [calc] with a generic variable')
+			End If
+			Calculate hit as rxpos('\[(?P<IN>[^\]]*)\]\.',mid(oneLine,offset),kFalse,kFalse,matchLen,capRow)
+		End While
+		
+		# ====== a write through a generic variable
+		Calculate offset as 1
+		Calculate hit as rxpos('[#\w]+',oneLine,kFalse,kFalse,matchLen,capRow)
+		While hit>0
+			Calculate hit as offset+hit-1
+			Calculate token as low(mid(oneLine,hit,matchLen))
+			Calculate prevChar as mid(oneLine,hit-1,1)
+			Calculate offset as hit+matchLen
+			If pos(con(',',token,','),taintNames)>0
+				If hit=1|(prevChar<>'.'&prevChar<>'$')
+					Do $cinst.$dangerMark(stage,rule,$cinst.$dangerChain(oneLine,offset),con('write through generic ',token))
+				End If
+			End If
+			Calculate hit as rxpos('[#\w]+',mid(oneLine,offset),kFalse,kFalse,matchLen,capRow)
+		End While
+		
+		If len(stage)>0
+			Do findings.$add(lineNo,stage,rule,lines.[lineNo].C1)
+		End If
+		
+		# ====== an assignment decides again for its target
+		Calculate target as ''
+		Calculate hit as rxpos('Returns\s+(?P<T>[#\w]+)\s*$',oneLine,kTrue,kFalse,matchLen,capRow)
+		If hit>0
+			Calculate target as low(capRow.T)
+			Calculate expr as mid(oneLine,1,hit-1)
+		Else
+			Calculate hit as rxpos('^(?:Set reference|Calculate)\s+(?P<T>[#\w]+)\s+(?:to|as)\s',oneLine,kTrue,kFalse,matchLen,capRow)
+			If hit>0
+				Calculate target as low(capRow.T)
+				Calculate expr as mid(oneLine,hit+matchLen)
+			End If
+		End If
+		If len(target)>0
+			Calculate isGeneric as srcGeneric|len($cinst.$dangerRoots(expr,taintNames))>0
+			Calculate isLiteral as $cinst.$dangerIsLiteral(expr,constNames)
+			Calculate taintNames as replaceall(taintNames,con(',',target,','),',')
+			Calculate constNames as replaceall(constNames,con(',',target,','),',')
+			If isGeneric
+				Calculate taintNames as con(taintNames,target,',')
+			End If
+			If isLiteral
+				Calculate constNames as con(constNames,target,',')
+			End If
+		End If
+	End If
+End For
+Quit method findings

@@ -1,0 +1,6 @@
+# Executes the "Open Value Window" command for the desired variable INSIDE the instance.
+# Attention: self-modifying code !!!
+
+Calculate methodtext as con('Variable menu command: Open Value Window ',pVariableName)
+Do $cinst.$cloneMethodToAndExecute(methodtext.$ref,pInstance.$class(),pInstance.$ref,,pVariableName) ## @SELF
+Quit method

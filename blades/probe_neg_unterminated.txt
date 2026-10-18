@@ -1,0 +1,9 @@
+# a literal that never closes. Six quotes where five were needed: the text
+# `Calculate raw as ''` is written with FOUR quotes inside plus the two that
+# delimit it. Omnis refuses such a line at assign time and says nothing about
+# why, so the blade has to count.
+Calculate result as con('run ',#T,' — probe',kCr)
+If pos('Calculate raw as '''''',text3)
+   Calculate count as count+1
+End If
+Do list.$add('this one is fine ## and this hash is text, not a comment')

@@ -1,0 +1,62 @@
+# Runs the script text: trace frame, assign, close target editors, run in the vessel, finish.
+# The error handler is loaded in a reversible block and lives only for this run.
+
+Calculate cResult as con('run ',#T)
+# Show we are running now
+Do $cinst.$redraw()
+
+Begin reversible block
+	Load error handler Startup_Task/$handleError
+End reversible block
+Do $itasks.[$clib().$name].$clearErrors()
+
+Clear trace log
+Send to trace log ==========================================================
+Send to trace log -  [mid(cScript,pos('—',cScript)+2,pos(kCr,mid(cScript,pos('—',cScript)+2))-1)]
+Send to trace log ================ Start [#T] =========================================
+
+# Executor version: a script that asks for a newer major version is asked about before anything is written. Soft by design, see $versionCheck
+If not($cinst.$versionCheck(cScript,'run',vBackup))
+	Calculate cResult as con(cResult,' - not run: the script asks for a newer Executor',kCr,kCr,vBackup)
+	Do $cinst.$redraw()
+	Quit method kFalse
+End If
+
+If not(iTextAssigned)
+	If cCloseTargetClasses
+		# close the Executor itself if possibly open
+		Close design [$clib().$name].Executor
+	End If
+	
+	If not($cinst.$assignScriptToExecutor())
+		Quit method kFalse
+	End If
+End If
+
+# The danger scan reads the method as assigned. A cancel leaves nothing behind but the assign:
+# no editor closed, nothing backed up, no log row. The findings stay in the error log.
+If not($cinst.$checkForDangerousCode(vBackup))
+	Calculate cResult as con(cResult,' - cancelled by the danger scan',kCr,kCr,vBackup)
+	Do $cinst.$redraw()
+	Quit method kFalse
+End If
+
+If cCloseTargetClasses
+	Calculate vBackup as con(vBackup,'[close   ]   ',$cinst.$closeOpenTargets(),kCr) ## same column as the [backup  ]   lines
+End If
+
+If cOverwritePathAndTitle
+	# The log row needs the title of THIS text: $setExecutorValues is not called here.
+	Calculate cLogTitle as $cinst.$titleFromScript(cScript,cTargetPath,cSourcePath)
+End If
+
+# ==========================================================
+# The run folder is fixed here: the title is known now, and a manual run never
+# returns from the call below.
+Calculate cRunFolder as $cinst.$runFolderPath()
+Do $cinst.$runInVessel(iTargetRef,iSourceRef) Returns vResult ## returns con(vBackup,vResult)
+# ==========================================================
+
+Calculate vResult as con(vBackup,vResult)
+Do $cinst.$finishRun(vResult,1) Returns cResult ## run from vessel
+Quit method cResult

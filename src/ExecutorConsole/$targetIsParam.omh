@@ -1,0 +1,8 @@
+# $targetIsParam(pText) -> Boolean
+# True when the TARGET FIELD carries THIS run's parameter, and is not a path
+# left over from another one.
+#
+# Not a keyword test: a script that sets targetRef from a static path names its own target.
+# Only 'targetRef' from $analyzeTarget means the field supplies the target; a path or '' does not.
+# Computed from the text, never from cTargetPath: the field can hold a path left from another run.
+Quit method $cinst.$analyzeTarget(pText)='targetRef'

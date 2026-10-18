@@ -1,0 +1,5 @@
+# Returns kTrue if pKey exists
+
+Set reference ref to $cclass.$cvardefs.$findname(pKey)
+
+Quit method not(isclear(ref))

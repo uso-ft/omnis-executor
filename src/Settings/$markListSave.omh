@@ -1,0 +1,40 @@
+# Stores iMarkList as cMarkList in the settings package of ExecutorConsole.
+# The console writes its WHOLE package in $destruct, so it is closed FIRST and opened again afterwards.
+# Empty rows at the end are cut: the list always ends with an icon.
+If iStore.$has('ExecutorConsole_settings')
+Else
+	OK message Marker list not saved (Sound bell) {ExecutorConsole has no stored settings yet. Open the console once, then save again.}
+	Quit method kFalse
+End If
+
+Do iMarkList.$search(kFalse,kTrue,kFalse,kTrue,kTrue) ## nothing selected
+Calculate n as iMarkList.$linecount
+While n>0
+	Calculate iMarkList.$line as n
+	If iMarkList.iconid
+		Break to end of loop
+	End If
+	Calculate iMarkList.$selected as kTrue
+	Calculate n as n-1
+End While
+Do iMarkList.$remove(kListDeleteSelected)
+
+Calculate wasOpen as $classes.ExecutorConsole.$insts().$count>0
+If wasOpen
+	Do $classes.ExecutorConsole.$insts().$sendall($sendallref.$close())
+End If
+
+Do row.$define()
+Do row.$assign(iStore.$get('ExecutorConsole_settings'))
+If row.$cols.$findname('cMarkList')
+Else
+	Do row.$cols.$add('cMarkList',kList,0)
+End If
+Calculate row.cMarkList as iMarkList
+Do iStore.$put('ExecutorConsole_settings',row) Returns saved
+
+If wasOpen
+	Do $classes.ExecutorConsole.$openonce('*',kWindowCenter,kFalse)
+End If
+Calculate iMarkList.$line as 1
+Quit method saved

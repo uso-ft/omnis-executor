@@ -1,0 +1,8 @@
+# Login user name, Windows only
+If bitand(sys(2),16) ## Unicode-Version = bit 4 (value 16)
+	Call DLL ('ADVAPI32.DLL','GetUserNameW',user,255)
+Else
+	Call DLL ('ADVAPI32.DLL','GetUserNameA',user,255)
+End If
+Calculate user as upp(user)
+Quit method user

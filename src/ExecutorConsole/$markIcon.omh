@@ -1,0 +1,10 @@
+# Returns the icon id of marker line pMark in cMarkList.
+# 0 for none: NULL, 0, a line out of range, or an emptied row.
+# Reads the row by index and never touches cMarkList.$line: dlMark shows that line.
+If isnull(pMark)
+	Quit method 0
+End If
+If pMark<1|pMark>cMarkList.$linecount
+	Quit method 0
+End If
+Quit method cMarkList.[pMark].iconid

@@ -1,0 +1,9 @@
+On evAfter
+	Do $cfield.$container().$find(0,kFalse,kFalse)
+	
+On evKey
+	If pSystemKey=kTabKey&#SHIFT
+		Queue set current field efSourcePath
+	Else If pSystemKey=kTabKey
+		Queue set current field efScript
+	End If

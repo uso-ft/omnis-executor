@@ -1,0 +1,5 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	Do iMarkList.$add()
+	Calculate iMarkList.$line as iMarkList.$linecount
+	Calculate iMarkerModified as kTrue
+	Do $cinst.$redraw()

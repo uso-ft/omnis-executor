@@ -1,0 +1,19 @@
+[
+	{
+		"name": "$event",
+		"order": 16384,
+		"pvardefs": [
+			{
+				"name": "pNode",
+				"order": 4,
+				"type": "kItemref",
+				"subtype": "",
+				"sublen": 0,
+				"param": 1
+			}
+		],
+		"lvardefs": [
+
+		]
+	}
+]

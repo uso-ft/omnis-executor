@@ -1,0 +1,67 @@
+#
+# Compares two snapshots from $classSnapshot.
+# Returns libName, clsName, change:
+#   changed  present in both, $moddate differs
+#   added    only in the after snapshot
+#   removed  only in the before snapshot
+#
+# Two text indexes instead of nested loops.
+Do out.$define(libName,clsName,change)
+# The jump block is cut off: classes named there are for the reader, not changed.
+Calculate pText_opt as mid(pText_opt,1,pick(pos('## ===== JUMP LINKS',pText_opt)=0,pos('## ===== JUMP LINKS',pText_opt)-1,len(pText_opt)))
+Calculate keyFull as kCr
+Calculate keyName as kCr
+For pBefore.$line from 1 to pBefore.$linecount step 1
+	Calculate keyFull as con(keyFull,pBefore.libName,'|',pBefore.clsName,'|',pBefore.moddate,kCr)
+	Calculate keyName as con(keyName,pBefore.libName,'|',pBefore.clsName,kCr)
+End For
+For pAfter.$line from 1 to pAfter.$linecount step 1
+	Calculate key as con(kCr,pAfter.libName,'|',pAfter.clsName,'|',pAfter.moddate,kCr)
+	If pos(key,keyFull)
+	Else
+		Calculate key as con(kCr,pAfter.libName,'|',pAfter.clsName,kCr)
+		If pos(key,keyName)
+			Do out.$add(pAfter.libName,pAfter.clsName,'changed')
+		Else
+			If pos(con(kCr,pAfter.libName,'|'),keyName)|pos(low(pAfter.clsName),low(pText_opt))
+				Do out.$add(pAfter.libName,pAfter.clsName,'added')
+			End If
+		End If
+	End If
+End For
+
+# A library that is new in full gets one row, not one per class. keyName is still the BEFORE index.
+Calculate keyFull as kCr
+For pAfter.$line from 1 to pAfter.$linecount step 1
+	If pos(con(kCr,pAfter.libName,'|'),keyName)
+	Else
+		If pos(con(kCr,pAfter.libName,kCr),keyFull)
+		Else
+			Calculate keyFull as con(keyFull,pAfter.libName,kCr)
+			Do out.$add(pAfter.libName,'(the whole library is new to this run)','added')
+		End If
+	End If
+End For
+
+# removed: build the after index, then walk before
+Calculate keyName as kCr
+For pAfter.$line from 1 to pAfter.$linecount step 1
+	Calculate keyName as con(keyName,pAfter.libName,'|',pAfter.clsName,kCr)
+End For
+Calculate keyFull as kCr
+For pBefore.$line from 1 to pBefore.$linecount step 1
+	Calculate key as con(kCr,pBefore.libName,'|',pBefore.clsName,kCr)
+	If pos(key,keyName)
+	Else
+		If pos(con(kCr,pBefore.libName,'|'),keyName)|pos(low(pBefore.clsName),low(pText_opt))
+			Do out.$add(pBefore.libName,pBefore.clsName,'removed')
+		Else
+			If pos(con(kCr,pBefore.libName,kCr),keyFull)
+			Else
+				Calculate keyFull as con(keyFull,pBefore.libName,kCr)
+				Do out.$add(pBefore.libName,'(the whole library is gone from this run)','removed')
+			End If
+		End If
+	End If
+End For
+Quit method out

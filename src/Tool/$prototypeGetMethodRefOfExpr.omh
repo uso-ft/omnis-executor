@@ -1,0 +1,20 @@
+# PROTOTYPE — injection template, runs INSIDE the living target instance (clone-and-run).
+# Resolves an expression to the static $fullname of its method.
+# Omnis uses DIFFERENT notation to CALL a method vs. to REFERENCE it as an object, so the
+# expression is evaluated in the live instance and the method object is reached from there:
+#   - method inside an $obj (any nesting): reachable via [pExpr].$obj().$methods
+#   - plain class method:                  reachable via [pExpr].$class().$methods
+# Returns the static $fullname (string), transportable across the instance boundary;
+# the caller resolves it with [fullname].$ref.
+# Note: evaluating [pExpr] EXECUTES the intermediate '()' links of the reference chain to reach
+# the method object — a link with side effects would fire here.
+
+If not([pExpr].$cando) ## expression cannot be evaluated in this instance
+	Quit method ''
+End If
+
+If [pExpr].$obj().$class ## method sits in an $obj on the window
+	Quit method [pExpr].$obj().$methods.$findname([pExpr].$name).$fullname
+Else ## plain class method
+	Quit method [pExpr].$class().$methods.$findname([pExpr].$name).$fullname
+End If

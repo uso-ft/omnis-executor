@@ -1,0 +1,42 @@
+# Sets up the tool instance: constants, prefs and MO references (guarded, MasterStudio only).
+
+If not(cInititalized)
+	# Register the required DLLs Windows only
+	Calculate version as sys(2)
+	
+	If not(pos(sys(6),'UX'))
+		If bitand(version,16) ## Unicode-Version = bit 4 (value 16)
+			Register DLL ('ADVAPI32.DLL','GetUserNameW','JCN') ## WCS-4417 @US/16.06.2020
+			Register DLL ("shell32.dll","ShellExecuteW","JJCCCCJ")
+		Else
+			Register DLL ('ADVAPI32.DLL','GetUserNameA','JCM')
+			Register DLL ("shell32.dll","ShellExecuteW","JJCCCCJ")
+		End If
+	End If
+	
+	Do cLogList.$define(cCinstLog,cGenericLog)
+	Do cAttListText.$define(name)
+	Do cAttListText.$add('$methodtext')
+	Do cAttListText.$add('$name')
+	Do cAttListText.$add('$desc')
+	Do cAttListText.$add('$text')
+	Do cAttListText.$add('$classname')
+	
+	# Constants for $windowXForObject
+	Calculate ckBorderSubwindow as 2
+	Calculate ckBorderScrollbox as 1
+	Calculate ckBorderPagedpane as 2
+	Calculate ckBorderGroupbox as 2
+	Calculate ckBorderTabpane as 4
+	Calculate ckTabStripHeight as 31
+	Calculate ckTitleBaseHeight as 5
+	Calculate ckTitleBaseSize as 9
+	Calculate ckTitlePxPerPoint3 as 4
+	
+	Calculate cInititalized as kTrue
+End If
+
+If $root.$libs.$findname('MoBaseClasses') ## MasterStudio only (findname guard - no notation error when absent)
+	# set up the standard references
+	Do method SetMORefs
+End If

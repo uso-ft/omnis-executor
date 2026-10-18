@@ -1,0 +1,48 @@
+# Renders the [errors] section for the run protocol; empty when clean.
+#
+# cErrors has EIGHT columns and this used to print two of them. errcode decides
+# whether a code belongs in cIgnoreCodes, linetext is the line that was running
+# when it happened, and foreign says the failing code lives outside this library
+# - a discovery rather than something the script did. All three were collected,
+# stored and thrown away here, and only the grid ever showed them.
+#
+# Two lines per error, because one line with six fields is read by nobody:
+#   1: <text> [<location>]
+#   <tab>code <n> in: <the line that was running>
+# The second line is left out when there is nothing to put in it.
+#
+# The stack column stays out. It is a LIST - sys(192) whole, not just the row
+# the handler used - and it belongs in the grid, not in a text protocol.
+
+#
+# Rows with errcode danger are skipped: they are findings of the danger scan, already in the
+# protocol as [danger  ] lines. The row number vN stays the grid's, so gaps are expected.
+# Rows with errcode ignored were let through by the ignore list of $handleError: counted in ONE
+# line at the end, never listed here, never in $errorCount (breakfilter v1, 2026-09-27).
+
+Calculate vOut as ''
+Calculate vIgnored as 0
+For vN from 1 to cErrors.$linecount step 1
+	If cErrors.[vN].errcode='ignored'
+		Calculate vIgnored as vIgnored+1
+	Else If cErrors.[vN].errcode<>'danger'
+		Calculate vOut as con(vOut,vN,': ',cErrors.[vN].errtext,' [',cErrors.[vN].location,']')
+		If cErrors.[vN].foreign
+			Calculate vOut as con(vOut,' (foreign: the failing code is not in this library)')
+		End If
+		Calculate vOut as con(vOut,kCr)
+		Calculate vLine as trim(cErrors.[vN].linetext)
+		If len(vLine)>0
+			Calculate vOut as con(vOut,kTab,'code ',cErrors.[vN].errcode,' in: ',vLine,kCr)
+		Else
+			Calculate vOut as con(vOut,kTab,'code ',cErrors.[vN].errcode,kCr)
+		End If
+	End If
+End For
+If vIgnored>0
+	Calculate vOut as con(vOut,vIgnored,' ignored by the ignore list of $handleError - rows in the error log',kCr)
+End If
+If len(vOut)>0
+	Calculate vOut as con(kCr,'[errors]',kCr,vOut)
+End If
+Quit method vOut

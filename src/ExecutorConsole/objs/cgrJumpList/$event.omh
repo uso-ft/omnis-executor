@@ -1,0 +1,2 @@
+On evDoubleClick
+	Do $cinst.$jump()

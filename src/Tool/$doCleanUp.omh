@@ -1,0 +1,41 @@
+# Deletes items from the CleanUp list.
+# Sometimes some temporarily added methods can not be removed,
+# because the method editor of that class is open.
+# or an error occured and the stack was cleared manually.
+# this method cleans up.
+
+Do cCleanUpList.$first
+While cCleanUpList.$line
+	# use exact $fullname when created not the reference.
+	# the name may have been changed to reuse the item: do not destroy it
+	Set reference ref to [cCleanUpList.path].$ref
+	
+	If ref.$class
+		Set reference classRef to ref.$class().$ref
+		If not(cCleanUpList.designWasOpen)
+			# For later use (optional):
+			# Close top window
+			# Close design {[classRef.$lib().$name].[classRef.$name]}
+		End If
+		Calculate showAsCheckedOut as classRef.$showascheckedout
+		Do classRef.$showascheckedout.$assign(kTrue) Returns #F
+		
+		Do classRef.$methods.$first().$modify(1)
+		
+		Set reference group to ref().$group
+		Do group.$remove(ref) ## delete item
+		Do classRef.$showascheckedout.$assign(showAsCheckedOut) Returns #F
+		
+		If ref.$class
+			# Still a valid Reference !
+			# item could not be removed, may be the editor is open
+			Sound bell
+			Do cCleanUpList.$next
+		Else ## done
+			Do cCleanUpList.$remove(0)
+		End If
+		
+	Else ## not valid anymore
+		Do cCleanUpList.$remove(0)
+	End If
+End While

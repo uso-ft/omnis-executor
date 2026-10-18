@@ -1,0 +1,4 @@
+Set reference ref to $clib.$classes.Tool.$methods.$stripComments
+Set reference ref2 to $clib.$classes.Tool.$methods.//$stripComments//
+Set reference ref4 to $clib.$classes.Tool.$methods.$findname('$stripComments')
+Calculate n as $clib.$classes.Tool.$methods.$count

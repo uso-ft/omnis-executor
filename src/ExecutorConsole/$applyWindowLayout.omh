@@ -1,0 +1,21 @@
+# The stored working layout onto a fresh instance.
+# An empty setting applies nothing: the class value stands. $resetLayout empties them.
+# Window left,top,width,height. Not checked against the screen: off-screen is rescued by pbReset.
+If len(cWindowGeometry)
+	Calculate geo as cWindowGeometry
+	Do $cinst.$left.$assign(strtok(nam(geo),","))
+	Do $cinst.$top.$assign(strtok(nam(geo),","))
+	Do $cinst.$width.$assign(strtok(nam(geo),","))
+	Do $cinst.$height.$assign(geo)
+End If
+If len(cExecutionColWidths)
+	Do $cinst.$objs.scrExecutionLog.$objs.hlLog.$columnwidths.$assign(cExecutionColWidths)
+End If
+If len(cTraceLogColWidths)
+	Do $cinst.$objs.scrTraceLog.$objs.hlTraceLog.$columnwidths.$assign(cTraceLogColWidths)
+End If
+# Last expanded pane heights, carried on the instance $userinfo that $handleExpand reads
+For cPaneHeights.$line from 1 to cPaneHeights.$linecount step 1
+	Do iExpanderList.$sendall($sendallref.c1.$userinfo.$assign(cPaneHeights.c2),$sendallref.c1.$name=cPaneHeights.c1)
+End For
+Quit method

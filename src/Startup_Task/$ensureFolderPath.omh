@@ -1,0 +1,48 @@
+# Makes sure pLibRef holds the folder chain named in pPath - names joined by
+# a slash, outermost first - and returns the $ident of the deepest folder.
+# Returns 0 for an empty path, which is what the top level looks like.
+#
+# The mirror of $ensureFolder, which does the same job on the vault side.
+# Both work by NAME: a class name is unique within a library and a folder IS
+# a class, so the chain is created flat and hooked up afterwards.
+#
+# A folder of that name that already sits somewhere else is re-parented, the
+# same way $ensureFolder does it. One name, one folder, per library.
+
+If isclear(pLibRef)
+	Quit method 0
+End If
+If len(pPath)=0
+	Quit method 0
+End If
+Calculate text as con(pPath,'/')
+Calculate id as 0
+Calculate guard as 0
+While len(text)>0
+	Calculate guard as guard+1
+	If guard>50
+		Break to end of loop
+	End If
+	Calculate n as pos('/',text)
+	If n=0
+		Calculate text as ''
+	Else
+		Calculate name as mid(text,1,n-1)
+		Calculate text as mid(text,n+1,len(text)-n)
+		If len(name)>0
+			Set reference fRef to pLibRef.$classes.$findname(name)
+			If isclear(fRef)
+				Do pLibRef.$classes.$add(kFolder,name)
+				Set reference fRef to pLibRef.$classes.$findname(name)
+			End If
+			If isclear(fRef)
+				Quit method id
+			End If
+			If id
+				Do fRef.$parentfolder.$assign(id)
+			End If
+			Calculate id as fRef.$ident
+		End If
+	End If
+End While
+Quit method id

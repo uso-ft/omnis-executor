@@ -1,0 +1,21 @@
+# GENERATOR: neg_cresult v1 — 2026-08-11 23:40 — Gegenprobe fuer die Ergebnisrueckgabe
+# CREATES:  nothing
+# MODIFIES: Executor.ExecutorConsole
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR console (v1.2 set)
+# END HEADER
+Do Executor.$classes.Executor.$methods.//$execute//.$modify(9) ## Jump to start point
+Quit all methods
+# <------ Start from here !
+Calculate result as con('run ',#T,' — Gegenprobe')
+Close design ExecutorConsole
+Set reference ref3 to $clib.$classes.ExecutorConsole.$insts().$first()
+Do ref3.$setExecutorValues()
+Do ref3.cResultDisplay.$assign(result)
+Do ref3.$addMarkedToLog()
+Copy to clipboard result
+OK message Fertig {Gegenprobe}
+Quit method result
+
+## ===== JUMP LINKS =====
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(1) ## ExecutorConsole

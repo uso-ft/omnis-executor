@@ -1,0 +1,43 @@
+# GENERATOR: probe_neg_stamp v2 — 2026-09-07 11:00 — the header says v2 and the run stamp still says v1
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR console (v1.3 variable set)
+
+
+# ============================================================================
+# ============================================================================
+#
+#          T E S T   F I L E   —   D O   N O T   R U N   T H I S
+#
+#   This file is NOT a script for the Executor. It is a NEGATIVE PROBE: a
+#   counter-example that the blade `check_stamp.py` must REJECT. Its whole
+#   purpose is to fail.
+#
+#   IT BELONGS IN THE PROJECT KNOWLEDGE, beside the other probe_neg_*.txt
+#   files and beside the blades themselves. Upload it there and leave it
+#   alone. Nothing here needs to be executed, ever.
+#
+# ============================================================================
+# ============================================================================
+
+
+# check_stamp must FAIL this file on the VERSION and pass it on the name.
+# The header identity is `probe_neg_stamp v2`; the run stamp below still reads
+# v1: a version bump that forgot the stamp, so a v2 run would open its
+# protocol with a line naming v1.
+# The log title and the run folder are derived from the HEADER, so they would
+# both read v2 while the protocol's own first line claims v1.
+
+Calculate result as con('run ',#T,' — probe_neg_stamp v1',kCr)
+
+Calculate result as con(result,'[note   ] nothing here does anything',kCr)
+
+Quit method result
+
+
+# ============================================================================
+#          E N D   O F   T E S T   F I L E   —   D O   N O T   R U N
+#   Belongs in the project knowledge as probe_neg_stamp.txt.
+#   check_stamp.py must report it as FAIL; every other blade passes it.
+# ============================================================================

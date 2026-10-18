@@ -1,0 +1,22 @@
+# Resolves an already-evaluated instance-expression reference to the STATIC method reference.
+# The caller passes the live reference (e.g. instRef.[pExpr], $cando already checked).
+# Distinguishes a method hiding in an $obj from a plain class method, then climbs the class
+# superclass chain — $methods.$findname finds NO inherited methods, so we must walk up.
+# @? a method in a SUPERclass of the $obj is not yet handled (pragmatic: only the direct $obj)
+
+If pExprRef.$obj().$class ## method hides in an $obj on the window
+	Quit method pExprRef.$obj().$methods.$findname(pExprRef.$name).$ref
+End If
+
+# plain class method → climb the superclass chain
+Calculate methodname as pExprRef.$name
+Set reference classRef to pExprRef.$class().$ref
+Repeat
+	Set reference methodRef to classRef.$methods.$findname(methodname)
+	If methodRef.$class
+		Quit method methodRef
+	End If
+	Set reference classRef to $cinst.$superclassRef(classRef)
+Until isclear(classRef)
+
+Quit method methodRef ## empty if not found

@@ -1,0 +1,21 @@
+
+On evDoubleClick
+	
+	If iMarkList.$line
+		Calculate id as $root.$promptforicon($clib,iMarkList.c1) ## $clib, not the name: the file may be renamed
+		If id
+			Calculate iMarkList.c1 as id
+			Calculate iMarkerModified as kTrue
+		End If
+		Do $cinst.$redraw()
+	End If
+	
+On evHeadedListEditFinishing
+	Calculate iMarkList.[pLineNumber].[pColumnNumber-1] as pNewText
+	Calculate iMarkerModified as kTrue
+	Do $cinst.$redraw()
+	
+On evHeadedListEditStarting
+	If pColumnNumber=1
+		Quit event handler (Discard event)
+	End If

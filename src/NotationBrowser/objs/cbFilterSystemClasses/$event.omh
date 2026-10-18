@@ -1,0 +1,3 @@
+On evClick
+	Do $cinst.$checkSystemClasses()
+	Quit method

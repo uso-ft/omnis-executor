@@ -1,0 +1,91 @@
+# Writes ONE index entry for pSourceRef into the vault index and returns a
+# protocol note - empty means it was written.
+#
+# The index is a code class execVaultIndex on the top level of the VAULT,
+# the whole index held in its $userinfo. It lives in the vault and not in
+# the Executor because a generation is a file copy of the vault library: a
+# copy that leaves its index behind is the copy of half a backup.
+#
+# One LINE per class, fields as name=value joined by tab, lines by kCr.
+# Self describing, so a field added later costs nothing and order carries no
+# meaning; line based, so replacing one entry is a cut and an append.
+#
+# Everything is read from the LIVE SOURCE and never from the copy. $desc,
+# $version, $vcsrevision and the folder do NOT travel with $classdata
+# (lore 9), which is the entire reason this index exists. $userinfo does
+# travel, which is why nothing is stamped into the copy any more.
+#
+# origin is LIBRARY.CLASS and not $fullname. $fullname reads
+# $root.$libs.execScratch.$codes.probeIdxSrc - it carries $root.$libs, which
+# every path carries, and the group $codes, which classtype already says. The
+# short form loses nothing and is the form a reader can act on.
+#
+# when carries colons, not the dashes of $runFolderPath: this is not a file
+# name, and a colon is only illegal in one.
+#
+# One current backup per class, so one current entry per class.
+
+If isclear(pVaultRef)
+	Quit method 'indexPut: no vault reference - nothing indexed. '
+End If
+If isclear(pSourceRef)
+	Quit method 'indexPut: no source reference - nothing indexed. '
+End If
+Calculate cName as pSourceRef.$name
+
+# fresh path law: never read through the reference $add returned
+Set reference idxRef to pVaultRef.$classes.$findname('execVaultIndex')
+If isclear(idxRef)
+	Do pVaultRef.$classes.$add(kCode,'execVaultIndex')
+	Set reference idxRef to pVaultRef.$classes.$findname('execVaultIndex')
+End If
+If isclear(idxRef)
+	Quit method 'indexPut: execVaultIndex could not be created - nothing indexed. '
+End If
+
+Calculate text2 as con('class=',$cinst.$indexClean(cName))
+Calculate text2 as con(text2,kTab,'origin=',$cinst.$indexClean(con(pSourceRef.$lib().$name,'.',pSourceRef.$name)))
+Calculate text2 as con(text2,kTab,'classtype=',pSourceRef.$classtype*1)
+Calculate text2 as con(text2,kTab,'folder=',$cinst.$indexClean($cinst.$folderPath(pSourceRef)))
+Calculate text2 as con(text2,kTab,'desc=',$cinst.$indexClean(pSourceRef.$desc))
+Calculate text2 as con(text2,kTab,'version=',$cinst.$indexClean(pSourceRef.$version))
+Calculate text2 as con(text2,kTab,'vcsrevision=',$cinst.$indexClean(pSourceRef.$vcsrevision))
+Calculate text2 as con(text2,kTab,'when=',jst(#D,'D:y-M-D'),' ',jst(#T,'T:H:N:S'))
+Calculate text2 as con(text2,kTab,'bytes=',pSourceRef.$disksize)
+Calculate text2 as con(text2,kTab,'methods=',pSourceRef.$methods.$count)
+Calculate text2 as con(text2,kTab,'seal=',$cinst.$indexClean(pProto))
+
+Do code method ExecutorConsole/$runFolder Returns text3
+Calculate text3 as mid(text3,1,len(text3)-1)
+Calculate text3 as mid(text3,rpos(sys(9),text3)+1,len(text3))
+Calculate text2 as con(text2,kTab,'run=',$cinst.$indexClean(text3))
+
+# cut the old line out. The leading kCr makes every line start after one, so
+# a class name can never be found in the middle of a value.
+Calculate text as con(kCr,idxRef.$userinfo)
+Calculate text3 as con(kCr,'class=',cName,kTab)
+Calculate n as pos(text3,text)
+If n>0
+	Calculate text3 as mid(text,n+1,len(text)-n)
+	Calculate n2 as pos(kCr,text3)
+	If n2=0
+		Calculate text as mid(text,1,n-1)
+	Else
+		Calculate text as con(mid(text,1,n-1),mid(text3,n2,len(text3)-n2+1))
+	End If
+End If
+
+Calculate text as mid(text,2,len(text)-1)
+If len(text)>0
+	Calculate text as con(text,kCr)
+End If
+Calculate text as con(text,text2)
+Do idxRef.$userinfo.$assign(text)
+
+# who writes, saves
+Save class [con(pVaultRef.$name,'.execVaultIndex')]
+Calculate ok as #F
+If ok
+	Quit method ''
+End If
+Quit method con('indexPut: entry for ',cName,' written but the index class was NOT saved. ')

@@ -1,0 +1,3 @@
+# Unregister trace log panel
+Set reference ref to $cinst.$objs.scrTraceLog.$objs.hlTraceLog
+Do $modes.$dotoolmethod(kEnvToolBrowser,190,ref) ## @CORE

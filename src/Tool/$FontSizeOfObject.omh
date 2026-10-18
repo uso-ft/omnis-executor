@@ -1,0 +1,62 @@
+# $FontSizeOfObject(prObject) -> Number
+# The font size Omnis actually DRAWS for a placed object.
+#
+# Order matters: a field style that owns $fontsize wins over the value stored on the object,
+# so the style is asked first. $fontsize on the object reports storage, not what is drawn.
+#
+# The library is taken from the OBJECT, not from $clib. $lib() is not in the Omnis help (lore).
+#
+# ASSUMPTION: a focused style owning $fontsize overrides the base style.
+# Not measured. If it is wrong, delete the focus block.
+#
+# prObject : ref (param)   size : number   sty : ref   styname : char
+# plat : char   lib : ref   tgt : ref   focname : char
+Calculate size as 0
+Set reference lib to prObject.$lib().$ref
+# the platform name once, as a string, for both lookups
+Calculate plat as sys(6)
+If plat='N'
+	Calculate plat as 'kMSWindows'
+Else If plat='U'
+	Calculate plat as 'kUnix'
+Else If plat='X'
+	Calculate plat as 'kmacOS'
+Else
+	Calculate plat as ''
+End If
+# the base style
+Calculate styname as prObject.$fieldstyle
+If len(styname)&len(plat)&not(isclear(lib))
+	Set reference sty to lib.$fieldstyles.[styname]
+	If not(isclear(sty))
+		If sty.$hasfontsize
+			Calculate size as sty.$platforms.[plat].$fontsize
+		End If
+	End If
+End If
+# the focused style, but only while this object IS the keyboard target.
+# Compared by $fullname: $ident is unique only inside a class, so two
+# open windows can carry the same one and would match falsely.
+Set reference tgt to $ctarget
+If not(isclear(tgt))
+	If tgt.$fullname=prObject.$fullname
+		Calculate focname as prObject.$fieldstylefocused
+		If len(focname)&len(plat)&not(isclear(lib))
+			Set reference sty to lib.$fieldstyles.[focname]
+			If not(isclear(sty))
+				If sty.$hasfontsize
+					Calculate size as sty.$platforms.[plat].$fontsize
+				End If
+			End If
+		End If
+	End If
+End If
+# only when no style owns the size does the object's own value count
+If size=0
+	Calculate size as prObject.$fontsize
+End If
+If size=0
+	# nothing resolved; this is a guess, and it is indistinguishable from a real 12
+	Calculate size as 12
+End If
+Quit method size

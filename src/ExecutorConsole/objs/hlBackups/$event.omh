@@ -1,0 +1,7 @@
+On evHeadedListHeadResize
+	Calculate cBackupColWidths as $cfield.$columnwidths
+	
+On evDoubleClick
+	If len(iBackupsRef.c4)
+		Do iTools.$modify([iBackupsRef.c4].$ref)
+	End If

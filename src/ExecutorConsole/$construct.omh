@@ -1,0 +1,42 @@
+# Console of the Executor: runs the script text against a target.
+# The text is assigned to the executor method and run in a fresh vessel ($runExecutor).
+# A script can use only the predefined variable set of that method (cookbook A1).
+# Before the run: danger scan, editors of the target classes closed, target classes backed up.
+# After the run: result, verdict, log row and run folder ($finishRun).
+# pReset: layout back to factory ($resetLayout) before anything stored is applied.
+
+Do $cwind.$title.$assign(con($clib().$name,' v',$ctask().$version(),' (build ',mid($clib().$userinfo,12,pos(' ',$clib().$userinfo)-12),')'))
+
+# The script runs from a code class: no ambiguity between class and instance methods.
+Set reference iExecutorMethodRef to $codes.Executor.$methods.//$execute//.$ref
+Set reference iJumperRef to $codes.Executor.$methods.//$jump//.$ref
+# Executor.$execute starts clean: the last script may name a library that is no longer open, and the JSON export cannot assign such a line again
+Do iExecutorMethodRef.$methodtext.$assign('# The console writes the script of each run into this method and runs it. Write scripts in the console, not here.') ## @SELF
+# The scratch library of the examples: opened, or created when its file is missing
+Do $itasks.[$clib().$name].$ensureScratch()
+Do $cinst.$initClassVars()
+If pReset
+	Do $cinst.$resetLayout() ## factory layout before anything stored is applied
+End If
+Set reference iErrorsRef to $itasks.[$clib().$name].$errors().$ref
+Set reference iBackupsRef to $itasks.Executor.$backups().$ref
+Do $cinst.$labelErrorList()
+Do $cinst.$labelBackupList()
+Do $cinst.$applyWindowLayout() ## stored window geometry, list widths, pane heights
+
+Do $cinst.$buildContainerTree()
+Do $cinst.$applyStoredContainerHeights(pReset)
+Do $cinst.$fitJumpListDivider() ## before $setExecutorValues: the row heights are measured at the comment column width
+# Class variables keep their values when the window is closed: $backupSettings, $restoreSettings
+
+Do $cinst.$setExecutorValues()
+Do $cinst.$redraw()
+
+If cView<>2
+	# set cursor to start of text
+	Queue click efScript (0,0)
+End If
+
+Do $cinst.$setTextSize() ## apply the stored text size
+Do $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.efScript.$horzscroll.$assign(cHorizScroll) ## apply the stored line-break setting
+Quit method

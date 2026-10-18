@@ -1,0 +1,132 @@
+# Backs up the target classes (cBackupBeforeRun), runs the script in a fresh vessel,
+# saves the touched classes and builds manifest and verdict.
+# Collectors are reached through task methods: $ctask is unstable after reopening the console.
+# Returns con(vBackup,vResult,kCr,vManifest)
+
+# Vaults open before this run stay open. The ones the backups open now are closed at the end:
+# an open vault invites hand edits that nobody notices. Omnis has no read-only library (Open library has no such option).
+Calculate vaultsBefore as kCr
+Do $root.$libs.$makelist($ref.$name) Returns vaultList
+For vaultList.$line from 1 to vaultList.$linecount step 1
+	If low(left(vaultList.c1,11))='execbackup_'
+		Calculate vaultsBefore as con(vaultsBefore,low(vaultList.c1),kCr)
+	End If
+End For
+Calculate vBackup as ''
+Do $itasks.Executor.$clearBackups()
+
+# bList and tgtClassRef are filled even without the seatbelt: the save loop after the run needs them.
+If iTargetRef&$cinst.$targetIsParam(cScript)
+	Set reference tgtClassRef to iTargetRef.$class()
+	If tgtClassRef.$class
+		Calculate tgtKey as iTools.$shortenClassPath(tgtClassRef.$fullname) ## Lib.Class, taken while the reference is still valid
+	End If
+End If
+Calculate bList as $cinst.$backupListFromText(cScript)
+If cBackupBeforeRun
+	Calculate bDone as ''
+	If iTargetRef
+		# The field may name an object: $class() gives the owning class. A library gives none, nothing is backed up.
+		If tgtClassRef.$class
+			Calculate vBackup as con(vBackup,'[backup  ]   ',$itasks.Executor.$backupClassHeld(tgtClassRef.$ref),kCr)
+			Calculate bDone as con(kCr,low(tgtKey),kCr) ## Lib.Class, the same key as bList.clsKey
+		Else
+			Calculate vBackup as con(vBackup,'[backup  ]   ',pick($cinst.$targetIsParam(cScript),'the Target field holds a class, but this run reads its target from the text - nothing backed up or saved from it','the Target field names no class - nothing backed up from it'),kCr)
+		End If
+	End If
+	Calculate text as 0
+	For bList.$line from 1 to bList.$linecount step 1
+		If bList.clsRef().$class
+			If pos(con(kCr,low(bList.clsKey),kCr),con(kCr,bDone))=0
+				Calculate bDone as con(bDone,low(bList.clsKey),kCr)
+				Calculate vBackup as con(vBackup,'[backup  ]   ',$itasks.Executor.$backupClassHeld(bList.clsRef().$ref),kCr)
+			End If
+		Else
+			Calculate text as text+1 ## a row the scan could not resolve
+		End If
+	End For
+	If text
+		Calculate vBackup as con(vBackup,'[backup  ]   ',text,' line(s) in the scan carried no class:',kCr)
+		For bList.$line from 1 to bList.$linecount step 1
+			If bList.clsRef().$class
+			Else
+				Calculate vBackup as con(vBackup,'[backup  ]      ',bList.note,kCr)
+			End If
+		End For
+	End If
+	If len(bDone)
+	Else
+		Calculate vBackup as con(vBackup,'[backup  ]   nothing to back up — no target and no class in the text',kCr)
+	End If
+End If
+
+Calculate iVessel as $clib.$objects.ExecutorVessel.$new()
+
+# the run itself: the seatbelt lies before this, and its time is in the backup list
+Calculate mBefore as $cinst.$classSnapshot()
+# Cleared before the call: a manual run never returns and must not show the values of the previous run.
+Calculate cVerdict as ''
+Calculate cRunTicks as 0
+Calculate tStart as #CT
+Do iTools.$cloneMethodToAndExecute(iExecutorMethodRef.$ref,0,iVessel.$ref,cStep,pTargetRef,pSourceRef) Returns vResult ## @SELF
+Calculate cRunTicks as abs(#CT-tStart)
+# --- manifest: save the touched classes first. $moddate is a disk timestamp, unsaved changes
+# would not show. Save class does nothing for a class without pending changes.
+
+# The target class is not in bList and is saved separately, re-resolved by tgtKey exactly like the loop
+# below: a reference taken before the run is dead when the script removed and re-added the class, and
+# If on a dead reference is TRUE (stalekey_fix v1, stalekey_target v1).
+If len(tgtKey)
+	Set reference saveRef to iTools.$classRefOfName(tgtKey)
+	If not(isclear(saveRef))
+		Save class [tgtKey]
+	End If
+End If
+If bList.$linecount>0
+	For bList.$line from 1 to bList.$linecount step 1
+		If len(bList.clsKey)
+			# re-resolved by Lib.Class: the reference taken before the run is dead when the script removed and re-added the class, and If on a dead reference is TRUE (stalekey_fix v1)
+			Set reference saveRef to iTools.$classRefOfName(bList.clsKey)
+			If not(isclear(saveRef))
+				Save class [bList.clsKey]
+			End If
+		End If
+	End For
+End If
+Calculate mAfter as $cinst.$classSnapshot()
+Calculate mDiff as $cinst.$manifestDiff(mBefore,mAfter,cScript)
+Calculate mVerdict as $cinst.$verdictFromRun(cScript,mDiff)
+For mVerdict.$line from 1 to mVerdict.$linecount step 1
+	If mVerdict.field='verdict'
+		Calculate cVerdict as mVerdict.value
+	End If
+End For
+Calculate vManifest as con('[manifest]   ',mDiff.$linecount,' Classe(s) changed',kCr)
+For mDiff.$line from 1 to mDiff.$linecount step 1
+	Calculate vManifest as con(vManifest,'             ',mDiff.change,'  ',mDiff.libName,'.',mDiff.clsName,kCr)
+End For
+
+# Build numbers: one bump per library that really changed (mDiff). bDone is reused as the done marker.
+# $bumpBuild returns its own status line.
+Calculate bDone as ''
+For mDiff.$line from 1 to mDiff.$linecount step 1
+	If pos(con(kCr,low(mDiff.libName),kCr),bDone)=0
+		Calculate bDone as con(bDone,kCr,low(mDiff.libName),kCr)
+		Calculate vManifest as con(vManifest,'             ',$itasks.Executor.$bumpBuild(mDiff.libName),kCr)
+	End If
+End For
+Calculate vManifest as con(vManifest,'[commit  ]   ',$itasks.Executor.$commitBackups(mDiff),kCr)
+Calculate vManifest as con(vManifest,'[build   ]   ',mid($itasks.Executor.$readBuild($clib().$name),11),kCr)
+# close the vaults this run opened (see the top of this method); a manual run never comes back here
+Do $root.$libs.$makelist($ref.$name) Returns vaultList
+For vaultList.$line from 1 to vaultList.$linecount step 1
+	If (low(left(vaultList.c1,11))='execbackup_')&(pos(con(kCr,low(vaultList.c1),kCr),vaultsBefore)=0)
+		Close library [vaultList.c1]
+		Calculate vManifest as con(vManifest,'[vault   ]   ',vaultList.c1,' closed again: this run opened it',kCr)
+	End If
+End For
+For mVerdict.$line from 1 to mVerdict.$linecount step 1
+	Calculate vManifest as con(vManifest,'[',jst(mVerdict.field,8),']   ',mVerdict.value,kCr)
+End For
+
+Quit method con(vBackup,kCr,vResult,kCr,vManifest)

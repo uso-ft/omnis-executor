@@ -1,0 +1,80 @@
+# Makes sure the vault holds the folder chain of pSourceRef, and returns the
+# $ident of the deepest folder IN THE VAULT:
+#   for a class  -> the id its copy should carry as $parentfolder
+#   for a folder -> the id of that folder itself
+# Returns 0 for anything sitting on the top level.
+#
+# Class names are unique within a library and a folder IS a class, so a
+# folder is found in the vault by NAME alone - no path matching needed.
+# Order does not matter either: $parentfolder can be assigned afterwards
+# (measured 2026-07-31), so folders are created flat and hooked up after.
+#
+# $parentfolder comes back EMPTY for top level, not 0 - hence the isclear.
+
+If isclear(pSourceRef)
+	Quit method 0
+End If
+
+If pSourceRef.$classtype*1=kFolder*1
+	Calculate id as pSourceRef.$ident
+Else
+	Calculate id as pSourceRef.$parentfolder
+End If
+If isclear(id)
+	Quit method 0
+End If
+If id=0
+	Quit method 0
+End If
+
+Set reference srcLib to pSourceRef.$lib().$ref
+If isclear(srcLib)
+	Quit method 0
+End If
+Calculate vaultName as con('execBackup_',srcLib.$name)
+Do $cinst.$ensureVault(vaultName)
+Set reference vaultRef to $root.$libs.$findname(vaultName)
+If isclear(vaultRef)
+	Quit method 0
+End If
+
+# collect the chain in the SOURCE, innermost first
+Do flist.$define(fName)
+Calculate guard as 0
+While id<>0
+	Calculate guard as guard+1
+	If guard>50
+		Break to end of loop
+	End If
+	Set reference fRef to srcLib.$classes.$findident(id)
+	If isclear(fRef)
+		Calculate id as 0
+	Else
+		Do flist.$add(fRef.$name)
+		Calculate id as fRef.$parentfolder
+		If isclear(id)
+			Calculate id as 0
+		End If
+	End If
+End While
+
+# create in the VAULT from the outside in
+Calculate vaultParent as 0
+Calculate n as flist.$linecount
+While n>0
+	Calculate flist.$line as n
+	Set reference vRef to vaultRef.$classes.$findname(flist.fName)
+	If isclear(vRef)
+		Set reference vRef to vaultRef.$classes.$add(kFolder,flist.fName)
+	End If
+	If isclear(vRef)
+		Quit method vaultParent
+	End If
+	If vaultParent
+		Do vRef.$parentfolder.$assign(vaultParent)
+	End If
+	Calculate vaultParent as vRef.$ident
+	Calculate n as n-1
+End While
+
+Quit method vaultParent

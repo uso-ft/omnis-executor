@@ -1,0 +1,32 @@
+# Return classes found in pText, current line defines desired library
+# Optional prompt for the library if ambiguous, the others are removed
+
+Do lclassList.$define(ref,name,version,moddate,posClass)
+
+# Load all classes from all libraries containing the classname as a whole word case INsensitive in the selection.
+# The found position is stored in the list too.
+Do $libs.$sendall($sendallref.$classes.$sendall(lclassList.$add($sendallref,$sendallref().$name,$sendallref.$version,$sendallref.$moddate,rxpos($sendallref.$class().$name,pText,kTrue,kTrue,mchlen)),rxpos($sendallref.$class().$name,pText,kTrue,kTrue,mchlen)))
+
+# sort to the first found position, then by version and moddate
+Do lclassList.$sort($ref.posClass,kFalse,$ref.version*1,kTrue,$ref.moddate,kTrue)
+
+If lclassList.$totc(lclassList.1.C1.$lib<>lclassList.C1.$lib)&pUniqueLib
+	# class/library ambiguous: select the line of the desired library
+	
+	Calculate lclassList.$line as 1
+	Do $clib.$classes.wSelectLib.$openonce('*',kWindowCenter,lclassList.$ref,flag1)
+	If not(flag1)
+		Quit method kFalse
+	End If
+	
+	# Remove others than the selected
+	Set reference libRef to lclassList.$lib().$ref
+	Do lclassList.$search(lclassList.C1.$lib=libRef,kTrue,kFalse,kTrue,kTrue)
+	Do lclassList.$remove(kListKeepSelected)
+	
+End If
+
+# set current line to first class/library
+Calculate lclassList.$line as 1
+
+Quit method lclassList

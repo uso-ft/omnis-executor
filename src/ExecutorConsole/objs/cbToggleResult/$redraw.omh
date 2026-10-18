@@ -1,0 +1,9 @@
+# Red when the run has errors or the verdict is conflict.
+Calculate errors as cLog.execErrors
+If errors|cVerdict='conflict'
+	Do $cfield.$textcolor.$assign(kRed)
+Else
+	Do $cfield.$textcolor.$assign(kBlack)
+End If
+
+Do default

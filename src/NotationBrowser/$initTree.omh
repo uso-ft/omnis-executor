@@ -1,0 +1,10 @@
+# set up references and the root nodes
+Set reference iTreeRef to $cinst.$objs.trNotation
+Do iTreeRef.$clearallnodes()
+Set reference ref to iTreeRef.$add('$root')
+Do ref.$tag.$assign($root.$ref)
+Do ref.$showexpandalways.$assign(kTrue)
+Do ref.$isexpanded.$assign(kTrue)
+Set reference ref to ref.$add('$libs')
+Do ref.$tag.$assign($root.$libs.$ref)
+Do ref.$showexpandalways.$assign(kTrue)

@@ -1,0 +1,7 @@
+# Class stores any key in it using $userinfo of class variables $cvardefs
+# Asseccor:
+# -$put(key,binary)
+# -$get(key) returns value
+# -$has(key) returns kTrue
+
+# Remark: Methods do not have $userinfo

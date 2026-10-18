@@ -1,0 +1,64 @@
+# Round-trip test: Code → String → Code  must return the original code.
+# Tests only verified keys, both pEditMode variants. Stops and logs on mismatch.
+# Assumes $shortcutCodeToText(pCode,pEditMode) and $shortcutTextToCode(pString) exist.
+
+# --- Build list of key codes to test -----------------------------------------
+Do keyCodes.$define(keyCode,keyLabel)
+# Letters A..Z  (asc 65..90)
+For i from 65 to 90 step 1
+	Do keyCodes.$add(i,chr(i))
+End For
+# Digits 0..9  (asc 48..57)
+For i from 48 to 57 step 1
+	Do keyCodes.$add(i,chr(i))
+End For
+# Function keys F1..F12  (stored as 1..12)
+For i from 1 to 12 step 1
+	Do keyCodes.$add(i,con('F',i))
+End For
+# Named verified keys
+Do keyCodes.$add(32,'Space')
+Do keyCodes.$add(45,'Minus')
+
+# --- Modifier bit combinations to test ----------------------------------------
+# 0 = none, plus all combinations of Ctrl(65536) Shift(131072) Opt(262144)
+Do modifiers.$define(modCode,modLabel)
+Do modifiers.$add(0,'(none)')
+Do modifiers.$add(65536,'Ctrl')
+Do modifiers.$add(131072,'Shift')
+Do modifiers.$add(262144,'Opt')
+Do modifiers.$add(196608,'Ctrl+Shift')
+Do modifiers.$add(327680,'Ctrl+Opt')
+Do modifiers.$add(393216,'Shift+Opt')
+Do modifiers.$add(458752,'Ctrl+Shift+Opt')
+
+# --- pEditMode variants to test -----------------------------------------------
+Do editModes.$define(modeFlag,modeLabel)
+Do editModes.$add(kFalse,'Queue (-)')
+Do editModes.$add(kTrue,'Editor (+)')
+
+# --- Run round-trip -----------------------------------------------------------
+Calculate failCount as 0
+Calculate testCount as 0
+For editModes.$line from 1 to editModes.$linecount step 1
+	For modifiers.$line from 1 to modifiers.$linecount step 1
+		For keyCodes.$line from 1 to keyCodes.$linecount step 1
+			Calculate origCode as modifiers.modCode+keyCodes.keyCode
+			Calculate testCount as testCount+1
+			
+			# Code → String
+			Do $cinst.$shortcutCodeToText(origCode,editModes.modeFlag) Returns asString
+			# String → Code
+			Do $cinst.$shortcutTextToCode(asString) Returns backCode
+			
+			If backCode<>origCode
+				Calculate failCount as failCount+1
+				Send to trace log {MISMATCH  mode=[editModes.modeLabel]  key=[keyCodes.keyLabel]  mod=[modifiers.modLabel]  origCode=[origCode]  string='[asString]'  backCode=[backCode]}
+				Breakpoint ## stop on each mismatch (dev tree only)
+			End If
+		End For
+	End For
+End For
+
+Send to trace log {Shortcut round-trip done: [testCount] tested, [failCount] failed}
+Quit method

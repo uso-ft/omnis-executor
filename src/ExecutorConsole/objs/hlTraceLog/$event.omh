@@ -1,0 +1,10 @@
+On evDoubleClick
+	Do $modes.$dotoolmethod(kEnvToolBrowser,203,$cfield) ## @CORE
+	
+On evHeadedListHeadResize
+	Calculate cTraceLogColWidths as $cfield.$columnwidths
+	
+	# On evKey
+	# If pKey='c'&#CTRL
+	# automatic copy handling is done by registration of this list
+	# End If

@@ -1,0 +1,7 @@
+# Callback from the notation browser: takes the chosen path as source,
+# writes it to the log and redraws.
+
+Calculate cSourcePath as $cinst.$shortPath(pTargetPath) ## the browser returns $fullname
+Set reference iSourceRef to iTools.$pathToRefQuiet(cSourcePath) ## silent, reads Lib.Class, like $setTargetPathCallback
+Do $cinst.$logSetValues()
+Do $cinst.$redraw()

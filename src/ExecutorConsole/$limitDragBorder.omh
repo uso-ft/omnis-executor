@@ -1,0 +1,13 @@
+# Stops a drag that would squeeze the elastic neighbour below its minimum, and gives the height back.
+# The elastic neighbour is the sibling with kEFposnClient. It is found, not passed: scrEditor pays
+# for the log panes, scrScript pays for scrResult.
+Do pFieldRef.$container().$objs.$sendall(iTools.$setRef(clientRef,$sendallref),$sendallref.$edgefloat*1=kEFposnClient*1) Returns #1
+If isclear(clientRef)
+	# no elastic sibling - nothing pays, so nothing can be overdrawn
+	Quit method
+End If
+Calculate diffHeight as clientRef.$minHeight-clientRef.$height
+If diffHeight>0
+	Sound bell
+	Calculate pFieldRef.$height as pFieldRef.$height-diffHeight
+End If

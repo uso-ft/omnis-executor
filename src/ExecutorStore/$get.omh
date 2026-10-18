@@ -1,0 +1,10 @@
+# Returns the binary value of $userinfo of the class variable named pKey
+# Returns '' if pKey was not found
+
+Set reference ref to $cclass.$cvardefs.$findname(pKey)
+If isclear(ref)
+	OK message ExecutorStore: Key:'[pKey]' not found (Sound bell) {Cannot backup/restore Key:'[pKey]' }
+	Quit method ''
+End If
+
+Quit method ref.$userinfo

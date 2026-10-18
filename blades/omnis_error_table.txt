@@ -1,0 +1,34 @@
+kerrAlreadyExists	Error return for file already exists
+kerrBaddata	Error return for attempting to open an invalid data file
+kerrBadlibrary	Error return for attempting to open an invalid library
+kerrBadmethodtext	Error when attempting to assign text to a method
+kerrBadnotation	Error when attempting to evaluate unresolved notation
+kerrCantcreate	Error return for unable to create a file
+kerrCantdelete	Error return for a file which is locked or in use and cannot be deleted
+kerrCantlock	Error return for failure to set a multiuser semaphore
+kerrCantopen	Error return for unable to open a file
+kerrCantshare	Error return for a file in use elsewhere which cannot be shared
+kerrDiskfull	Error return for a disk is full
+kerrDiskRead	Error return for unable to read a file
+kerrDiskWrite	Error return for unable to write a file
+kerrDuplock	Error return for attempt to lock a record already locked by the same user
+kerrEOFRead	Error return for attempt to read past the end of a file
+kerrEOFWrite	Error return for attempt to write past the end of a file
+kerrEventParameter	Attempt to use an event parameter which is not used for the current event
+kerrInheritedVar	Unrecognized inherited variable
+kerrListClass	Class not found when loading a list
+kerrNoaccess	Error return for access to the file is not available
+kerrNoInstance	Attempt to use an instance or task variable when no instance exists
+kerrNonull	Error return for attempt to insert or update a record with a null value in a field with nulls not allowed
+kerrNotFound	Error return for unable to find a file
+kerrNotOpen	Error return for file not open
+kerrObjectClass	Class not found when constructing an object variable
+kerrObjectRecursion	Class contains an object variable with the same class
+kerrPortdriver	Error return for unable to open the driver for a port
+kerrPortinuse	Error return for attempting to open a port which is already being used
+kerrSQL	Error at server during execution of SQL command
+kerrSuperclass	Superclass not found when constructing an instance
+kerrTaskVar	Unrecognized task variable
+kerrTesttool	Testing tools external library error
+kerrUnqindex	Error return for attempt to insert or update a record with a non-unique value for a unique index
+kerrWriteprot	Error return for a write protected file or volume

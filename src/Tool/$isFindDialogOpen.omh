@@ -1,0 +1,6 @@
+# True when the IDE Find-and-Replace dialog is open (findandreplace guard).
+# Reason: while the dialog is open, every find/replace of myClass.$findandreplace is logged into it, which is very slow.
+
+Calculate allWindows as sys(194)
+## hard IDE window-title assumption, no other way
+Quit method allWindows.$search(pos('Find And Replace:',allWindows.c1)=1,kTrue,kFalse,kFalse,kFalse)

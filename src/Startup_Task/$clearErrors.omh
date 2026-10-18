@@ -1,0 +1,3 @@
+# Clears the run error collector (called by the canon at run start)
+Do cErrors.$clear()
+Quit method kTrue

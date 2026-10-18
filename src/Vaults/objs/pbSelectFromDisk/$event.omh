@@ -1,0 +1,23 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	# Opens ONE vault file WITHOUT its startup task. A vault is an archive and must not run code (lore 6.2).
+	# $dotoolmethod(kEnvToolBrowser,105) opened it WITH the startup task and has no known switch for that.
+	Calculate chosenPath as cBackupsFolderPath
+	Do FileOps.$getfilename(chosenPath,'Open vault','*.lbs') Returns flag1
+	If not(flag1)
+		Quit method
+	End If
+	If pos(con(sys(9),'execBackup_'),chosenPath)=0
+		OK message Vaults {Only execBackup_ libraries are vaults.//Nothing was opened.}
+		Quit method
+	End If
+	# chosen on purpose: it stays open when the window closes, even if this window opened it (owner, 2026-09-24).
+	# Opening an already open library is silent. $listLibraries, not $loadLibraries: that one rebuilt
+	# iOpenedLibraries and emptied it, so the window closed nothing it had opened.
+	Do iOpenedLibraries.$search(kFalse)
+	Do iOpenedLibraries.$search(iOpenedLibraries.c2=chosenPath,kTrue,kFalse,kTrue,kFalse)
+	Do iOpenedLibraries.$remove(kListDeleteSelected)
+	Open library (Do not close others,Do not open startup task) [chosenPath]
+	Do $cinst.$listLibraries()
+	Do $cinst.$loadClasses()
+	Do $cinst.$redraw()
+	Quit method

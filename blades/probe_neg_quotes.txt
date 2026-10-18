@@ -1,0 +1,3 @@
+Calculate result as con("Do out.$add(x,'y')",kCr)
+Calculate result as con('a ## b',kCr)
+Calculate gibtsNicht as 1

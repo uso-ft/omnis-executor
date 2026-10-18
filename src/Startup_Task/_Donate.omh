@@ -1,0 +1,11 @@
+# Executor is DONATE-WARE.
+#
+# It is free software under the MIT license (see _License). Every right the license
+# grants holds with or without a donation - a donation is a request, not a condition.
+#
+# If the Executor saves you time or work, please consider supporting its development.
+# The donation link is returned by $donateLink() and shown in About (menu Executor).
+# The project page is returned by $projectLink().
+# Contact: uso-ft@sonnabend.ch
+#
+# Thank you!

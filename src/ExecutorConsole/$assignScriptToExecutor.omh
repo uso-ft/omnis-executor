@@ -1,0 +1,50 @@
+# Assigns cScript to the execute method LINE BY LINE, so the first faulty line names itself.
+# Returns kTrue on success, kFalse on the first refused line.
+# A refused $methodlines.$add returns a CLEAR reference and creates no line: that is the test.
+# On refusal: error list, clipboard, message, breakpoint. The stack is alive at the failing line:
+# edit text there and move the go-point back onto the add.
+
+Calculate iTextAssigned as kFalse
+If iExecutorMethodRef.$lvardefs.$count=0 ## guard: vars may have been wiped by an empty assign
+	Do $cinst.$createExecutorVars()
+End If
+If len(cScript)=0
+	Quit method kTrue ## nothing to assign
+End If
+
+# clear previous text: a single comment char, NOT '' (empty wipes all local vars, Omnis ST/PF/1528)
+Do iExecutorMethodRef.$methodtext.$assign('#') ## @SELF
+
+# remove that single line, then add the user lines one by one. The FIRST add
+# fills the emptied line rather than appending after it, so the count reads
+# 1 -> 1 that once and n -> n+1 from then on (lore 10.5).
+Set reference group to iExecutorMethodRef.$methodlines
+Do group.$remove(group.1.$ref) ## drop the '#' placeholder line
+Calculate sourceList as split(cScript,kCr)
+
+# For sourceList.$line ... makes the iterated row the CURRENT line, so sourceList.C1 needs no index
+For sourceList.$line from 1 to sourceList.$linecount step 1
+	# trim tabs and spaces on both sides: $methodtext carries no indentation anyway
+	Calculate text as trim(trim(sourceList.C1,kTrue,kTrue,kTab),kTrue,kTrue,kSp)
+	
+	Set reference newTextlne to group.$add(text)
+	If isclear(newTextlne)
+		Calculate errorText as con('Executor line ',sourceList.$line,' was REFUSED: ',text)
+		
+		# the error list first. The location points at the last line that DID go in,
+		# which is where the cursor belongs - the refused one does not exist.
+		Calculate lineNo as max(sourceList.$line-1,1)
+		Set reference errRef to $itasks.[$clib().$name].$errors().$ref
+		If not(isclear(errRef))
+			Do errRef.$add(errRef.$linecount,con(#T),'assign',errorText,text,con('$clib.$codes.Executor.$methods.//$execute//.$methodlines.',lineNo),kFalse)
+		End If
+		
+		Copy to clipboard
+		Copy to clipboard errorText ## to AI
+		OK message Could not assign method text to Executor ! {Line [sourceList.$line] was REFUSED://[text]////Unknown command, or a missing local/instance/class/task variable ?//Variables must exist BEFORE the line that names them.//Nothing was written for this line - a refused line leaves no trace, so the numbering below it would silently shift.//The stack is alive: edit [text] here and move the go-point back onto the add.}
+		Breakpoint
+		Quit method kFalse
+	End If
+End For
+Calculate iTextAssigned as kTrue
+Quit method kTrue

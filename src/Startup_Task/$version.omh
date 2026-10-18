@@ -1,0 +1,17 @@
+# $version() -> Character
+# The hand-kept version of Executor.lbs. One number, raised by a person when
+# the tool reaches a state worth naming. Nothing raises it automatically.
+#
+# It is NOT the build number. The build lives in the library's own $userinfo,
+# tagged EXEC-BUILD=, and Startup_Task.$bumpBuild raises it by one for every
+# library a run actually changed -- worked out from mDiff in
+# ExecutorConsole.$runInVessel, which is the only place that knows.
+#
+# So: $version says which tool this is, EXEC-BUILD says how many runs have
+# changed it. Read the build with
+#     Calculate name as $root.$libs.Executor.$userinfo
+# or see it in the Property Manager, where it is plain text.
+#
+# Semantic versioning (semver.org): MAJOR.MINOR.PATCH, a pre-release suffix while in beta.
+# Raise it by hand on a release and record the change in _Changelog.
+Quit method '1.0.0'

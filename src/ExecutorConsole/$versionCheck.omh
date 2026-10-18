@@ -1,0 +1,99 @@
+# $versionCheck(pText,pKind,pfProtocol_opt) -> kTrue: go on; kFalse: the operator answered No.
+# pKind run reads the header line RUNS-IN, written EXECUTOR 1.0.
+# pKind jump reads the JUMP LINKS marker, the version written after its fixed start, before the closing equal signs.
+# Both name the Executor version a script was written for, major.minor. The patch does not count: it changes no contract.
+#
+# Why so soft: the Executor is a work tool, and the programmer knows, or has to know, what he runs.
+# The check informs. It stops nothing on its own, and it says a thing once, not on every click.
+# - No version (no header, no RUNS-IN, the form before 1.0 EXECUTOR console, a marker without a number): silent.
+#   One-liners, older scripts and hand-made tests run as before.
+# - A version that cannot be read: one trace line, no sound. A typo should not go unseen.
+# - A higher MINOR: one trace line. A minor version only adds; what this console does not know fails at its own line and says so there.
+# - A higher MAJOR breaks compatibility: trace line and bell. On a run a No/Yes follows, No as default, so Return runs nothing.
+#   On a jump an error row instead, and the jump goes ahead: a newer jump block can still hold lines that work.
+# Once: iVersionWarnedRun and iVersionWarnedJump hold the version last reported, so the same version says nothing again.
+# $setExecutorValues clears both when the script changes as a whole (log row, snippet, a paste over most of the text).
+# A run writes its [version ] line into the protocol every time: the protocol is the record of that run.
+# A run gets no error row: $runExecutor clears the error list before the run, and $errorCount would count the row as an error of it.
+# The check reads text only; nothing of the script runs here.
+
+Calculate value as ''
+If pKind='run'
+	# the RUNS-IN line, read by $parseHeader like every other header field: raw, trimmed
+	Calculate hdr as $cinst.$parseHeader(pText)
+	For hdr.$line from 1 to hdr.$linecount step 1
+		If hdr.field='RUNS-IN'
+			Calculate value as hdr.value
+		End If
+	End For
+	# EXECUTOR console (v1.3 variable set) is the form before 1.0: it names no Executor version
+	If len(value)=0|pos('CONSOLE',upp(value))>0
+		Quit method kTrue
+	End If
+	Calculate stated as upp(value)
+Else
+	# the marker: its start never changes, so an older console still finds a newer block, and the version follows the start
+	# built from two literals, so this method is not read as a jump block itself
+	Calculate marker as con('## =====',' JUMP LINKS')
+	Calculate scrVer as pos(marker,pText)
+	If scrVer=0
+		Quit method kTrue
+	End If
+	Calculate value as mid(pText,scrVer+len(marker))
+	Calculate scrVer as pos(kCr,value)
+	If scrVer>0
+		Calculate value as mid(value,1,scrVer-1)
+	End If
+	Calculate value as trim(replaceall(replaceall(value,'=',''),kLf,''),kTrue,kTrue,kSp)
+	If len(value)=0
+		Quit method kTrue
+	End If
+	Calculate stated as con('EXECUTOR ',value)
+End If
+
+# major.minor from the stated text and from this console; a patch or anything after the minor is ignored
+Calculate scrVer as rxpos('^EXECUTOR\s+(?P<MAJ>[0-9]+)\.(?P<MIN>[0-9]+)',stated,kTrue,kFalse,mchlen,captureRow)
+If scrVer=0
+	Calculate note as con('[version ]   ',pick(pKind='run','JUMP LINKS','RUNS-IN'),' ',value,': not a version this console can read, nothing checked')
+Else
+	Calculate scrVer as captureRow.MAJ*1000+captureRow.MIN
+	Calculate conVer as rxpos('^(?P<MAJ>[0-9]+)\.(?P<MIN>[0-9]+)',$ctask().$version(),kTrue,kFalse,mchlen,captureRow)
+	If conVer=0
+		# this console cannot read its own version: nothing to compare with
+		Quit method kTrue
+	End If
+	Calculate conVer as captureRow.MAJ*1000+captureRow.MIN
+	If scrVer<=conVer
+		Quit method kTrue
+	End If
+	Calculate note as con('[version ]   ',pick(pKind='run','JUMP LINKS','RUNS-IN'),' ',value,': written for a newer Executor than this one, ',$ctask().$version())
+End If
+
+If pKind='run'
+	Send to trace log [note]
+	Calculate pfProtocol_opt as con(pfProtocol_opt,note,kCr)
+	If scrVer>0&int(scrVer/1000)>int(conVer/1000)&iVersionWarnedRun<>value
+		No/Yes message Executor version (Sound bell) {This script was written for Executor [value].//This is Executor [$ctask().$version()]. A new major version can change what a script relies on.//Nothing has run yet.////Run anyway ?}
+		If flag true
+			Calculate iVersionWarnedRun as value
+			Quit method kTrue
+		End If
+		Quit method kFalse
+	End If
+	Quit method kTrue
+End If
+
+# a jump: said once per version, the jump goes ahead in every case
+If iVersionWarnedJump=value
+	Quit method kTrue
+End If
+Calculate iVersionWarnedJump as value
+Send to trace log [note]
+If scrVer>0&int(scrVer/1000)>int(conVer/1000)
+	If not(isclear(iErrorsRef))
+		Do iErrorsRef.$add(iErrorsRef.$linecount,con(#T),'version',note,value,'',kFalse)
+		Do $cinst.$objs.hlErrors.$redraw()
+	End If
+	Sound bell
+End If
+Quit method kTrue

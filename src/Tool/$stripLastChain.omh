@@ -1,0 +1,10 @@
+# Removes the last dot-separated segment from a notation path.
+
+Calculate return as mid(pNotation,1,rpos('.',pNotation)-1)
+Calculate stripped as mid(pNotation,rpos('.',pNotation),1000000)
+
+If mid(stripped,len(stripped)-1,2)='//'&mid(stripped,1,3)<>'.//' ## example: root.$methods.//myname.$blabla//
+	Calculate return as mid(return,1,rpos('//',return)-2)
+End If
+
+Quit method return

@@ -1,0 +1,16 @@
+# Shortens a full class path to the compact 'libname.classname' notation, which Omnis also
+# accepts and which is shorter/more readable.
+#   $root.$libs.ZIDETOOLS.$classes.ToolModifyClass  →  ZIDETOOLS.ToolModifyClass
+#   $root.$libs.ZIDETOOLS.$codes.Executor        →  ZIDETOOLS.Executor
+# pPath → the full path (may already be short; then returned unchanged)
+# NOTE: the class-group names must be hard-coded — Omnis offers no runtime list of them.
+
+Calculate path as replace(pPath,'$root.$libs.','') ## strip the leading $root.$libs.
+
+# collapse the class-group segment (.$classes. / .$codes. / .$windows. …) to a single dot
+Calculate groupList as split('$classes,$codes,$fieldstyles,$files,$menus,$objects,$prefs,$queries,$remoteforms,$remotemenus,$remoteobjects,$remotetasks,$reports,$schemas,$searches,$tables,$tasks,$toolbars,$windows')
+For loop from 1 to groupList.$linecount step 1
+	Calculate path as replace(path,con('.',groupList.[loop].C1,'.'),'.')
+End For
+
+Quit method path

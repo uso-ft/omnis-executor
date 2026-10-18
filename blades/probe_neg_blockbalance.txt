@@ -1,0 +1,6 @@
+Calculate a as 1
+If a=1
+If a=1
+	Calculate b as 2
+End If
+Calculate c as 3

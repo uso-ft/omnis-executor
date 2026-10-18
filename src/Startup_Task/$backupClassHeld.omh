@@ -1,0 +1,19 @@
+# $backupClassHeld v1 2026-09-09 (holdcommit v1) — $backupClass with the net.
+# One call, so a caller changes ONE word per call site instead of gaining a line.
+# $holdBackup runs FIRST and its note is computed before $backupClass is asked,
+# because the order of the two notes is the order of the two operations.
+#
+# $backupClass itself is untouched and still does the whole backup on its own for
+# every other caller. A backup taken through THIS door is the one $commitBackups
+# may undo; a backup taken through the old door is final, as it always was.
+
+Calculate note as ''
+If pClassRef
+	If pClassRef.$classtype*1>0
+		If pos('execBackup_',pClassRef.$lib().$name)<>1
+			Calculate note as $cinst.$ensureVault(con('execBackup_',pClassRef.$lib().$name))
+		End If
+	End If
+End If
+Calculate note as con(note,$cinst.$holdBackup(pClassRef))
+Quit method con($cinst.$backupClass(pClassRef),note)

@@ -1,0 +1,45 @@
+# - If the name is in the form LibraryName.Classname, the reference is returned.
+# ___________or
+# - Searches for the class name in all OPEN libraries and returns a reference to the latest version
+#   pNoVaults_opt: the bare-name search skips the vaults (execBackup_*), which hold copies,
+#   never a target. The qualified route is unchanged (targetscan_libs v1, 2026-09-23).
+# This means that the MO class broker does not have to be present.
+
+If not(isclear(pClassName))
+	Calculate pClassName as Strip(pClassName,"'") ## remove possible quotation marks, e.g. 'MyDelegate'
+	
+	If pos('.',pClassName)
+		Calculate library as strtok(nam(pClassName),'.')
+		Set reference ref to $libs.$findname(library) ## an argument, not an expression: an unknown name stays silent
+		If isclear(ref)
+			Quit method ''
+		End If
+		Set reference ref2 to ref.$classes.$findname(pClassName)
+		If isclear(ref2)
+			Quit method ''
+		End If
+		Quit method ref2.$ref
+		
+	Else
+		Do list.$define(ref,version,moddate)
+		# Load all classes of all libraries - with pNoVaults_opt, of all but the vaults
+		If pNoVaults_opt
+			Do $libs.$sendall($ref.$classes.$sendall(list.$add($ref,$ref.$version,$ref.$moddate),upp($ref.$class().$name)=upp(pClassName)),pos('execBackup_',$sendallref().$name)<>1)
+		Else
+			Do $libs.$sendall($ref.$classes.$sendall(list.$add($ref,$ref.$version,$ref.$moddate),upp($ref.$class().$name)=upp(pClassName)))
+		End If
+		
+		If list.$linecount
+			# pUnique_opt: the caller wants an unambiguous answer and there is none. Two
+			# open libraries holding the same class name is not a case a $moddate may
+			# decide (cookbook A7b). Empty means NO ANSWER; a caller that needs the
+			# reason asks again without the flag and learns the name resolved twice.
+			If list.$linecount>1&pUnique_opt
+				Quit method
+			End If
+			Do list.$sort($ref.version*1,kTrue,$ref.moddate,kTrue)
+			Quit method list.1.ref ## return most recent
+		End If
+	End If
+End If
+Quit method ''

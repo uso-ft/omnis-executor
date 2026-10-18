@@ -1,0 +1,8 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	If cCloseTargetClasses
+		# close the Executor itself if possibly open
+		Close design [$clib().$name].Executor
+	End If
+	
+	Do $cinst.$assignScriptToExecutor
+	Do $cinst.$redraw()

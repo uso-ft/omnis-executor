@@ -1,0 +1,31 @@
+# Saves the class variables of this console into ExecutorStore, in two
+# packages: settings and data. $settingsSpec says which is which and
+# $applySettingsFilter does the sorting.
+# Returns flag
+Do cols.$define(ref)
+Do $cclass.$cvars.$sendall(cols.$add($ref.$ref)) ## all class variables
+Do cols.$search($ref.c1().$type=kItemref,kTrue,kFalse,kTrue,kTrue)
+Do cols.$search($ref.c1().$type=kObject,kTrue,kFalse,kTrue,kFalse)
+Do cols.$search($ref.c1().$type=kObjectref,kTrue,kFalse,kTrue,kFalse)
+Do $cinst.$applySettingsFilter(cols,'setting') Returns cols ## D6: the table decides what is persisted
+Do row.$define()
+Do cols.$sendall(row.$cols.$add($sendallref.c1().$name,$sendallref.c1().$type,$sendallref.c1().$subtype,$sendallref.c1().$sublen))
+Do row.$cols.$sendall(row.[$sendallref.$name].$assign([$sendallref.$name]))
+Do iStore.$put(con($cclass().$name,'_settings'),row) Returns savedSettings
+
+# The data package - what $settingsSpec calls data, under a key of its own.
+Do cols2.$define(ref)
+Do $cclass.$cvars.$sendall(cols2.$add($ref.$ref))
+Do $cinst.$applySettingsFilter(cols2,'data') Returns cols2
+Do row2.$define()
+Do cols2.$sendall(row2.$cols.$add($sendallref.c1().$name,$sendallref.c1().$type,$sendallref.c1().$subtype,$sendallref.c1().$sublen))
+Do row2.$cols.$sendall(row2.[$sendallref.$name].$assign([$sendallref.$name]))
+Do iStore.$put(con($cclass().$name,'_data'),row2) Returns savedData
+# The store is the only copy, so a refused write must not be silent.
+If savedSettings
+	If savedData
+		Quit method kTrue
+	End If
+End If
+OK message Settings could not be stored (Sound bell) {ExecutorStore refused a write: settings [savedSettings], data [savedData]. The class variables of this console are NOT persisted.}
+Quit method kFalse

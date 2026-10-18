@@ -1,0 +1,12 @@
+# MasterStudio only
+Set reference cTaskCtrlRef to $cinst.$classRefOfName('MoContextRoot')
+Set reference cEntityCtrlRef to $cinst.$classRefOfName('MdEntityController')
+Set reference cCmdCtrlRef to $cinst.$classRefOfName('MoCommandController')
+Set reference cWindowContextCtrlRef to $cinst.$classRefOfName('MoContextWindowSuperclass')
+Set reference cAppContextCtrlRef to $cinst.$classRefOfName('MoContextApplicationSuperclass')
+Set reference cDlgRef to $cinst.$classRefOfName('MoControllerPaneDelegateSuperclass')
+Set reference cMgrListRef to $cinst.$classRefOfName('MdManagerListGeneric')
+Set reference cMgrRecordRef to $cinst.$classRefOfName('MdManagerRecordGeneric')
+Set reference cMgrFiedsRef to $cinst.$classRefOfName('MoManagerListFields')
+Set reference cMgrRef to $cinst.$classRefOfName('MoManagerSuperclass')
+Set reference cCtrlRef to $cinst.$classRefOfName('MoControllerSuperclass')

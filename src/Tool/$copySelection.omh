@@ -1,0 +1,20 @@
+# Copies and returns the selected string without permanently changing the clipboard
+# (the clipboard is saved before and restored afterwards).
+## @? clipboardSaved as Binary might be better — would preserve non-text clipboard content (images, formatted data), not just plain text
+
+Paste from clipboard clipboardSaved ## save clipboard — unfortunately only works for plain text in the clipboard
+
+# clear clipboard, by copying an empty string to
+Calculate clipboard as ''
+Copy to clipboard clipboard
+
+Standard menu command *Edit/11003 {Copy}
+Paste from clipboard clipboard
+
+Copy to clipboard clipboardSaved ## restore clipboard
+
+If clipboard=200 ## error code
+	Calculate clipboard as ''
+End If
+
+Quit method clipboard

@@ -1,0 +1,96 @@
+# Backs up pClassRef into the backup library (execBackup_<SourceLib>.lbs next to
+# the startup folder), ORIGINAL name kept, one current backup per class.
+# Seal: method-level for ALL class types (backups are fresh births — §A8.12d).
+# NO $userinfo stamp: $userinfo travels with $classdata, so a stamp would land in the LIVE class on every restore. Origin and date belong in the vault index.
+# Returns the protocol text; a refusal when pClassRef is empty or not a CLASS.
+Calculate startTicks as #CT
+If pClassRef
+Else
+	Calculate text as 'backupClass: pClassRef empty — nothing backed up.'
+	Do cBackups.$add(text,pClassRef.$name,pClassRef.$fullname,'',0,abs(#CT-startTicks),'refused')
+	Quit method text
+End If
+
+# entrance guard: the reference must BE a class, not just belong to one.
+# Measured 2026-07-22 15:40: $class returns 1 for BOTH a class and a group
+# (it answers "which class do you belong to"), so it cannot tell them apart.
+# $classtype does: a real class carries a type, a group path like
+# ...$objects.Tool.$methods has none. Without this the derived name is
+# $methods, which $classes.$add refuses SILENTLY (reserved notation name)
+# and only Save class reports later as 101201.
+
+If pClassRef.$classtype*1>0
+Else
+	Calculate text as con('backupClass: [',pClassRef.$name,'] is not a class (group or object reference?) — nothing backed up.')
+	Do cBackups.$add(text,pClassRef.$name,pClassRef.$fullname,'',0,abs(#CT-startTicks),'refused')
+	Quit method text
+End If
+
+# A vault is never a SOURCE. Backing up a copy makes a vault of a vault, and
+# that happened twice in one evening: the pre-run scan resolves a bare class
+# name against every OPEN library, and once a vault is open its copies carry
+# the same names as the originals. The guard sits here and not at the caller,
+# because every caller would have to remember it.
+If pos('execBackup_',pClassRef.$lib().$name)=1
+	Calculate text as con('backupClass: [',pClassRef.$fullname,'] lives in a vault, and a vault is never a source — nothing backed up.')
+	Do cBackups.$add(text,pClassRef.$name,pClassRef.$fullname,'',0,abs(#CT-startTicks),'refused')
+	Quit method text
+End If
+Calculate cName as pClassRef.$name
+Calculate vaultName as con('execBackup_',pClassRef.$lib().$name)
+Calculate classBytes as pClassRef.$disksize
+
+# ensure the vault via the ONE ensure logic (note travels into the protocol)
+Calculate bakPath as $cinst.$ensureVault(vaultName)
+Set reference vaultRef to $root.$libs.$findname(vaultName)
+If vaultRef
+Else
+	Calculate text as con('backupClass: ',bakPath,'NOTHING backed up.')
+	Do cBackups.$add(text,pClassRef.$name,pClassRef.$fullname,'',0,abs(#CT-startTicks),'refused')
+	Quit method text
+End If
+
+# The copy itself is NOT done here. $copyClass is the one safe copy and both
+# directions use it: it renames whatever stands at the target name aside,
+# fills a fresh class, seals it method level, and takes the net away only
+# then. The order here used to be remove-then-add, and between the two the
+# target did not exist. Bearable in a vault, and not worth keeping now that
+# the safer order is one call away.
+#
+# THE SUCCESS TOKEN IS seal OK AND THE ABSENCE OF ROLLED BACK. $copyClass
+#            builds the phrase BEFORE the save, so a copy whose SAVE
+#            failed carries both the token and the rollback notice —
+#            measured 2026-09-07. If either phrase changes, both methods move.
+Calculate proto as $cinst.$copyClass(pClassRef,vaultRef)
+Calculate ok as pos('seal OK',proto)>0&pos('ROLLED BACK',proto)=0
+Set reference bakRef to vaultRef.$classes.$findname(cName)
+If isclear(bakRef)
+	Calculate ok as kFalse
+End If
+
+If ok
+	Calculate folderId as $cinst.$ensureFolder(pClassRef)
+	If folderId
+		Do bakRef.$parentfolder.$assign(folderId)
+	End If
+	# who writes, saves (persistence law) — only a sealed copy earns the disk
+	Save class [con(vaultName,'.',cName)]
+	Calculate ok as #F ## honest save flag: read straight after the save, not later
+	# the index entry takes the place of the $userinfo stamp that used to sit here.
+	# $desc, $version, $vcsrevision and the folder do not travel with $classdata
+	# (lore 9). ok is captured above because $indexPut saves too, and #F is global.
+	# The seal field records the STATE of the copy and not the story of the run.
+	# Handing the whole copy note over put the class name, the vault name and the
+	# aside handling into every entry — all three of them already elsewhere in the
+	# same line or derivable from it. The narrative belongs in the backup list.
+	# seal OK is a constant here: this branch is only reached when it held.
+	Calculate idxNote as $cinst.$indexPut(vaultRef,pClassRef,con('seal OK, folder saved ',ok))
+	
+	Calculate text as con('backupClass: ',bakPath,proto,'folder saved [',ok,']. ',idxNote)
+	Do cBackups.$add(text,pClassRef.$name,pClassRef.$fullname,bakRef.$fullname,classBytes,abs(#CT-startTicks),'restorable')
+	Quit method text
+Else
+	Calculate text as con('backupClass: ',bakPath,proto,'NOT trusted — inspect before relying on this backup. ')
+	Do cBackups.$add(text,pClassRef.$name,pClassRef.$fullname,'',classBytes,abs(#CT-startTicks),'refused')
+	Quit method text
+End If

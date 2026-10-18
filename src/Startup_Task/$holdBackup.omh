@@ -1,0 +1,61 @@
+# $holdBackup v1 2026-09-09 (holdcommit v1) — the NET for commit-instead-of-write.
+# Renames the CURRENT vault copy of pClassRef to <cls>_prev and, ONCE per vault
+# and run, snapshots the whole vault index into execVaultHold. $commitBackups
+# then decides from the manifest: a run that really changed the class keeps the
+# fresh copy, a run that did not gets the older one back, index entry included.
+#
+# The PRESENCE of execVaultHold is the run marker, and $commitBackups removes it.
+# A hold left standing by a run that died mid-flight is therefore finished by the
+# next commit, not by this method.
+#
+# This method only HOLDS. It never decides, never deletes a backup, and never
+# writes into the live library. On every refusal the vault is exactly as it was.
+# Returns a note ending in a full stop and a space, like the vault note.
+If isclear(pClassRef)
+	Quit method 'holdBackup: no class - nothing held. '
+End If
+If pClassRef.$classtype*1>0
+Else
+	Quit method 'holdBackup: not a class - nothing held. '
+End If
+If pos('execBackup_',pClassRef.$lib().$name)=1
+	Quit method 'holdBackup: the class lives in a vault, and a vault is never a source - nothing held. '
+End If
+Calculate cName as pClassRef.$name
+Calculate vaultName as con('execBackup_',pClassRef.$lib().$name)
+Set reference vaultRef to $root.$libs.$findname(vaultName)
+If isclear(vaultRef)
+	Quit method 'holdBackup: vault not open - nothing to hold. '
+End If
+Set reference oldRef to vaultRef.$classes.$findname(cName)
+If isclear(oldRef)
+	Quit method 'holdBackup: no copy in the vault yet - nothing to hold. '
+End If
+Calculate prevName as con(cName,'_prev')
+# a leftover _prev means an earlier run died between hold and commit; it is the
+# OLDER of the two and the fresh copy under cName is the better net, so it goes.
+If vaultRef.$classes.$findname(prevName)
+	Do vaultRef.$classes.$remove(vaultRef.$classes.$findname(prevName).$ref)
+End If
+Do oldRef.$name.$assign(prevName)
+If isclear(vaultRef.$classes.$findname(prevName))
+	Quit method con('holdBackup: ',chr(91),cName,chr(93),' could not be put aside - NOTHING held. ')
+End If
+# the index snapshot, once per vault and run
+Set reference holdRef to vaultRef.$classes.$findname('execVaultHold')
+If isclear(holdRef)
+	Do vaultRef.$classes.$add(kCode,'execVaultHold')
+	Set reference holdRef to vaultRef.$classes.$findname('execVaultHold')
+	If isclear(holdRef)
+		Quit method con('holdBackup: ',chr(91),cName,chr(93),' put aside, but execVaultHold could not be created - its index entry cannot come back. ')
+	End If
+	Set reference oldRef to vaultRef.$classes.$findname('execVaultIndex')
+	If isclear(oldRef)
+		Do holdRef.$userinfo.$assign('')
+	Else
+		Do holdRef.$userinfo.$assign(oldRef.$userinfo)
+	End If
+	# who writes, saves (persistence law)
+	Save class [con(vaultName,'.execVaultHold')]
+End If
+Quit method con('held ',chr(91),cName,chr(93),' as ',chr(91),prevName,chr(93),'. ')

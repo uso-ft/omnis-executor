@@ -1,0 +1,42 @@
+#
+# Title for the log: name and version from the header, else the target path, the source path,
+# or the first code line.
+Calculate nm as ''
+Calculate ver as ''
+Calculate hdr as $cinst.$parseHeader(pText)
+For hdr.$line from 1 to hdr.$linecount step 1
+	If hdr.field='name'
+		Calculate nm as hdr.value
+	End If
+	If hdr.field='version'
+		Calculate ver as hdr.value
+	End If
+End For
+If len(nm)
+	If len(ver)
+		Quit method con(nm,' ',ver)
+	End If
+	Quit method nm
+End If
+
+# Fallbacks
+If len(pTargetPath)
+	Quit method $cinst.$formatTitleFromPath(pTargetPath)
+Else If len(pSourcePath)
+	Quit method $cinst.$formatTitleFromPath(pSourcePath)
+Else
+	# First Source code line not commented
+	Calculate scriptLines as split(pText,kCr)
+	For scriptLines.$line from 1 to scriptLines.$linecount step 1
+		Calculate pos as rxpos('^[^#]\w',scriptLines.c1,kTrue,kFalse,mchlen)
+		If pos
+			Quit method mid(scriptLines.c1,1,40)
+		End If
+		
+	End For
+	
+	# At least first line
+	Quit method mid(scriptLines.1.c1,1,40)
+	
+End If
+Quit method ''

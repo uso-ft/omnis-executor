@@ -1,0 +1,15 @@
+# Calculates Total LOC and SLOC (source lines, no comments/empty) from pText.
+# Results returned via field references pTotalLOC and pSLOC.
+Calculate work as replaceall(pText,kLf,'')
+Calculate pTotalLOC as 0
+Calculate pSLOC as 0
+While len(work)
+	Calculate line as strtok('work',kCr)
+	Calculate pTotalLOC as pTotalLOC+1
+	Calculate line as trim(line)
+	If len(line)
+		If mid(line,1,1)<>'#'
+			Calculate pSLOC as pSLOC+1
+		End If
+	End If
+End While

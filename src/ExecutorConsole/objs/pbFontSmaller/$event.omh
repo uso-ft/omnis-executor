@@ -1,0 +1,13 @@
+On evClick
+	Calculate cTextSize as cTextSize-1
+	If cTextSize<6
+		Calculate cTextSize as 6
+	End If
+	Do $cinst.$setTextSize()
+	
+	If not(cFixJumpLine)
+		Calculate line as cJumpLinks.$line
+		Do $cinst.$adjustJumpLineHeight()
+		Calculate cJumpLinks.$line as line
+		Do $cinst.$redraw()
+	End If

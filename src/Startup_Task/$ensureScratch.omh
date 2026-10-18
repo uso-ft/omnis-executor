@@ -1,0 +1,32 @@
+# Returns the full path of the scratch library, always.
+# Without pPathOnly_opt it also makes sure the library is OPEN, creating
+# it when the file is gone.
+#
+# The path is built HERE and nowhere else. $resetScratch asks for it with
+# pPathOnly_opt, so the logic exists exactly once.
+#
+# Do not open startup task: a class that accidentally becomes the startup
+# task of a scratch library must not run when the library is opened.
+# Internal name given explicitly - Omnis would otherwise derive it from the
+# file name, uppercased on Windows.
+
+Calculate scratchName as 'execScratch'
+Calculate scratchPath as con(mid(sys(10),1,rpos(sys(9),sys(10))),scratchName,'.lbs')
+If pPathOnly_opt
+	Quit method scratchPath
+End If
+If $root.$libs.$findname(scratchName)
+	Quit method scratchPath
+End If
+If FileOps.$doesfileexist(scratchPath)
+	Open library (Do not close others,Do not open startup task) [scratchPath],[scratchName]
+Else
+	Create library (Do not close others) [scratchPath],[scratchName]
+	# Create library puts an EMPTY Startup_Task into EVERY new library (2026-09-24). Here it would start when
+	# the scratch is opened through the Studio Browser, and make the bare name Startup_Task ambiguous.
+	Set reference libRef to $root.$libs.$findname(scratchName)
+	If not(isclear(libRef.$classes.$findname('Startup_Task')))
+		Do libRef.$classes.$remove(libRef.$classes.$findname('Startup_Task').$ref)
+	End If
+End If
+Quit method scratchPath

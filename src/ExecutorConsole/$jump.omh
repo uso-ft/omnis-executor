@@ -1,0 +1,50 @@
+# Opens the target of the clicked jump line with Tool.$edit.
+# A #> tag in the comment carries a clipboard payload: it is copied first
+# (\n becomes a real line break), so you jump and paste in one go.
+
+If #SHIFT
+	# jump to text defining this jump link and select it
+	Do $cinst.$jumpToScript()
+	Quit method
+End If
+
+
+# ====== Executor version of the jump block: said once, the jump goes ahead in every case (see $versionCheck)
+Do $cinst.$versionCheck(cScript,'jump')
+
+# ====== Payload
+Calculate clipPos as pos('#>',cJumpLinks.comment)
+If clipPos
+	Calculate clipText as trim(mid(cJumpLinks.comment,clipPos+2,len(cJumpLinks.comment)))
+	Calculate clipText as replaceall(clipText,con(chr(92),'n'),kCr)
+	Copy to clipboard clipText
+End If
+
+# A Copy line carries a label and a payload, no target: copied above, no jump, no bell
+If cJumpLinks.target='Copy'
+	Quit method kTrue
+End If
+# ====== Jump
+If len(cJumpLinks.target)
+	# Tool.$edit opens methods, method lines, classes, objects and variables, and reads the Omnis short form.
+	Calculate target as cJumpLinks.target
+	If pos('Do ',target)
+		Calculate target as mid(target,pos('Do ',target)+3)
+	End If
+	
+	# older jump links: $modify(n) becomes $methodlines.n
+	Calculate pos as rxpos('\$modify\((?P<NO>[0-9]+)\)',target,kTrue,kFalse,mchlen,captureRow)
+	Calculate target as replace(target,mid(target,pos,mchlen),con('$methodlines.',captureRow.NO))
+	
+	Calculate note as iTools.$edit(target)
+	If len(note)
+		Send to trace log [note]
+		Sound bell
+	End If
+	Quit method isclear(note)
+	
+Else
+	Sound bell
+End If
+
+Quit method result

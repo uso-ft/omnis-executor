@@ -1,0 +1,4 @@
+# $donateLink() -> Character
+# The donation link of the Executor (donate-ware, see _Donate). Shown in About.
+# Change it HERE only: About reads it from this method.
+Quit method 'https://donate.stripe.com/28EaEXg2E8SN1RR2RfeUU00'

@@ -1,0 +1,28 @@
+# $shortPath(pPath) -> the path as the fields and the log show it: Lib.Class, then the rest as given
+#   $root.$libs.Executor.$objects.Tool.$methods.//$edit//  ->  Executor.Tool.$methods.//$edit//
+# Four fronts are read: $root.$libs.Lib.$group.Class, $libs.Lib.$group.Class, Lib.$group.Class, Lib.Class.
+# Only the front is shortened; the rest after the class is kept character for character.
+# The short form is for DISPLAY: Omnis refuses Lib.Class in code (owner, 2026-09-26), so a
+# path that goes into notation is taken from the reference ($fullname), never from the field.
+# Comes back unchanged: a path that does not resolve (a typo stays visible, and blue), a
+# front that is no library ($clib, $cinst ...), and a short form that resolves to anything else.
+Set reference longRef to iTools.$pathToRefQuiet(pPath)
+If isclear(longRef)
+	Quit method pPath
+End If
+Calculate shortText as pPath
+If left(shortText,6)='$libs.'
+	Calculate shortText as con('$root.',shortText) ## $shortenClassPath strips $root.$libs. as one piece
+End If
+If left(shortText,1)='$'&left(shortText,12)<>'$root.$libs.'
+	Quit method pPath ## not a library front: keep it
+End If
+Calculate shortText as iTools.$shortenClassPath(shortText)
+Set reference shortRef to iTools.$pathToRefQuiet(shortText)
+If isclear(shortRef)
+	Quit method pPath
+End If
+If shortRef.$fullname<>longRef.$fullname
+	Quit method pPath ## the short form names something else: keep what was given
+End If
+Quit method shortText

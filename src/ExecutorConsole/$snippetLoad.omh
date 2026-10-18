@@ -1,0 +1,28 @@
+# Load a .txt snippet into cScript via the file dialog. Normalises line endings.
+Calculate basePath as con(mid(sys(10),1,rpos(sys(9),sys(10))),'execSnippets',sys(9))
+Do FileOps.$createdir(basePath,kTrue) Returns flag1
+Calculate chosenPath as basePath
+Do FileOps.$getfilename(chosenPath,'Open snippet','*.txt') Returns flag1
+If not(flag1)
+	Quit method ## user cancelled
+End If
+
+Do iFileOps.$openfile(chosenPath,kTrue) Returns flag1
+If flag1
+	Do iFileOps.$readcharacter(kUniTypeUTF8,content,0,0,kTrue) Returns flag1
+	Do iFileOps.$closefile()
+	Calculate content as replaceall(content,con(kCr,kLf),kCr)
+	Calculate content as replaceall(content,kLf,kCr)
+	Calculate cScript as content
+	
+	Do $cinst.$logSetValues()
+	Do $cinst.$setExecutorValues(kTrue)
+	Do $cinst.$redraw()
+	If cView<>2
+		Queue set current field efScript
+	End If
+Else
+	Do iFileOps.$getlasterror(errText) Returns flag1
+	OK message Load failed {[errText]}
+End If
+Quit method

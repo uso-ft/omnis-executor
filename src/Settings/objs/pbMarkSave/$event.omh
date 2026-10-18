@@ -1,0 +1,6 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	If $cinst.$markListSave()
+		Calculate iMarkerModified as kFalse
+	End If
+	
+	Do $cinst.$redraw()

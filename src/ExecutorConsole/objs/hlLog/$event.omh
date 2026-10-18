@@ -1,0 +1,39 @@
+On evHeadedListEditStarting
+	If pColumnNumber<>2
+		# let only the title to be edited
+		Quit event handler (Discard event)
+	End If
+	Calculate iListEditStarted as kTrue
+	
+On evHeadedListEditFinished
+	Calculate iListEditStarted as kFalse
+	
+On evClick
+	If iListEditStarted
+		# Do not interfere with editing (the Queue Event mostly !)
+		Quit event handler (Discard event)
+	End If
+	
+	# Process event and continue
+	Do $cinst.$loadExecutionLogRow(pLineNumber,#SHIFT|#COMMAND|#CTRL)
+	Quit method
+	
+	
+On evHeadedListEditStarting
+	# Allow edit of title
+	If (pColumnNumber=2)
+		Process event and continue
+		
+	Else
+		Quit event handler (Discard event)
+	End If
+	
+	
+On evHeadedListEditFinishing
+	If pColumnNumber=2
+		Calculate cLog.execTitle as pNewText
+	End If
+	
+	
+On evHeadedListHeadResize
+	Calculate cExecutionColWidths as $cfield.$columnwidths

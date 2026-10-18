@@ -1,0 +1,20 @@
+[
+	{
+		"name": "$event",
+		"order": 1,
+		"pvardefs": [
+			{
+				"name": "pSystemKey",
+				"order": 1,
+				"type": "kInteger",
+				"subtype": "k32bitint",
+				"sublen": 0,
+				"param": 1
+			}
+		],
+		"lvardefs": [
+
+		],
+		"empty": true
+	}
+]

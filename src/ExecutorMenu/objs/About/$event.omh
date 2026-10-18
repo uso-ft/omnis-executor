@@ -1,0 +1,2 @@
+On evClick
+	OK message About Executor (Icon) {Executor [$ctask().$version()] (build [mid($clib().$userinfo,12,pos(' ',$clib().$userinfo)-12)])//AI-assisted code changes for Omnis Studio////DONATE-WARE: if it saves you time, please support it://[$ctask().$donateLink()]////Copyright (c) 2026 Udo Sonnabend (USO-FT), MIT License//[$ctask().$projectLink()]}

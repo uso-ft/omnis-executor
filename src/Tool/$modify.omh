@@ -1,0 +1,27 @@
+# Opens the class editor for pRef; pMethods kTrue opens Modify methods, kFalse the class design.
+
+Calculate className as pObjRef.$class().$name
+Calculate libraryName as pObjRef.$class().$lib().$name ## Detour necessary ! @US/10.05.2016
+Set reference lclassRef to pObjRef.$class()
+
+If className<>''&libraryName<>''
+	
+	If pModifyMethods
+		Switch lclassRef.$classtype ## only for classes with methods
+			Case kObjectclass,kWindow,kReport,kMenu,kTask
+				If iHasMasterstudio
+					If lclassRef.$methods.$findname('$initFrameset') ## is a Delegate → most info is in $initFrameset
+						Set reference methodRef to lclassRef.$methods.$findname('$initFrameset').$ref
+						Do methodRef.$modify(1)
+						Quit method
+					End If
+				End If
+				
+				Modify methods [libraryName].[className]
+				Quit method
+		End Switch
+	End If
+	
+	Modify class [libraryName].[className]
+	
+End If

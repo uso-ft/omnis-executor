@@ -1,0 +1,7 @@
+# Opens only the variable value window. Compare with the commented-out variant below that
+# analyses the variable INSIDE the instance, e.g. iMdEntityDelegateRef.iProfileListe.AP_BEZ
+# can only display the content of a SINGLE cell.
+
+# The following analyses the variable INSIDE the instance:
+Do $cinst.$cloneMethodToAndExecute($cinst.$methods.$findname('$prototypeOpenEntityList').$ref,pInstance.$class(),pInstance.$ref,,pVariableName,pErrorMsg) ## @SELF
+Quit method

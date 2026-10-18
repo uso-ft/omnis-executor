@@ -1,0 +1,47 @@
+# PROTOTYPE — injection template, runs INSIDE the living target instance (clone-and-run).
+# Tests whether an expression's call chain can be evaluated WITHOUT a runtime error.
+# Why: in frameworks a chain like MoContext.$mdManagerWindow().$commandController().$activateTarget
+# can resolve a MIDDLE term to 'unnamed_value', and the NEXT term then causes a HARD runtime error.
+# $cando never errors, so we walk the chain term by term and $cando-test each growing prefix —
+# always WITHOUT the trailing brackets, so the methods are never executed (no evaluation, no side
+# effects). Returns kTrue only if every prefix is valid → the caller may then evaluate the whole
+# chain safely.
+# WARNING: when the caller finally evaluates the chain, the intermediate links with '()' are
+# EXECUTED to navigate to the next reference (e.g. $commandController() in
+# MoContext.$mdManagerWindow().$commandController().$activateTarget). A link with side effects
+# (...$giveRefAndDeleteData()...) would then alter data. This $cando test itself never executes
+# them — it tests each prefix WITHOUT the trailing brackets.
+
+Calculate rest as pExpr ## strtok consumes a copy of this, term by term
+Calculate prefix as '' ## the growing path tested so far
+
+While len(rest)
+	# append the next term ('.' separated) to the prefix
+	Calculate prefix as con(prefix,pick(len(prefix)=0,'.',''),strtok('rest','.')) ## strtok needs a literal var name
+	
+	# build the test prefix WITHOUT the trailing bracket pair, so $cando does not execute it.
+	# scan from the end, balancing, to drop the last (...) whatever it contains, e.g. $do('a.b') or $do(x(y))
+	Calculate testExpr as prefix
+	If mid(testExpr,len(testExpr),1)=')'
+		Calculate level as 0
+		Calculate scanPos as len(testExpr)
+		While scanPos>0
+			If mid(testExpr,scanPos,1)=')'
+				Calculate level as level+1
+			Else If mid(testExpr,scanPos,1)='('
+				Calculate level as level-1
+				If level=0
+					Calculate testExpr as mid(testExpr,1,scanPos-1) ## cut the trailing call
+					Break to end of loop
+				End If
+			End If
+			Calculate scanPos as scanPos-1
+		End While
+	End If
+	
+	If not([testExpr].$cando) ## this term cannot be evaluated here → chain is unsafe / does not resolve
+		Quit method kFalse
+	End If
+End While
+
+Quit method kTrue

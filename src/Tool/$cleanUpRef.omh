@@ -1,0 +1,17 @@
+# Re-resolves the reference to the CORRECT instance based on its object path.
+# ==========================================
+# When references are not passed cleanly, Omnis creates a COPY of the instance in memory.
+# You can spot this (use right mouse click) by an instance name starting with an underscore,
+# e.g. ____42134_EntityCtr.
+
+If pfRef.$objectpath.$cando ## accessor exists
+	Calculate objectPath as pfRef.$objectpath()
+Else If pfRef.iObjectpath.$cando ## otherwise via hard access
+	Calculate objectPath as pfRef.iObjectpath
+End If
+
+If len(objectPath)
+	Set reference pfRef to [objectPath].$ref
+End If
+
+Quit method

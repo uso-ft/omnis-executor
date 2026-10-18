@@ -1,0 +1,94 @@
+# $collectObjects(pNode,pList,pLevel_opt,pPath_opt) -> row count
+# Collects ALL objects of a window class or container into pList,
+# recursively. Callers pass only the first two parameters:
+#   Do tools.$collectObjects($clib.$classes.MyWindow.$ref,list)
+#
+# Recursive: $objs yields only the direct children of one level, there is no flat view of a class.
+# The recursion is structural: an object with children ($objs.$count>0) is a container, no type list.
+#
+# $objlink is read as INFORMATION only (Omnis help, verified):
+#   32 bit, 0 = top level, low 16 bits = $order of the container,
+#   high 16 bits = page/tab number for paged/tab panes, or column and
+#   section for complex grids. Example: 131079 = 0x00020007 = page 2
+#   inside the object with $order 7.
+#
+# Columns per row:
+#   objRef   itemref to the object
+#   objName  $name
+#   objType  $objtype
+#   level    nesting depth, 0 = top level
+#   pageNo   page/tab number from $objlink, 0 if none (always 0 for
+#            background objects, they carry no objlink page entry)
+#   isBkgnd  kTrue when the object comes from $bobjs (lines, frames,
+#            labels); those are often NAMELESS, and objPath is then empty
+#   isPreLeaf kTrue on a row whose children have no children of their own
+#   objPath  dotted path inside the class, e.g. scrRight.ppBottom.pbX
+#
+# pLevel_opt/pPath_opt are internal recursion state. Their ABSENCE
+# marks the entry call, which is where pList gets defined and cleared —
+# a recursive call always passes them (even level 0 would be explicit).
+
+# entry call:
+# ===========
+If isnull(pLevel_opt)
+	Do pList.$define()
+	Do pList.$cols.$add('objRef',kItemref)
+	Do pList.$cols.$add('objName',kCharacter,kSimplechar,255)
+	Do pList.$cols.$add('objType',kCharacter,kSimplechar,255)
+	Do pList.$cols.$add('level',kInteger,k32bitint)
+	Do pList.$cols.$add('pageNo',kInteger,k32bitint)
+	Do pList.$cols.$add('isBkgnd',kBoolean)
+	Do pList.$cols.$add('isPreLeaf',kBoolean)
+	Do pList.$cols.$add('objPath',kCharacter,kSimplechar,100000000)
+	Do pList.$clear()
+	Calculate lvl as 0
+	Calculate parentPath as ''
+Else
+	Calculate lvl as pLevel_opt
+	Calculate parentPath as pPath_opt
+End If
+
+# $objs:
+# ======
+Set reference node to pNode.$objs.$first()
+Calculate nodeLine as pList.$linecount
+Calculate isPreLeaf as kTrue
+
+While not(isclear(node))
+	Calculate pageNo as int(node.$objlink/65536)
+	If len(parentPath)
+		Calculate path as con(parentPath,'.',node.$name)
+	Else
+		Calculate path as node.$name
+	End If
+	Do pList.$add(node.$ref,node.$name,node.$objtype,lvl,pageNo,kFalse,kFalse,path)
+	# recursive for container fields: children make it a container
+	If node.$objs.$count>0
+		Calculate isPreLeaf as kFalse
+		Do $cinst.$collectObjects(node,pList,lvl+1,path)
+	End If
+	
+	Set reference node to pNode.$objs.$next(node)
+End While
+
+# $bobjs:
+# =======
+Set reference node to pNode.$bobjs.$first()
+
+While not(isclear(node))
+	If len(parentPath)
+		Calculate path as con(parentPath,'.',node.$name)
+	Else
+		Calculate path as node.$name
+	End If
+	Do pList.$add(node.$ref,node.$name,node.$objtype,lvl,0,kTrue,kFalse,path)
+	
+	Set reference node to pNode.$bobjs.$next(node)
+End While
+
+If isPreLeaf
+	# the children of this node have no children
+	Calculate pList.[nodeLine].isPreLeaf as kTrue
+End If
+
+Quit method pList.$linecount

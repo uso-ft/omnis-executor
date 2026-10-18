@@ -1,0 +1,7 @@
+# $showInheritanceTree(pClassRef)
+# Opens the core Inheritance Tree window for pClassRef (core, undocumented,
+# reverse engineered from IDE shell oLibraries.$cmenuclick Case 10).
+#   $dotoolmethod(kEnvToolBrowser,6,classRef,kTrue) = Inheritance Tree
+#   $dotoolmethod(kEnvToolBrowser,6,classRef)       = Interface Manager
+# pClassRef: reference to a class (any classtype). No return value.
+Do $root.$modes.$dotoolmethod(kEnvToolBrowser,6,pClassRef,kTrue) ## @CORE

@@ -1,0 +1,59 @@
+# Determines a possible View for a path.
+# Recursive method!
+# IN:  object path
+# OUT: reference to $component().$ref
+
+Set reference viewRef to [pPath].$ref
+
+If len(pPath)
+	
+	# first check the component
+	If [pPath].$component.$cando()
+		Quit method [pPath].$component().$ref
+	End If
+	
+	Switch [pPath].$class().$classtype
+		
+		Case kWindow,kSubwindow ## component path
+			Quit method [pPath].$ref
+			
+		Case kTask ## MoContext
+			If [pPath].$component.$cando
+				Quit method [pPath].$component().$ref
+			Else If [pPath].$superController.$cando
+				Quit method $cinst.$returnView([pPath].$superController().$objectPath()) ## recursive!
+			Else
+				Quit method '' ## no view
+			End If
+			
+		Case kTable,kList
+			Quit method [pPath].$mdManagerList().$entityController().$component().$ref
+			
+		Default
+			If [pPath].$isa(cMgrRef) ## Manager
+				If [pPath].$isa(cMgrListRef) ## ListManager
+					Quit method [pPath].$entityController().$component().$ref
+				Else If [pPath].$isa(cMgrRecordRef) ## RecordManager
+					Quit method [pPath].iMdEntityControllerRef.$component().$ref ## hard-coded! @? no accessor
+				Else If [pPath].$isa(cMgrFiedsRef) ## FieldManager
+					Quit method [pPath].iListManagerRef.$entityController().$component().$ref ## hard-coded! @? no accessor
+				End If
+				
+			Else If [pPath].$isa(cDlgRef) ## Delegate
+				Quit method [pPath].iPaneControllerRef.$component().$ref ## hard-coded, no accessor @?
+				
+			Else If [pPath].$isa(cCtrlRef) ## Controller
+				If [pPath].$component.$cando
+					Quit method [pPath].$component().$ref
+				Else
+					Quit method $cinst.$returnView($cinst.$stripLastChain(pPath))
+				End If
+				
+			End If
+			# last attempt
+			Quit method $cinst.$returnView($cinst.$stripLastChain(pPath))
+			
+	End Switch
+End If
+
+Quit method ''

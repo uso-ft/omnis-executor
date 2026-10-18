@@ -1,0 +1,6 @@
+On evClick
+	Process event and continue
+	Calculate line as cJumpLinks.$line
+	Do $cinst.$adjustJumpLineHeight()
+	Calculate cJumpLinks.$line as line
+	Do $cinst.$redraw()

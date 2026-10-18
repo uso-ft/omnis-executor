@@ -1,0 +1,47 @@
+# Static notation paths: $-first, or library-first (Lib.$classes.X: one word before the first '.$'); runtime-bound is out of scope.
+Calculate cand as trim(pExpr)
+If (left(cand,1)<>'$')&((pos('.$',cand)=0)|(pos('.',cand)<pos('.$',cand)))
+	Quit method '' ## not a static notation path
+End If
+While len(cand)>0
+	
+	# 1) if it ends in '(...)', drop the WHOLE trailing '.$name(...)' (call + method name)
+	If right(cand,1)=')'
+		Calculate p as len(cand)
+		Calculate level as 0
+		While p>0
+			If mid(cand,p,1)=')'
+				Calculate level as level+1
+			Else If mid(cand,p,1)='('
+				Calculate level as level-1
+			End If
+			If level=0
+				Break to end of loop
+			End If
+			Calculate p as p-1
+		End While
+		Calculate cand as mid(cand,1,p-1) ## now ends in '.$name'
+		Calculate p as rpos('.$',cand)
+		If p>0
+			Calculate cand as mid(cand,1,p-1) ## drop the '.$name' too
+		End If
+	End If
+	
+	# 2) resolve the (call-free) candidate; validity needs a real name
+	# quiet walk (thread 039): the bracket form raised 25207 on pasted text and stopped the run
+	Set reference ref to $cinst.$pathToRefQuiet(cand)
+	If not(isclear(ref))&ref.$name<>''&ref.$name<>'unnamed_value'
+		Set reference ref2 to ref.$group
+		If pStopAt_opt=''|ref2.$name=pStopAt_opt
+			Quit method ref
+		End If
+	End If
+	
+	# 3) peel the last '.$segment' and retry
+	Calculate p as rpos('.$',cand)
+	If p=0
+		Quit method '' ## nothing left to peel
+	End If
+	Calculate cand as mid(cand,1,p-1)
+End While
+Quit method '' ## exhausted, no valid ref

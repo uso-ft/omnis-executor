@@ -1,0 +1,28 @@
+# Decode ESC icon codes -> comma-separated decimal ids. Handles type 08 (hex) + 16 (decimal).
+# Works on the hex view so invisible 1B/08/16/23 bytes are visible.
+Calculate hex as upp(bintohex(chartoutf8(pCode)))
+Calculate ids as ''
+While pos(chr(49,66),hex)
+	Calculate hex as mid(hex,pos(chr(49,66),hex)+2)
+	Calculate typ as mid(hex,1,2)
+	Calculate hex as mid(hex,3)
+	If pos(chr(50,51),hex)
+		Calculate body as mid(hex,1,pos(chr(50,51),hex)-1)
+		Calculate hex as mid(hex,pos(chr(50,51),hex)+2)
+	Else
+		Calculate body as hex
+		Calculate hex as ''
+	End If
+	Calculate seg as utf8tochar(binfromhex(body))
+	If typ='16'
+		Calculate n as seg*1
+	Else If typ='08'
+		Calculate n as bintoint32(binfromhex(seg))
+	Else
+		Calculate n as -1
+	End If
+	If n>=0
+		Calculate ids as con(ids,pick(len(ids)>0,'',','),n)
+	End If
+End While
+Quit method ids

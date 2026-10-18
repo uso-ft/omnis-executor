@@ -1,0 +1,31 @@
+# Ensures the backup vault (execBackup_<SourceLib>) is open; opens it, or CREATES it when the
+# file is missing. Returns a protocol note - empty means it was already open.
+# The note never names its caller. It had one for months and has two since
+# tonight, and a note carrying the first caller's name reads as a lie from
+# the second. Every branch ends the same way: a sentence, a full stop, a
+# space — so a caller can put it anywhere in a line and add nothing.
+
+If $root.$libs.$findname(pVaultName)
+	Quit method ''
+End If
+
+Calculate vaultPath as $cinst.$backupPath()
+Do FileOps.$createdir(vaultPath,kTrue)
+Calculate vaultPath as con(vaultPath,pVaultName,'.lbs')
+If FileOps.$doesfileexist(vaultPath)
+	Open library (Do not close others,Do not open startup task) [vaultPath],[pVaultName]
+	# no warning: sealweak v1 (2026-09-07) closed the vault, backed up, and read the copy four ways - all identical
+	Quit method 'vault was CLOSED - opened now. '
+Else
+	Create library (Do not close others) [vaultPath],[pVaultName]
+	If not($root.$libs.$findname(pVaultName))
+		Quit method con('vault could not be opened or created at ',chr(91),vaultPath,chr(93),'. ')
+	End If
+	# Create library puts an EMPTY Startup_Task into EVERY new library (owner, measured 2026-09-24 21:58).
+	# A vault is an archive and must start nothing when opened, so it goes at birth.
+	Set reference vaultLibRef to $root.$libs.$findname(pVaultName)
+	If not(isclear(vaultLibRef.$classes.$findname('Startup_Task')))
+		Do vaultLibRef.$classes.$remove(vaultLibRef.$classes.$findname('Startup_Task').$ref)
+	End If
+	Quit method con('vault was CREATED at ',chr(91),vaultPath,chr(93),'. ',pick(isclear(vaultLibRef.$classes.$findname('Startup_Task')),'Its Startup_Task could NOT be removed. ','Startup_Task removed. '))
+End If

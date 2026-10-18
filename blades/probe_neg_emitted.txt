@@ -1,0 +1,7 @@
+Calculate text2 as ''
+Calculate text2 as con(text2,'# a generated body that no other blade would look at',kCr)
+Calculate text2 as con(text2,'If flag',kCr)
+Calculate text2 as con(text2,'Calculate n as val(seg)',kCr)
+Calculate text2 as con(text2,'Set reference ref = $clib',kCr)
+Calculate text2 as con(text2,'End If')
+Do ref2.$methodtext.$assign(text2) Returns flag1

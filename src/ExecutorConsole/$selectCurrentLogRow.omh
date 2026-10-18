@@ -1,0 +1,7 @@
+# Selects exactly the current log row and nothing else.
+# Called by $finishRun and $saveToLog. Only a click in hlLog builds a multiple selection.
+Calculate line as cLog.$line
+For cLog.$line from 1 to cLog.$linecount step 1
+	Calculate cLog.$selected as cLog.$line=line
+End For
+Calculate cLog.$line as line

@@ -1,0 +1,21 @@
+# Builds the display list iBackupLibraries from the open execBackup_ libraries, with class count and bytes.
+# Opens and closes nothing and never touches iOpenedLibraries: pbSelectFromDisk refreshes the list with this alone,
+# so $destruct still knows which vaults the window opened (vault_keepchosen, 2026-09-24).
+Do iBackupLibraries.$define()
+Do iBackupLibraries.$cols.$add('ref',kItemref)
+Do iBackupLibraries.$cols.$add('libName',kCharacter,kSimplechar,255)
+Do iBackupLibraries.$cols.$add('filePath',kCharacter,kSimplechar,100000000)
+Do iBackupLibraries.$cols.$add('classes',kInteger,k32bitint)
+Do iBackupLibraries.$cols.$add('bytes',kInteger,k32bitint)
+Do $libs.$sendall(iBackupLibraries.$add($ref,$ref.$name,$ref.$pathname,0,0),pos('execBackup_',$sendallref().$name))
+# the byte sum of each vault goes through the local list sizes. iClasses is the class list of $loadClasses and is not touched here (vaultsizes_local, 2026-09-23).
+For iBackupLibraries.$line from 1 to iBackupLibraries.$linecount step 1
+	Do iBackupLibraries.ref().$classes.$makelist($ref.$disksize*1) Returns sizes
+	Calculate iBackupLibraries.classes as sizes.$linecount
+	For sizes.$line from 1 to sizes.$linecount step 1
+		Calculate iBackupLibraries.bytes as iBackupLibraries.bytes+sizes.C1
+	End For
+End For
+
+Do iBackupLibraries.$line.$assign(1)
+Do iBackupLibraries.$selected.$assign(kTrue)

@@ -1,0 +1,55 @@
+# Analyses the executor text and returns the TARGET PATH as a string:
+#   ''           -> no target found
+#   'targetRef'  -> the target is the runtime targetRef variable
+#   <full path>  -> the fully resolved reference ($fullname).
+# Rule: FIRST OCCURRENCE wins -- first targetRef mention vs first static
+# 'Set reference <var> to <path>', $-first or library-first. posStatic<=posTargetRef -> static path wins.
+Calculate codeOnly as iTools.$stripComments(pText)
+
+Calculate count as pos('targetref',low(codeOnly)) ## first targetRef mention
+Calculate count2 as rxpos('set\s+reference\s+\w+\s+to\s+(?=\$|[A-Za-z_]\w*\.\$)',codeOnly,kTrue,kFalse,matchLen) ## first static path, $-first or library-first
+If count2>0&(count=0|count2<=count)
+	# static path wins -> pull the clean path (from the $) and resolve it
+	Calculate targetPath as iTools.$firstPathFrom(codeOnly,count2+matchLen)
+	Set reference ref to iTools.$exprToValidRef(targetPath,'') ## the static path: the peeling resolver first, it handles a trailing call
+	If isclear(ref)
+		Set reference ref to iTools.$pathToRefQuiet(targetPath) ## then the quiet walk: Lib.$classes.X and Lib.Class
+	End If
+	If not(isclear(ref))
+		Quit method ref.$fullname
+	End If
+	If count>0
+		Quit method 'targetRef' ## static path did not resolve -> fall back
+	End If
+Else If count>0
+	Quit method 'targetRef' ## targetRef comes first (or no static path)
+End If
+
+# 2b) 'Do code method Class/Method ...' syntax -> resolve to the METHOD.
+If pos('code method ',low(codeOnly))>0
+	Set reference ref to iTools.$codeMethodExprToMethodRef(codeOnly)
+	If ref<>''
+		Quit method ref.$fullname
+	End If
+End If
+
+# 3) otherwise: full expression, then bare class, then library.
+Calculate targetPath as iTools.$extractFirstExpressionFromString(codeOnly)
+If targetPath<>''
+	Set reference ref to iTools.$exprToValidRef(targetPath,'') ## the first expression: the same two resolvers in the same order
+	If isclear(ref)
+		Set reference ref to iTools.$pathToRefQuiet(targetPath)
+	End If
+	If not(isclear(ref))
+		Quit method ref.$fullname
+	End If
+End If
+Set reference ref to iTools.$getFirstClassRefFromString(codeOnly,0,kTrue)
+If ref<>''
+	Quit method ref.$fullname
+End If
+Set reference ref to iTools.$getFirstLibRefFromString(codeOnly)
+If ref<>''
+	Quit method ref.$fullname
+End If
+Quit method ''

@@ -1,0 +1,86 @@
+#
+# Builds the list of classes a script should have backed up.
+# UNION of the code scan and the header - the header may only ENLARGE the
+# list, never shrink it. The code is the truth; the header can be wrong or
+# missing.
+#
+# Header values are often prose, so only Lib.Class is accepted: one dot, no $ in the class part,
+# both halves must resolve. Everything else is returned as a note.
+#
+# Returns clsRef, clsName, origin, note, clsKey.
+#   origin  scan | CREATES | MODIFIES | REMOVES
+#   note    only on rows that could NOT be resolved; clsRef is EMPTY there - an omitted argument.
+#   clsKey  Lib.Class, taken while clsRef is still valid. The caller re-resolves by it after
+#           the run: a script that removes and re-adds a class leaves clsRef dead, and If on a
+#           dead reference is TRUE (runs 2026-09-23 00:45/00:52, stalekey_fix v1).
+# seen holds the keys of RESOLVED rows only, so a note never blocks a later hit on the same name.
+Do out.$define(clsRef,clsName,origin,note,clsKey)
+Calculate seen as ''
+Calculate gaps as '' ## bare names already reported as a note
+
+# --- source 1: the code scan, main source ---
+Calculate scan as $cinst.$targetsFromText(pText) ## positional, strips comments itself
+For scan.$line from 1 to scan.$linecount step 1
+	Calculate clsName as scan.clsName
+	If scan.clsRef
+		Calculate clsKey as iTools.$shortenClassPath(scan.clsRef().$fullname)
+		If pos(con(kCr,low(clsKey),kCr),con(kCr,seen))=0
+			Calculate seen as con(seen,low(clsKey),kCr)
+			Do out.$add(scan.clsRef,clsName,'scan',scan.note,clsKey)
+		End If
+	Else If len(clsName)=0
+		Do out.$add(,'','scan',scan.note,'') ## a gap the scan could not resolve, kept visible. Omitted, never #NULL: #NULL stores unnamed_value and If on it is TRUE
+	Else If pos(con(kCr,low(clsName),kCr),con(kCr,gaps))=0
+		Calculate gaps as con(gaps,low(clsName),kCr)
+		Do out.$add(,clsName,'scan',scan.note,'')
+	End If
+End For
+
+# --- source 2: the header, may only add ---
+Calculate hdr as $cinst.$parseHeader(pText)
+For hdr.$line from 1 to hdr.$linecount step 1
+	Calculate origin as hdr.field
+	If origin='CREATES'|origin='MODIFIES'|origin='REMOVES'
+		Calculate toks as $cinst.$splitCommaList(hdr.value)
+		For toks.$line from 1 to toks.$linecount step 1
+			Calculate tok as toks.tok
+			If low(tok)='nothing'
+			Else
+				Calculate q as pos('.',tok)
+				Calculate note as ''
+				If q=0
+					Calculate note as con('not Lib.Class, skipped: ',tok)
+				End If
+				If len(note)=0
+					Calculate libNm as mid(tok,1,q-1)
+					Calculate clsName as mid(tok,q+1)
+					If pos('.',clsName)|pos('$',clsName)|pos(' ',clsName)|pos('(',clsName)
+						Calculate note as con('not a plain class name, skipped: ',tok)
+					End If
+				End If
+				If len(note)=0
+					Set reference libRef to $root.$libs.$findname(libNm)
+					If isclear(libRef)
+						Calculate note as con('library not open, skipped: ',tok)
+					End If
+				End If
+				If len(note)=0
+					Set reference clsRef to libRef.$classes.$findname(clsName)
+					If isclear(clsRef)
+						Calculate note as con('class not found, skipped: ',tok)
+					End If
+				End If
+				If len(note)
+					Do out.$add(,tok,origin,note,'')
+				Else
+					Calculate clsKey as iTools.$shortenClassPath(clsRef.$fullname)
+					If pos(con(kCr,low(clsKey),kCr),con(kCr,seen))=0
+						Calculate seen as con(seen,low(clsKey),kCr)
+						Do out.$add(clsRef.$ref,clsName,origin,'',clsKey)
+					End If
+				End If
+			End If
+		End For
+	End If
+End For
+Quit method out

@@ -1,0 +1,3 @@
+# close all libraries opened by this window
+
+Do $libs.$sendall($libs.$remove($sendallref),iOpenedLibraries.$search(iOpenedLibraries.c2=$sendallref.$pathname,kTrue,kFalse,kFalse,kFalse)) Returns count

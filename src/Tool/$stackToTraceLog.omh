@@ -1,0 +1,19 @@
+# Debug helper: writes the current call stack to the trace log to see where a call came from.
+
+Calculate stack as sys(192)
+Send to trace log --Stack:: [stack.2.method]
+
+If pEventCode.$cando
+	Send to trace log -----pEventCode=[pEventCode]
+End If
+If $libs.MoBaseClasses.$cando
+	Send to trace log -----Notification=[$ctask.$notificationCenter().cCurrentNotification]
+End If
+
+
+For i from 1 to %0 step 1
+	Send to trace log -----p[i]= [eval(con('p',i))]
+End For
+For stack.$line from 2 to stack.$linecount step 1
+	Send to trace log --------[con(stack.classitem.$lib().$name,'.',stack.classitem.$class().$name,pick(len(stack.object)=0,con('.',stack.object)),'.',stack.method,'   ',stack.line,' ',stack.linetext)]
+End For

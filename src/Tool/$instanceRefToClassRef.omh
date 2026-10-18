@@ -1,0 +1,20 @@
+# Convert Reference to object in runtime instance to object ref in static class
+# Warning: pRef.$fullname omits dummy containers as kScrollbox, kGroupbox, kPagedpane, kTabpane in the path.
+# But pRef.$container() gives the correct container
+
+Set reference ref to pRef
+Calculate relPath as ref().$name
+Set reference containerRef to ref.$container().$ref
+
+# Climb up $objs containers
+While containerRef().$obj().$class
+	Set reference ref to containerRef.$ref
+	Calculate relPath as con(ref().$name,'.',ref().$group().$name,'.',relPath)
+	Set reference containerRef to ref.$container().$ref
+	
+End While
+
+Calculate path as con(ref.$class().$fullname,'.$objs.',relPath)
+Set reference ref to [path].$ref
+
+Quit method ref

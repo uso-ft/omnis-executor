@@ -1,0 +1,6 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	If isclear(iTargetRef)
+		Do $clib.$windows.NotationBrowser.$openonce('*',kWindowCenter,cTargetPath,$cinst.$setTargetPathCallback.$ref)
+	Else
+		Do $clib.$windows.NotationBrowser.$openonce('*',kWindowCenter,iTargetRef.$fullname,$cinst.$setTargetPathCallback.$ref) ## the field shows Lib.Class, the browser needs notation
+	End If

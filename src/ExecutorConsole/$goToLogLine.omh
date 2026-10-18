@@ -1,0 +1,10 @@
+# Lands log navigation on a row. Returns kFalse and bells when the line does not exist.
+If cLog.$linecount=0|pLine<1|pLine>cLog.$linecount
+	Sound bell
+	Quit method kFalse
+End If
+Do iTools.$selectAllLines(cLog,kFalse)
+Do cLog.$line.$assign(pLine)
+Do cLog.$selected.$assign(kTrue)
+Do $cinst.$loadExecutionLogRow()
+Quit method kTrue

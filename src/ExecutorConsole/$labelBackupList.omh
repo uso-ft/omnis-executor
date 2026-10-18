@@ -1,0 +1,9 @@
+Calculate columnNames as ''
+Do iBackupsRef.$cols.$sendall(columnNames.$assign(con(columnNames,',',$sendallref.$name)))
+Calculate columnNames as mid(columnNames,2)
+Do $cinst.$objs.scrBackupLog.$objs.hlBackups.$columnnames.$assign(columnNames)
+Do $cinst.$objs.scrBackupLog.$objs.hlBackups.$colcount.$assign(iBackupsRef.$colcount)
+
+If len(cBackupColWidths) ## empty: the class widths stand (layout_reset v1)
+	Do $cinst.$objs.scrBackupLog.$objs.hlBackups.$columnwidths.$assign(cBackupColWidths)
+End If

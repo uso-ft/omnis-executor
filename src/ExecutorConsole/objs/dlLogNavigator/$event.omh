@@ -1,0 +1,12 @@
+On evMouseEnter
+	Calculate $cobj.$listheight as cLog.$linecount
+	
+On evClick
+	
+	# fast "synchronization"
+	Do $cinst.$objs.scrExecutionLog.$objs.hlLog.$redraw()
+	
+	Do $cinst.$loadExecutionLogRow(pLineNumber)
+	Do iTools.$selectAllLines(cLog,kFalse)
+	Do cLog.$selected.$assign(kTrue)
+	Quit method

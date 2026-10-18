@@ -1,0 +1,5 @@
+# Searches specified text in specified list, redraws the list
+Do $cinst.$findInLists(cFindExecutionLogText,cLog.$ref,pDirection_opt,pSoundBell_opt) Returns line
+If line
+	Do $cinst.$loadExecutionLogRow(line)
+End If

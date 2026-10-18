@@ -1,0 +1,3 @@
+# Register Tracelog variable to synchronize
+Set reference ref to $cinst.$objs.scrTraceLog.$objs.hlTraceLog
+Calculate iTraceLog as $modes.$dotoolmethod(kEnvToolBrowser,189,ref) ## @CORE

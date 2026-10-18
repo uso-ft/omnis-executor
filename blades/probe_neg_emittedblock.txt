@@ -1,0 +1,18 @@
+# probe_neg_emittedblock -- check_emitted form 4, block replacement. Must FAIL.
+# The NEW block reaches replaceall into the assigned variable; the rebuilt chain
+# of the verification afterwards writes nothing and must NOT be read.
+Set reference methodRef to Executor.$classes.Tool.$methods.//$pathToRefQuiet//
+Calculate text as con(kCr,methodRef.$methodtext,kCr)
+Calculate text2 as ''
+Calculate text2 as con(text2,kCr,'Set reference ref2 to ref.$findname(seg) ## a name is an argument')
+Calculate text2 as con(text2,kCr)
+Calculate text3 as ''
+Calculate text3 as con(text3,kCr,'Calculate n as val(seg)',kCr,'Set reference ref2 to iTools.$pathToRefQuit(seg)')
+Calculate text3 as con(text3,kCr,'Do $cinst.$logBack()')
+Calculate text3 as con(text3,kCr)
+Calculate text as replaceall(text,text2,text3)
+Calculate text as mid(text,2,len(text)-2)
+Do methodRef.$methodtext.$assign(text) Returns flag2
+Calculate text3 as ''
+Calculate text3 as con(text3,kCr,'this verification chain is not code and must not be read')
+Calculate text3 as con(text3,kCr)

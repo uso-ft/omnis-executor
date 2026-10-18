@@ -1,0 +1,45 @@
+# $getClassObjectRef(pObjRef) -> STATIC object ref in the CLASS, or NULL
+# Maps an INSTANCE object to its counterpart in the window class: walks up the container chain
+# to the enclosing window or subwindow instance, re-adding the levels $container() skips, then
+# resolves <window class fullname>.<relativePath> via $pathToRef.
+# Returns NULL when the chain runs off, when the object IS the window,
+# or for dynamically added objects without a class counterpart.
+
+Set reference containerRef to pObjRef.$ref
+Calculate relativePath as ''
+Calculate chainList as split(pObjRef.$fullname,'.')
+Calculate chainList.$line as chainList.$linecount
+While kTrue
+	If isclear(containerRef) ## ran off the top
+		Break to end of loop
+	Else If containerRef.$objtype=kSubwindow ## reached a subwindow
+		Break to end of loop
+	Else If containerRef.$classtype=kWindow ## reached the window
+		Break to end of loop
+	End If
+	# not there yet: consume the current segment, then climb one level
+	Calculate relativePath as con(chainList.c1,'.',relativePath)
+	Calculate chainList.$line as chainList.$line-1
+	Set reference containerRef to containerRef.$container().$ref
+	If not(isclear(containerRef))
+		# re-add the intermediate segments $container() skipped,
+		# building relativePath right to left for the FULL static path
+		While containerRef().$name<>chainList.c1&chainList.$line>0
+			Calculate relativePath as con(chainList.c1,'.',relativePath)
+			Calculate chainList.$line as chainList.$line-1
+		End While
+	End If
+End While
+If isclear(containerRef)
+	Quit method ref.$ref
+End If
+If len(relativePath)=0
+	Quit method ref.$ref
+End If
+If containerRef.$objtype=kSubwindow
+	# use the effective subwindow instance, not the placeholder obj
+	Set reference containerRef to containerRef.$subinst().$ref
+End If
+Calculate relativePath as mid(relativePath,1,len(relativePath)-1)
+Set reference ref to $cinst.$pathToRef(con(containerRef.$class().$fullname,'.',relativePath)).$ref
+Quit method ref.$ref

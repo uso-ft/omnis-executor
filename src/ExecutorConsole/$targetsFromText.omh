@@ -1,0 +1,206 @@
+# $targetsFromText(pText) -> list(clsRef,clsName,how,lineNo,note)
+#
+# Classes the text DESIGNATES AS A TARGET - not classes whose name merely
+# occurs somewhere. For that purpose this replaces $getClassesFromText,
+# which matches every name as a whole word and so also hits variable names
+# and prose inside string literals.
+#
+# Designating positions:
+#   .$classes.NAME                 direct navigation
+#   .$classes.$findname(NAME)      literal lookup
+#   Close design NAME  and others  the ten commands that take a class
+#                                  name argument, per the help
+#
+# Lines containing .$modify( are editor jumps and are skipped:
+# $modify([iLine=1]) OPENS the method editor, it changes nothing.
+#
+# Whatever cannot be resolved comes back as a NOTE with an empty clsRef -
+# a visible gap beats an invisible one. Nothing is deduplicated: every
+# hit carries its line number, and the caller dedupes.
+#
+# New class is left out of the command list on purpose: it creates a class
+# that does not exist yet at scan time, and its argument is a type.
+#
+# A one-level library alias is followed: after Set reference X to $root.$libs.Lib
+# or $libs.$findname('Lib'), X.$classes.NAME counts as Lib.NAME (section 0).
+# Bare names skip the vaults (execBackup_*): a vault holds copies, never a target.
+# targetscan_libs v1, 2026-09-23.
+Do out.$define(clsRef,clsName,how,lineNo,note)
+Calculate body as iTools.$stripComments(pText)
+Calculate lines as split(body,kCr,kTrue)
+Calculate aliasMap as ','
+Calculate groups as ',classes,codes,fieldstyles,files,menus,objects,queries,remoteforms,remotemenus,remotetasks,reports,schemas,searches,tables,tasks,toolbars,windows,'
+Calculate cmds as 'Close design,Delete class,Duplicate class,Modify class,Modify methods,Print class,Rename class,Revert class,Save class,Set class description'
+For loop from 1 to lines.$linecount step 1
+	Calculate oneLine as lines.[loop].C1
+	If pos('.$modify(',oneLine)
+		Do out.$add(,'','jump',loop,'editor jump, not a change')
+	Else
+		# --- 0) a one-level library alias: Set reference X to $root.$libs.Lib or $libs.$findname('Lib')
+		# every Set reference to X forgets X first, so a reassignment never keeps an old library
+		Calculate trimmed as jst(oneLine,'-')
+		If low(left(trimmed,14))='set reference '
+			Calculate alias as trim(mid(trimmed,15),kTrue,kTrue,kSp)
+			Calculate q as pos(' ',alias)
+			Calculate libExpr as ''
+			If q
+				Calculate libExpr as trim(mid(alias,q+1),kTrue,kTrue,kSp)
+				Calculate alias as low(mid(alias,1,q-1))
+			End If
+			Calculate q as pos(con(',',alias,'='),aliasMap)
+			If q
+				Calculate aliasLib as mid(aliasMap,q+1)
+				Calculate aliasMap as con(mid(aliasMap,1,q),mid(aliasLib,pos(',',aliasLib)+1))
+			End If
+			Calculate aliasLib as ''
+			If low(left(libExpr,3))='to '
+				Calculate libExpr as trim(mid(libExpr,4),kTrue,kTrue,kSp)
+				If low(left(libExpr,6))='$root.'
+					Calculate libExpr as mid(libExpr,7)
+				End If
+				If (low(left(libExpr,16))='$libs.$findname(')&(mid(libExpr,17,1)=chr(39))
+					Calculate q as pos(chr(39),mid(libExpr,18))
+					If (q>1)&(mid(libExpr,18+q,1)=')')&(len(libExpr)=18+q)
+						Calculate aliasLib as mid(libExpr,18,q-1)
+					End If
+				Else If low(left(libExpr,6))='$libs.'
+					Calculate tokLen as 0
+					Calculate q as rxpos('[A-Za-z_][A-Za-z0-9_]*',mid(libExpr,7),kFalse,kFalse,tokLen)
+					If (q=1)&(len(libExpr)=6+tokLen)
+						Calculate aliasLib as mid(libExpr,7)
+					End If
+				End If
+			End If
+			If len(alias)&len(aliasLib)
+				Calculate aliasMap as con(aliasMap,alias,'=',aliasLib,',')
+			End If
+		End If
+		# --- 1) designating notation: any CLASS GROUP of a library ---
+		Calculate rest as oneLine
+		Calculate p as iTools.$posOutsideQuotes('.$',rest,kFalse)
+		While p>0
+			Calculate head as mid(rest,1,p-1) ## everything before the dot
+			Calculate tail as mid(rest,p+2) ## past the dot and the dollar
+			Calculate tokLen as 0
+			Calculate q as rxpos('[A-Za-z_][A-Za-z0-9_]*',tail,kFalse,kFalse,tokLen)
+			Calculate how as ''
+			If q=1
+				Calculate how as con('$',mid(tail,1,tokLen))
+			End If
+			If len(how)&pos(con(',',low(mid(how,2)),','),groups)
+				# a class group. The segment behind it names the class.
+				Calculate tail as mid(tail,tokLen+1)
+				If left(tail,1)='.'
+					Calculate tail as mid(tail,2)
+					Calculate libName as head
+					# $libs.$findname('Lib').$classes.NAME in one line: the segment before the group is findname('Lib').
+					# Taken only when the line holds $libs.$findname('Lib') itself (targetscan_findname v1, 2026-09-23)
+					If (low(left(libName,10))='findname(''')&(right(libName,2)=''')')
+						Calculate libName as mid(libName,11,len(libName)-12)
+						If pos(low(con('$libs.$findname(''',libName,''')')),low(oneLine))=0
+							Calculate libName as ''
+						End If
+					Else
+						Calculate q as rpos('.',libName)
+						If q
+							Calculate libName as mid(libName,q+1)
+						End If
+						Calculate q as rpos(' ',libName)
+						If q
+							Calculate libName as mid(libName,q+1)
+						End If
+					End If
+					Calculate clsName as ''
+					Calculate note as ''
+					If left(tail,1)='['
+						Calculate note as 'class reached by an expression, not resolvable from text'
+					Else If left(tail,10)='$findname('
+						Calculate how as '$findname'
+						If mid(tail,11,1)=chr(39)
+							Calculate q as pos(chr(39),mid(tail,12))
+							If q>1
+								Calculate clsName as mid(tail,12,q-1)
+							End If
+						Else
+							Calculate note as '$findname with an expression instead of a literal, not resolvable from text'
+						End If
+					Else If left(tail,2)='//'
+						# escaped name, //Some Name//
+						Calculate q as pos('//',mid(tail,3))
+						If q>1
+							Calculate clsName as mid(tail,3,q-1)
+						End If
+					Else If left(tail,1)='$'
+						# group operation ($sendall, $first, ...) - no named target
+					Else
+						Calculate tokLen as 0
+						Calculate q as rxpos('[A-Za-z_][A-Za-z0-9_]*',tail,kFalse,kFalse,tokLen)
+						If q=1
+							Calculate clsName as mid(tail,1,tokLen)
+						End If
+					End If
+					If len(clsName)
+						If len(libName)&(left(libName,1)<>'$')
+							# a one-level alias names its library (section 0)
+							Calculate q as pos(con(',',low(libName),'='),aliasMap)
+							If q
+								Calculate libName as mid(aliasMap,q+len(libName)+2)
+								Calculate libName as mid(libName,1,pos(',',libName)-1)
+							End If
+							Set reference libRef to $root.$libs.$findname(libName)
+							If not(isclear(libRef))
+								Calculate clsName as con(libName,'.',clsName)
+							End If
+						End If
+						Set reference clsRef to iTools.$classRefOfName(clsName,kTrue,kTrue) ## bare names skip the vaults
+						If isclear(clsRef)
+							Set reference clsRef to iTools.$classRefOfName(clsName,kFalse,kTrue)
+							If isclear(clsRef)
+								Do out.$add(,clsName,how,loop,'class not found in any open library outside the vaults')
+							Else
+								Do out.$add(,clsName,how,loop,'AMBIGUOUS: this bare name resolves in more than one open library — write Lib.Class')
+							End If
+						Else
+							Do out.$add(clsRef,clsRef.$name,how,loop,'')
+						End If
+					Else If len(note)
+						Do out.$add(,'',how,loop,note)
+					End If
+				End If
+			End If
+			Calculate rest as tail
+			Calculate p as iTools.$posOutsideQuotes('.$',rest,kFalse)
+		End While
+		# --- 2) commands that take a class name argument ---
+		Calculate trimmed as jst(oneLine,'-')
+		Calculate cmdList as cmds
+		While len(cmdList)
+			Calculate cmd as strtok(nam(cmdList),',')
+			If left(trimmed,len(cmd)+1)=con(cmd,' ')
+				Calculate arg as trim(mid(trimmed,len(cmd)+2),kTrue,kTrue,kSp)
+				Calculate q as pos('/',arg) ## class-name/new-name
+				If q
+					Calculate arg as trim(mid(arg,1,q-1),kTrue,kTrue,kSp)
+				End If
+				If left(arg,1)='['
+					Do out.$add(,'',cmd,loop,'class name is an expression, not resolvable from text')
+				Else If pos(' ',arg)|pos('(',arg)|pos('$',arg)
+					Do out.$add(,arg,cmd,loop,'not a plain class name')
+				Else If len(arg)
+					Set reference clsRef to iTools.$classRefOfName(arg,kTrue,kTrue) ## bare names skip the vaults
+					If isclear(clsRef)
+						Set reference clsRef to iTools.$classRefOfName(arg,kFalse,kTrue)
+						If isclear(clsRef)
+							Do out.$add(,arg,cmd,loop,'class not found in any open library outside the vaults')
+						Else
+							Do out.$add(,arg,cmd,loop,'AMBIGUOUS: this bare name resolves in more than one open library — write Lib.Class')
+						End If
+					Else
+						Do out.$add(clsRef,clsRef.$name,cmd,loop,'')
+					End If
+				End If
+			End If
+		End While
+	End If
+End For
+Quit method out

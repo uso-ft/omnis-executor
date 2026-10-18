@@ -1,0 +1,21 @@
+# Lays one file into the folder of THIS run. The writing itself is done
+# by the console, so there is exactly ONE writer and one place to improve.
+# Returns the FULL PATH on success and an empty string on failure, with
+# the reason in $why. Name every file you write in the protocol, with its
+# line count - that rule is what keeps the log row true on its own.
+# env_class v1 (2026-08-29).
+If iOk
+Else
+	Quit method ''
+End If
+Set reference ref to $clib.$classes.ExecutorConsole.$insts().$first()
+If isclear(ref)
+	Calculate iWhy as 'the console has gone away since this run started'
+	Quit method ''
+End If
+Calculate note as ref.$writeRunFile(pName,pText)
+If len(note)
+	Calculate iWhy as note
+	Quit method ''
+End If
+Quit method con(iPath,pName)

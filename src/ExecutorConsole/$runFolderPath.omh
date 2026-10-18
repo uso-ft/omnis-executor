@@ -1,0 +1,11 @@
+# The run folder path for the current moment: execRuns beside the library. Builds the string only.
+# Sortable stamp with seconds. Dashes, never a colon: illegal in Windows file names. Format letters: lore 7.8.
+# Returns the path, ending in a separator.
+Calculate base as con(mid(sys(10),1,rpos(sys(9),sys(10))),'execRuns',sys(9))
+Calculate stamp as con(jst(#D,'D:y-M-D'),'_',jst(#T,'T:H-N-S'))
+Calculate stamp as $cinst.$safeFileName(stamp)
+Calculate title as $cinst.$safeFileName(cLogTitle)
+If len(title)=0
+	Calculate title as 'untitled'
+End If
+Quit method con(base,stamp,'_',title,sys(9))

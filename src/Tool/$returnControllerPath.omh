@@ -1,0 +1,37 @@
+# Returns the corresponding Controller.$objectPath for the input path.
+# IN:  object path or $fullname to a window
+# OUT: Controller.$objectPath()
+
+If len(pControllerPath)
+	Switch [pControllerPath].$class().$classtype
+		Case kTask ## MoContext
+			Calculate objectPath as [pControllerPath].$objectPath()
+			
+		Case kWindow,kSubwindow ## components
+			Calculate objectPath as [pControllerPath].$controller().$objectPath()
+			
+		Case kTable,kList
+			Calculate objectPath as [pControllerPath].$mdManagerList().$entityController().$objectPath()
+			
+		Default ## object: controller, delegate or manager
+			
+			If [pControllerPath].$isa(cMgrRef) ## Manager
+				If [pControllerPath].$isa(cMgrListRef) ## ListManager
+					Calculate objectPath as [pControllerPath].$entityController().$objectPath()
+				Else If [pControllerPath].$isa(cMgrRecordRef) ## RecordManager
+					Calculate objectPath as [pControllerPath].iMdEntityControllerRef.$objectPath() ## hard-coded! @? no accessor
+				Else If [pControllerPath].$isa(cMgrFiedsRef) ## FieldManager
+					Calculate objectPath as [pControllerPath].iListManagerRef.$entityController().$objectPath() ## hard-coded! @? no accessor
+				End If
+				
+			Else If [pControllerPath].$isa(cDlgRef) ## Delegate
+				Calculate objectPath as [pControllerPath].iPaneControllerRef.$objectPath() ## hard-coded, no accessor @?
+				
+			Else If [pControllerPath].$isa(cCtrlRef) ## Controller
+				Calculate objectPath as [pControllerPath].$objectPath()
+			End If
+			
+	End Switch
+End If
+
+Quit method objectPath

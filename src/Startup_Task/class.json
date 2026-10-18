@@ -1,0 +1,50 @@
+{
+	"classtype": "kTask",
+	"omnisversion": "10.2",
+	"internalversion": 233,
+	"tvardefs": [
+
+	],
+	"cvardefs": [
+		{
+			"name": "cBackups",
+			"order": 4,
+			"type": "kList",
+			"subtype": "",
+			"sublen": 0
+		},
+		{
+			"name": "cErrors",
+			"order": 3,
+			"type": "kList",
+			"subtype": "",
+			"sublen": 0
+		}
+	],
+	"ivardefs": [
+		{
+			"name": "iTools",
+			"order": 1,
+			"type": "kObject",
+			"subtype": "Tool",
+			"sublen": 0
+		}
+	],
+	"properties": {
+		"canremotedebugwhenlocked": false,
+		"collectperformancedata": false,
+		"componenticon": 0,
+		"componenttype": "kCompStoreHidden",
+		"createdate": "2026-07-17 15:26:51",
+		"desc": "",
+		"editor": "",
+		"editordata": "",
+		"external": false,
+		"issupercomponent": false,
+		"moddate": "2026-10-18 18:01:00",
+		"showascheckedout": false,
+		"userinfo": "",
+		"vcsrevision": 5,
+		"version": "1.0.0"
+	}
+}

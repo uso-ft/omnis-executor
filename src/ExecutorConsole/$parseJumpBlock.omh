@@ -1,0 +1,66 @@
+# Parses the JUMP LINKS block from cScript.
+# Marker: the first line holding the fixed start of the marker. Since 1.0 the Executor version may follow it; $versionCheck reads it.
+# Fills cJumpLinks (comment, target on the same row). A #> tag inside the
+# comment part marks a CLIPBOARD payload; it stays in the comment column and
+# is split off by $jump when the line is clicked.
+# A line starting '# Copy ' is a payload without a target: $jump copies it and jumps nowhere.
+# Returns the number of entries found.
+
+Do cJumpLinks.$define(comment,target)
+Do cJumpLinks.$clear()
+
+Calculate work as replaceall(cScript,kLf,'')
+
+# the fixed start of the marker only: since 1.0 a version may follow it, and the rest of the marker line is skipped below
+Calculate quitPos as pos(con('## =====',' JUMP LINKS'),work)
+If quitPos=0
+	Quit method 0
+End If
+Calculate crPos as pos(kCr,mid(work,quitPos))
+If crPos=0
+	Quit method 0
+End If
+Calculate work as mid(work,quitPos+crPos)
+Calculate workList as split(work,kCr)
+
+For workList.$line from 1 to workList.$linecount step 1
+	
+	Calculate line as workList.c1
+	Calculate line as trim(line)
+	
+	If len(line)=0
+		# Skip empty lines
+	Else If pos('$modify(',line)|pos('eval(',line)|pos('# Do ',line)=1|pos('Do ',line)=1|pos('# Do ',line)=1|pos('Do ',line)=1|pos('# Do ',line)=1|pos('Do ',line)=1|pos('# Copy ',line)=1
+		
+		Calculate commentPos as pos(' ##',line)
+		If commentPos
+			Calculate comment as trim(mid(line,commentPos+3,len(line)))
+			Calculate target as trim(mid(line,1,commentPos-1))
+			While mid(target,1,2)='# '
+				# remove leading comment sign
+				Calculate target as trim(mid(target,3,len(target)))
+			End While
+		Else
+			While mid(line,1,2)='# '
+				# remove leading comment sign
+				Calculate line as trim(mid(line,3,len(line)))
+			End While
+			Calculate comment as $cinst.$analyzeTarget(line)
+			Calculate comment as $cinst.$formatTitleFromPath(comment)
+			Calculate target as trim(line)
+		End If
+		
+		Do cJumpLinks.$add(comment,target)
+		
+	Else If pos('===',line)
+		Calculate header as replaceall(line,'=','')
+		Calculate header as replaceall(header,'#','')
+		Calculate header as trim(header)
+		If len(header)
+			Calculate target as ''
+			Do cJumpLinks.$add(con('--- ',header,' ---'),'')
+		End If
+	End If
+End For
+
+Quit method cJumpLinks.$linecount

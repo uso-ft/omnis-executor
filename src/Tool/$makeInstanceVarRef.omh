@@ -1,0 +1,10 @@
+# Builds a reference to an instance variable from instance and variable name.
+
+If pInstance.$objtype=kSubwindow
+	# The reference to the class must be obtained from the sub-instance.
+	Set reference instanceRef to pInstance.$subinst().$ref
+Else
+	Set reference instanceRef to pInstance.$ref
+End If
+
+Quit method instanceRef.$ivars.[pVariableName].$ref

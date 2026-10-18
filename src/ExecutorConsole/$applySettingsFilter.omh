@@ -1,0 +1,28 @@
+# Removes from pCols everything that must not be persisted, and keeps
+# exactly the kind the caller asks for.
+# pWanted = setting: keeps setting AND unclassified, drops data and transient
+# pWanted = data: keeps data and nothing else
+# The asymmetry is deliberate. An unclassified new variable should be
+# persisted with the settings and reported, not silently dropped; but it
+# must never drift into the data package, which is a whitelist.
+# Rows the caller has already selected are removed first.
+# Returns the filtered list.
+Do pCols.$remove(kListDeleteSelected)
+Calculate spec as $cinst.$settingsSpec()
+Calculate names as ''
+Calculate names2 as ''
+For spec.$line from 1 to spec.$linecount step 1
+	If spec.kind='transient'
+		Calculate names as con(names,kCr,low(spec.nm),kCr)
+	End If
+	If spec.kind='data'
+		Calculate names2 as con(names2,kCr,low(spec.nm),kCr)
+	End If
+End For
+If pWanted='data'
+	Do pCols.$search(not(pos(con(kCr,low($ref.c1().$name),kCr),names2)),kTrue,kFalse,kTrue,kTrue)
+Else
+	Do pCols.$search(pos(con(kCr,low($ref.c1().$name),kCr),con(names,names2)),kTrue,kFalse,kTrue,kTrue)
+End If
+Do pCols.$remove(kListDeleteSelected)
+Quit method pCols

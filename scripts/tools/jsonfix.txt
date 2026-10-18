@@ -1,0 +1,459 @@
+# GENERATOR: jsonfix v4 — 2026-10-18 17:40 — copies an open library, comments every line Omnis refuses, tags it, and exports the copy as JSON
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR 1.0
+#
+# WHAT IT IS FOR
+# A method line that no longer compiles fails the JSON export (23470, one error row per line, naming
+# neither class nor method). Omnis still writes the tree, but such a tree does NOT import again: the
+# library cannot be rebuilt from it. jsonfix comments those lines, so the export reports ok and the tree
+# imports; and it names every place. The usual cause is a variable that was removed; others are a line
+# naming a library that is not open, a constant or an object of an external component that is no longer
+# there, and old method text written for an earlier Omnis (the comment character changed from ; to #).
+# A removed local, instance or class variable shows as #???. A removed TASK variable does not: its lines
+# read $ctask.<name>, they compile, export and import, and fail only when they run. jsonfix does not find
+# them, and nothing else does either.
+#
+# WHAT IT DOES
+# 1. Name the library in the ADAPT HERE line below. It must be OPEN. Left empty, the script lists the
+#    open libraries and stops; nothing is done.
+# 2. Every superclass named as Lib.Class must lie in an open library. If one does not, a No/Yes
+#    message asks; No (the default) stops before anything is copied. Yes makes a MAP OF DEPENDENCIES:
+#    every line that cannot compile without that library is tagged, grouped by library in the protocol,
+#    and no export is tried - Omnis writes nothing at all when a superclass is missing (23452).
+#    Found are names resolved when a line compiles: variables (also those inherited from the missing
+#    superclass) and literal Lib.Class paths. Not found: what resolves at run time ($cinst.$method(),
+#    $ctask.<name>, class names held in strings).
+# 3. The FILE of the library is copied to execExports/jsonfix/<library>_<date>_<time>/ beside the
+#    Executor and opened from there as <library>_jsonfix, without its startup task. The library
+#    itself is never written. Unsaved changes in it are not in the copy: save first.
+# 4. In the copy, every line of every method (class methods, and the methods of every object of a
+#    window, remote form, report, menu, toolbar, and of the URIs of a RESTful remote task) is
+#    assigned to itself. A line Omnis refuses is turned into a comment and tagged at its end:
+#        # <the old line> ## @JSONFIX
+#    To bring such a line back, delete the two characters '# ' in front; the tag stays as an
+#    ordinary end-of-line comment. Find all of them with Find and Replace on @JSONFIX.
+#    A method that cannot be reached is not skipped in silence: the protocol names it.
+# 5. The copy is saved, closed, opened again from disk, and the tags are counted again there.
+# 6. The copy is exported as JSON into json/ in the same folder. Every error row and every warning
+#    the export reports is listed; for a 23470 row the place of the line is looked up. Such rows have
+#    other causes than a refused line, and jsonfix does not touch them. The protocol says whether the
+#    tree was written at all (library.json).
+# 7. The copy is closed. The protocol names every tagged line: class, method, line number, old text.
+#
+# BEFORE YOU RUN IT
+# - Open EVERY library the code of this library names, and every library that holds one of its
+#   superclasses. They may name each other. A line naming a library that is not open is refused like
+#   a broken one, and would be commented although nothing is wrong with it. The protocol shows the
+#   refused lines in groups: one per missing superclass library (lines naming it), then with #??? in
+#   the text, then the rest. Where a refused line names a word before .$classes that is no open
+#   library, the protocol says so.
+# - Switch off "Break if error". Every refused line raises 25208. Every line that names an instance
+#   variable raises 25216 while it is written (the copy has no instance); the line arrives all the
+#   same. Reading or assigning some lines raises 25207 without a refusal. The error list fills up;
+#   that is expected.
+#
+# WHY COMMENT INSTEAD OF REPAIR
+# An AI that writes scripts sees text, not the library: it cannot know which variable a #??? stood
+# for. jsonfix keeps every broken line, commented and tagged, so that the JSON tree can be read at
+# all - by a person or by an AI - and the tagged lines are the material for the repair.
+#
+# Run twice: each run makes a new folder and a new copy; nothing is deleted. The Executor's header
+# says nothing: the copy is not open when the run starts and is closed before it ends.
+# A method is found again by its object's row and its name, right before its lines are walked: a
+# reference to the method of a nameless menu line, kept in a list, did not resolve later (v2, 11:10).
+# Measured on macOS only: copying the file of an open library (lore 12).
+
+Calculate result as con('run ',#T,' — jsonfix v4',kCr)
+
+Calculate name2 as '' ## ADAPT HERE: the name of the OPEN library to fix, e.g. 'MyLib'
+
+Do vars.$cols.$add('tag',kCharacter,kSimplechar,100)
+Do vars.$cols.$add('folder',kCharacter,kSimplechar,100000000)
+Do vars.$cols.$add('saved',kCharacter,kSimplechar,100000000)
+Do vars.$cols.$add('classes',kInteger,k32bitint)
+Do vars.$cols.$add('methods',kInteger,k32bitint)
+Do vars.$cols.$add('lines1',kInteger,k32bitint)
+Do vars.$cols.$add('lines2',kInteger,k32bitint)
+Do vars.$cols.$add('tagsBefore',kInteger,k32bitint)
+Do vars.$cols.$add('tagsDisk',kInteger,k32bitint)
+Do vars.$cols.$add('refusedVar',kInteger,k32bitint)
+Do vars.$cols.$add('refusedOther',kInteger,k32bitint)
+Do vars.$cols.$add('tagRefused',kInteger,k32bitint)
+Do vars.$cols.$add('unreached',kInteger,k32bitint)
+Do vars.$cols.$add('missing',kCharacter,kSimplechar,100000000) ## ,Lib1,Lib2, - the libraries of missing superclasses
+Calculate vars.classes as 0
+Calculate vars.methods as 0
+Calculate vars.lines1 as 0
+Calculate vars.lines2 as 0
+Calculate vars.tagsBefore as 0
+Calculate vars.tagsDisk as 0
+Calculate vars.refusedVar as 0
+Calculate vars.refusedOther as 0
+Calculate vars.tagRefused as 0
+Calculate vars.unreached as 0
+Calculate vars.missing as ','
+Calculate vars.tag as con(' #','# @JSONFIX') ## built so no double hash stands in a literal of this script
+
+# ====== CHOOSE — the library must be open, and may not be one of the Executor's own
+Set reference ref3 to $root.$libs.$findname(name2)
+Calculate flag1 as len(name2)>0
+If flag1
+   Calculate flag1 as not(isclear(ref3))
+End If
+If flag1
+   Calculate name2 as ref3.$name
+   Calculate flag2 as (low(name2)='executor')|(low(name2)='execscratch')|(low(left(name2,11))='execbackup_')|(low(right(name2,8))='_jsonfix')
+   If flag2
+      Calculate result as con(result,'[choose  ]   ',name2,' is one of the Executor''s own libraries, or a jsonfix copy - not fixed. Nothing done.',kCr)
+      Quit method result
+   End If
+Else
+   If len(name2)=0
+      Calculate result as con(result,'[choose  ]   no library named - set the ADAPT HERE line at the top. Nothing done.',kCr)
+   Else
+      Calculate result as con(result,'[choose  ]   no open library is called ',name2,' - open it, or correct the ADAPT HERE line. Nothing done.',kCr)
+   End If
+   Do $root.$libs.$makelist($ref.$name) Returns list
+   Calculate text as ''
+   For list.$line from 1 to list.$linecount step 1
+      Calculate name as list.C1
+      If (low(name)='executor')|(low(name)='execscratch')|(low(left(name,11))='execbackup_')|(low(right(name,8))='_jsonfix')
+      Else
+         Calculate text as con(text,' ',name)
+      End If
+   End For
+   Calculate result as con(result,'[choose  ]   open libraries:',pick(len(text)>0,' none',text),kCr)
+   Quit method result
+End If
+Calculate result as con(result,'[choose  ]   ',name2,', file ',ref3.$pathname,kCr)
+
+# ====== SUPERCLASSES — every Lib.Class superclass must lie in an open library
+Calculate count as 0
+Calculate text as ''
+Set reference classRef to ref3.$classes.$first()
+While not(isclear(classRef))
+   Calculate n as classRef.$classtype*1
+   Calculate text2 as ''
+   If n=kWindow*1|n=kRemoteForm*1|n=kReport*1|n=kMenu*1|n=kToolbar*1|n=kTask*1|n=kRemoteTask*1|n=kObjectclass*1|n=kTable*1
+      Calculate text2 as classRef.$superclass ## the nine class types whose help page lists $superclass (a code class has none)
+   End If
+   If pos('.',text2)>1
+      Calculate name as mid(text2,1,pos('.',text2)-1)
+      If isclear($root.$libs.$findname(name))
+         Calculate count as count+1
+         Calculate result as con(result,'[super   ]   ',classRef.$name,': superclass ',text2,' - library ',name,' is NOT open',kCr)
+         If len(text)=0
+            Calculate text as name
+         End If
+         If pos(con(',',low(name),','),low(vars.missing))=0
+            Calculate vars.missing as con(vars.missing,name,',')
+         End If
+      End If
+   End If
+   Set reference classRef to ref3.$classes.$next(classRef)
+End While
+If count>0
+   No/Yes message jsonfix (Icon) {[count] class(es) have a superclass in a library that is not open, the first: [text].////No: stop, and open it first.//Yes: a map of dependencies - every line that needs it is tagged; no export (Omnis writes nothing then, 23452).}
+   If flag true
+      Calculate result as con(result,'[super   ]   ',count,' superclass(es) in a library that is not open - a MAP OF DEPENDENCIES, as answered; no export will be tried',kCr)
+   Else
+      Calculate result as con(result,'[super   ]   ',count,' superclass(es) in a library that is not open - stopped, as answered. Nothing done.',kCr)
+      Quit method result
+   End If
+Else
+   Calculate result as con(result,'[super   ]   every Lib.Class superclass lies in an open library',kCr)
+End If
+
+# ====== COPY — a new folder with a time stamp, the file copied, opened as <library>_jsonfix
+Calculate name as con(name2,'_jsonfix')
+Calculate vars.folder as con(mid(sys(10),1,rpos(sys(9),sys(10))),'execExports',sys(9),'jsonfix',sys(9),name2,'_',jst(#D,'D:y-M-D'),'_',jst(#T,'T:H-N-S'),sys(9))
+If FileOps.$doesfileexist(vars.folder)
+   Calculate result as con(result,'[copy    ]   ',vars.folder,' exists already - run again in a second. Nothing done.',kCr)
+   Quit method result
+End If
+Do FileOps.$createdir(vars.folder,kTrue)
+Calculate text3 as ref3.$pathname
+Calculate name3 as con(vars.folder,mid(text3,rpos(sys(9),text3)+1,len(text3)))
+If not(isclear($root.$libs.$findname(name)))
+   Close library [name]
+   Calculate result as con(result,'[copy    ]   ',name,' was still open from an earlier run - closed',kCr)
+End If
+Calculate n as FileOps.$copyfile(text3,name3)
+If not(FileOps.$doesfileexist(name3))
+   Calculate result as con(result,'[copy    ]   FAILED, $copyfile code ',n,' - nothing done',kCr)
+   Quit method result
+End If
+Calculate result as con(result,'[copy    ]   ',name3,', code ',n,' where 0 is ok',kCr)
+Open library (Do not close others,Do not open startup task) [name3],[name]
+Set reference ref2 to $root.$libs.$findname(name)
+If isclear(ref2)
+   Calculate result as con(result,'[open    ]   ',name,' did NOT open - nothing done',kCr)
+   Quit method result
+End If
+Calculate result as con(result,'[open    ]   ',name,', startup task ',pick(isclear($itasks.$findname(name)),'STARTED','not started'),kCr)
+
+# ====== from here on the copy is open: no Quit before the close at the end
+Begin reversible block
+   Calculate $root.$prefs.$alloweditifnotcheckedout as kTrue ## a class of a VCS library not checked out must not pass as refused (cookbook A8.12b)
+End reversible block
+
+Do list2.$define()
+Do list2.$cols.$add('cls',kCharacter,kSimplechar,255)
+Do list2.$cols.$add('path',kCharacter,kSimplechar,100000000)
+Do list2.$cols.$add('lno',kInteger,k32bitint)
+Do list2.$cols.$add('txt',kCharacter,kSimplechar,100000000)
+Do list2.$cols.$add('kind',kCharacter,kSimplechar,20) ## '' sound, 'var' refused with #???, 'other' refused without
+Do list2.$cols.$add('taken',kBoolean) ## the tagged comment was taken
+
+# Pass 1 walks the copy in memory and fixes it. Pass 2 walks the copy read back from disk and only counts.
+For n3 from 1 to 2 step 1
+   If n3=2
+      # save every class that carries a new tag, close, open again from disk
+      Calculate vars.saved as ','
+      For list2.$line from 1 to list2.$linecount step 1
+         If list2.taken&(pos(con(',',list2.cls,','),vars.saved)=0)
+            Save class [con(name,'.',list2.cls)]
+            Calculate vars.saved as con(vars.saved,list2.cls,',')
+         End If
+      End For
+      Close library [name]
+      Open library (Do not close others,Do not open startup task) [name3],[name]
+      Set reference ref2 to $root.$libs.$findname(name)
+      Calculate result as con(result,'[verify  ]   saved ',len(vars.saved)-len(replaceall(vars.saved,',',''))-1,' class(es); copy opened again from disk ',pick(isclear(ref2),'- ok','- FAILED, nothing verified'),kCr)
+   End If
+   Set reference classRef to ref2.$classes.$first()
+   While not(isclear(classRef))
+      Calculate count as classRef.$classtype*1
+      Calculate text as classRef.$name
+      # --- the methods of this class, collected right before its lines are walked
+      Do list.$define()
+      Do list.$cols.$add('path',kCharacter,kSimplechar,100000000)
+      Do list.$cols.$add('orow',kInteger,k32bitint) ## 0 = a class method, else the row of its object in list3
+      Do list.$cols.$add('mname',kCharacter,kSimplechar,255)
+      If count=kWindow*1|count=kRemoteForm*1|count=kReport*1|count=kMenu*1|count=kToolbar*1|count=kTask*1|count=kRemoteTask*1|count=kObjectclass*1|count=kTable*1|count=kCode*1
+         Set reference methodRef to classRef.$methods.$first()
+         While not(isclear(methodRef))
+            Do list.$add(methodRef.$name,0,methodRef.$name)
+            Set reference methodRef to classRef.$methods.$next(methodRef)
+         End While
+      End If
+      # --- the objects whose methods count: a window through tools.$collectObjects, the rest walked here
+      Do list3.$define()
+      If count=kWindow*1
+         Do tools.$collectObjects(classRef.$ref,list3) Returns n
+      Else
+         Do list3.$cols.$add('objRef',kItemref)
+         Do list3.$cols.$add('objName',kCharacter,kSimplechar,255)
+         Do list3.$cols.$add('objPath',kCharacter,kSimplechar,100000000)
+         Do list3.$cols.$add('isBkgnd',kBoolean) ## as in the list of tools.$collectObjects; always kFalse here
+         Calculate flag1 as count=kReport*1|count=kMenu*1|count=kToolbar*1|count=kRemoteForm*1
+         If count=kRemoteTask*1
+            Calculate flag1 as classRef.$restful ## only a RESTful remote task has objects: its URIs
+         End If
+         If flag1
+            Set reference objRef to classRef.$objs.$first()
+            While not(isclear(objRef))
+               Do list3.$add(objRef.$ref,objRef.$name,objRef.$name,kFalse)
+               Set reference objRef to classRef.$objs.$next(objRef)
+            End While
+         End If
+         If count=kRemoteForm*1
+            # a remote form nests its objects and has no $bobjs: the rows found are walked in turn, each adds its children
+            Calculate n as 0
+            While n<list3.$linecount
+               Calculate n as n+1
+               Set reference objRef to list3.[n].objRef().$ref
+               Calculate text3 as list3.[n].objPath
+               Set reference objRef2 to objRef.$objs.$first()
+               While not(isclear(objRef2))
+                  Do list3.$add(objRef2.$ref,objRef2.$name,con(text3,'.',objRef2.$name),kFalse)
+                  Set reference objRef2 to objRef.$objs.$next(objRef2)
+               End While
+            End While
+         End If
+      End If
+      For n from 1 to list3.$linecount step 1
+         If not(list3.[n].isBkgnd) ## a background object carries no methods ($sealObjRows reads none)
+            Set reference objRef to list3.[n].objRef().$ref
+            Calculate text3 as list3.[n].objPath
+            If len(list3.[n].objName)=0
+               Calculate text3 as objRef.$fullname ## a nameless object: its $fullname ends in type and ident (lore 1.4)
+               Calculate text3 as mid(text3,rpos('.',text3)+1,len(text3))
+            End If
+            Set reference methodRef to objRef.$methods.$first()
+            While not(isclear(methodRef))
+               Do list.$add(con(text3,'.',methodRef.$name),n,methodRef.$name)
+               Set reference methodRef to objRef.$methods.$next(methodRef)
+            End While
+         End If
+      End For
+      If n3=1
+         Calculate vars.classes as vars.classes+(list.$linecount>0)
+         Calculate vars.methods as vars.methods+list.$linecount
+      End If
+      # --- every line of every method of this class
+      For n from 1 to list.$linecount step 1
+         # found again by the row of its object and its name: a kept method reference may not resolve (v2)
+         Calculate n2 as list.[n].orow
+         If n2=0
+            Set reference methodRef to classRef.$methods.$findname(list.[n].mname)
+         Else
+            Set reference objRef to list3.[n2].objRef().$ref
+            Set reference methodRef to objRef.$methods.$findname(list.[n].mname)
+         End If
+         If isclear(methodRef)&(n3=1)
+            Calculate vars.unreached as vars.unreached+1
+            Do list2.$add(text,list.[n].path,0,'','unreached',kFalse)
+         End If
+         Calculate n2 as 0
+         Set reference ref to methodRef.$methodlines.$first()
+         While not(isclear(ref))
+            Calculate n2 as n2+1
+            Calculate text2 as ref.$text
+            If n3=1
+               Calculate vars.lines1 as vars.lines1+1
+               Calculate vars.tagsBefore as vars.tagsBefore+(pos(vars.tag,text2)>0)
+               Do ref.$text.$assign(text2) Returns flag1
+               If flag1
+                  Do list2.$add(text,list.[n].path,n2,text2,'',kFalse)
+               Else
+                  Do ref.$text.$assign(con('# ',text2,vars.tag)) Returns flag2
+                  Do list2.$add(text,list.[n].path,n2,text2,pick(pos('#???',text2)>0,'other','var'),flag2)
+                  If pos('#???',text2)>0
+                     Calculate vars.refusedVar as vars.refusedVar+1
+                  Else
+                     Calculate vars.refusedOther as vars.refusedOther+1
+                  End If
+                  Calculate vars.tagRefused as vars.tagRefused+not(flag2)
+               End If
+            Else
+               Calculate vars.lines2 as vars.lines2+1
+               Calculate vars.tagsDisk as vars.tagsDisk+(pos(vars.tag,text2)>0)
+            End If
+            Set reference ref to methodRef.$methodlines.$next(ref)
+         End While
+      End For
+      Set reference classRef to ref2.$classes.$next(classRef)
+   End While
+   If n3=1
+      Calculate result as con(result,'[walk    ]   ',vars.classes,' class(es) with methods, ',vars.methods,' method(s), ',vars.lines1,' line(s); ',vars.tagsBefore,' line(s) carried the tag already',kCr)
+      Calculate result as con(result,'[walk    ]   refused: ',vars.refusedVar,' with #??? in the text, ',vars.refusedOther,' without; the comment was refused for ',vars.tagRefused,'; methods NOT reached: ',vars.unreached,kCr)
+   End If
+End For
+
+# ====== the protocol: methods not reached, then the refused lines in groups
+Calculate count3 as 0 ## tags taken
+For list2.$line from 1 to list2.$linecount step 1
+   If (list2.kind='var')|(list2.kind='other')
+      Calculate count3 as count3+list2.taken
+   End If
+   If list2.kind='unreached'
+      Calculate result as con(result,'[unreach ]   ',list2.cls,' / ',list2.path,' - its lines were not walked',kCr)
+   End If
+End For
+# one group per library of a missing superclass: the refused lines that name it
+Calculate text3 as mid(vars.missing,2,len(vars.missing))
+While pos(',',text3)>0
+   Calculate name3 as mid(text3,1,pos(',',text3)-1)
+   Calculate text3 as mid(text3,pos(',',text3)+1,len(text3))
+   Calculate count as 0
+   For list2.$line from 1 to list2.$linecount step 1
+      If ((list2.kind='var')|(list2.kind='other'))&(pos(low(con(name3,'.')),low(list2.txt))>0)
+         Calculate count as count+1
+         Calculate result as con(result,'[needs   ]   ',name3,' / ',list2.cls,' / ',list2.path,' / line ',list2.lno,pick(list2.taken,'  COMMENT REFUSED:  ','  '),list2.txt,kCr)
+         Calculate list2.kind as 'lib'
+      End If
+   End For
+   Calculate result as con(result,'[needs   ]   ',name3,': ',count,' refused line(s) name it; lines using variables inherited from its classes are in the groups below',kCr)
+End While
+For list2.$line from 1 to list2.$linecount step 1
+   If list2.kind='var'
+      Calculate result as con(result,'[#???    ]   ',list2.cls,' / ',list2.path,' / line ',list2.lno,pick(list2.taken,'  COMMENT REFUSED:  ','  '),list2.txt,kCr)
+   End If
+End For
+For list2.$line from 1 to list2.$linecount step 1
+   If list2.kind='other'
+      Calculate result as con(result,'[refused ]   ',list2.cls,' / ',list2.path,' / line ',list2.lno,pick(list2.taken,'  COMMENT REFUSED:  ','  '),list2.txt,kCr)
+      # a hint: the word before .$classes, when it is no open library
+      Calculate text2 as list2.txt
+      Calculate n as pos('.$classes',text2)
+      If n>1
+         Calculate n2 as n-1
+         While n2>0
+            If pos(low(mid(text2,n2,1)),'abcdefghijklmnopqrstuvwxyz0123456789_')>0
+               Calculate n2 as n2-1
+            Else
+               Break to end of loop
+            End If
+         End While
+         Calculate name3 as mid(text2,n2+1,n-n2-1)
+         If len(name3)>0
+            If n2>0
+               Calculate flag1 as mid(text2,n2,1)<>'$'
+            Else
+               Calculate flag1 as kTrue
+            End If
+            If flag1&isclear($root.$libs.$findname(name3))
+               Calculate result as con(result,'             ''',name3,'.$classes'': ',name3,' is no open library - open it, if it is one',kCr)
+            End If
+         End If
+      End If
+   End If
+End For
+Calculate result as con(result,'[verify  ]   from disk: ',vars.lines2,' line(s) (pass 1: ',vars.lines1,'), ',vars.tagsDisk,' carry the tag, expected ',vars.tagsBefore+count3,' (',vars.tagsBefore,' before + ',count3,' new)',kCr)
+Calculate flag3 as (vars.lines2=vars.lines1)&(vars.tagsDisk=vars.tagsBefore+count3)&(vars.tagRefused=0)&(vars.unreached=0)
+
+# ====== EXPORT — the copy as read back from disk, into json/
+Calculate text3 as con(vars.folder,'json',sys(9))
+Do FileOps.$createdir(text3,kTrue)
+Calculate flag1 as kFalse
+Do list3.$define()
+Do list.$define()
+Calculate flag2 as len(vars.missing)>1 ## a superclass library is missing: Omnis would write nothing (23452, lore 11.5)
+If flag2
+   Calculate result as con(result,'[export  ]   NOT tried: a superclass library is missing, and Omnis writes nothing then (23452). The tags in the copy are the map.',kCr)
+Else If not(isclear(ref2))
+   # the folder WITHOUT its trailing separator: on Windows a trailing \ fails with 23455 (lore 11.5)
+   Do $root.$exportjson(ref2,mid(text3,1,len(text3)-1),list3,list) Returns flag1
+   Calculate result as con(result,'[export  ]   ',text3,' ok ',pick(flag1,'NO','YES'),', ',list3.$linecount,' error row(s), ',list.$linecount,' warning(s); the tree was ',pick(FileOps.$doesfileexist(con(text3,'library.json')),'NOT written (no library.json)','written'),kCr)
+   For n from 1 to list.$linecount step 1
+      Calculate result as con(result,'[warning ]   ',list.[n].C1,' ',list.[n].C2,' ',list.[n].C3,kCr)
+   End For
+End If
+For n from 1 to list3.$linecount step 1
+   Calculate text2 as list3.[n].errortext
+   Calculate result as con(result,'[export  ]   ',list3.[n].c1,' ',list3.[n].errorcode,' ',text2,kCr)
+   If list3.[n].errorcode=23470
+      # the export quotes the line as stored: look it up among the lines walked in pass 1
+      Calculate n2 as pos('the same text: ',text2)
+      If n2>0
+         Calculate text2 as mid(text2,n2+15,len(text2))
+         Calculate count as 0
+         For list2.$line from 1 to list2.$linecount step 1
+            If list2.txt=text2
+               Calculate count as count+1
+               If count<=3
+                  Calculate result as con(result,'             at ',list2.cls,' / ',list2.path,' / line ',list2.lno,pick(len(list2.kind)>0,' (assigned to itself without refusal)',' (refused, tagged)'),kCr)
+               End If
+            End If
+         End For
+         Calculate result as con(result,'             ',pick(count>0,'the line was not found among the lines walked',con(count,' place(s) hold this line')),kCr)
+      End If
+   End If
+End For
+If not(flag2)
+   Calculate flag3 as flag3&flag1
+End If
+
+# ====== CLOSE
+Close library [name]
+Calculate result as con(result,'[close   ]   ',name,' ',pick(isclear($root.$libs.$findname(name)),'still OPEN','closed'),kCr)
+If flag2
+   Calculate result as con(result,'[done    ]   ',pick(flag3,'map NOT complete - read the lines above; the tagged copy is in ','map of dependencies made, no export: the tagged copy is in '),vars.folder,kCr)
+Else
+   Calculate result as con(result,'[done    ]   ',pick(flag3,'NOT clean - read the lines above; the copy and what was exported are in ','copy fixed and exported: '),vars.folder,kCr)
+End If
+
+Quit method result

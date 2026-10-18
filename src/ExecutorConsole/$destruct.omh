@@ -1,0 +1,17 @@
+# Expandable panes: write pane $height to $userinfo for reopening at the same size
+
+# Write $height of expanded panes to $userinfo
+Do iExpanderList.$sendall($sendallref.c1.$userinfo.$assign($sendallref.c1.$container().$container().$height),eval($sendallref.c1().$dataname))
+Calculate cPaneHeights as iExpanderList.$makelist($ref.c1.$name,$ref.c1.$userinfo) ## last expanded heights
+
+# Save $height of all containers
+Calculate cSavedContainerHeights as iContainerTree.$makelist(iTools.$instanceRefToClassRef($ref.c1).$fullname,$ref.c1.$height)
+Calculate cWindowGeometry as con($cinst.$left,',',$cinst.$top,',',$cinst.$width,',',$cinst.$height) ## working position and size
+
+
+# Save all $cvars
+Do $cinst.$backupSettings()
+# Executor.$execute left clean, as in $construct: a JSON export after the console is closed meets no line of a closed library
+Do iExecutorMethodRef.$methodtext.$assign('# The console writes the script of each run into this method and runs it. Write scripts in the console, not here.') ## @SELF
+
+Quit method

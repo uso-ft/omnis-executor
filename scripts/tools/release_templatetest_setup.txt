@@ -1,0 +1,211 @@
+# GENERATOR: release_templatetest_setup v4 — 2026-10-17 18:21 — builds MyLib.lbs, a small library holding every place release_template touches
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR 1.0
+#
+# WHAT IT IS
+# The companion of release_template: a library to try the template on before you adapt it to your own.
+# Made in execExports/release_templatetest_setup/MyLib.lbs beside the Executor, then CLOSED. The names
+# inside are exactly the examples of the ADAPT HERE blocks and the jump links of release_template, so
+# the template runs on it as it is.
+#
+# WHAT IT SHOWS
+# A whole library built from code, in one run: Create library makes the file, $classes.$add adds a
+# task, two object classes and a window, $cvardefs.$add and $lvardefs.$add declare variables before
+# the code that uses them, $methodtext.$assign writes each body in one go, $objs.$add places a button
+# and its $event method gets a body of its own. Data goes into the $userinfo of a variable definition,
+# where it is saved with the class. Then everything is read back over a path resolved afresh: what is
+# reported is what the library holds, not what the script meant to write.
+#
+# WHAT IT BUILDS - every method of MyLib says in its first lines what it stands for
+#   Startup_Task  $version: Quit method '1.0.0'; $changelog: how a changelog is kept, then three
+#                 releases, newest first: 1.0.0, 0.9.0-beta.1, 0.1.0-alpha (invented entries)
+#   oSettings     class variables cDevPath, cLastLogin, cKeep, each with a text in its $userinfo;
+#                 $about explains why such data must not ship
+#   oTools        $mode (local lMode): line 2 carries the developer marker, line 3 is a commented line
+#                 carrying the release marker; $playground (local lTmp): 4 lines, line 3 a Breakpoint
+#   wTest         a window, button pbTest: $event line 2 carries the developer marker, line 3 a
+#                 Breakpoint without a marker
+#
+# THEN, WITH release_template (its ADAPT HERE lines already say 'MyLib' and '1.0.0'; open MyLib first)
+#   first run         execInput/release_template/ is made and the run stops with the list of files: lay a
+#                     README.txt into it
+#   TRIAL (No)        places 3 of 3; data: cDevPath removed, cLastLogin emptied, class variables 3 -> 2;
+#                     $playground neutral, 1 local kept; classes 4 of 4; $version 1.0.0 in 4 classes;
+#                     developer lines 2 commented, release lines 1 armed; 1 forbidden line: wTest /
+#                     pbTest.$event / line 3, Breakpoint - a warning in a TRIAL; from disk the same;
+#                     README.txt copied; JSON export ok
+#   REAL (Yes)        the same, but the Breakpoint makes it INCOMPLETE. Delete line 3 of pbTest.$event in
+#                     MyLib by hand, save, build again: complete.
+#   version '1.0.1'   places 1 of 3 (both version places fail): a TRIAL warns, a REAL stops before the copy.
+#
+# The Executor's header says nothing: the library is not open when the run starts and is closed before
+# it ends. Run twice: a second run stops while the file exists; close the library and delete the file
+# by hand. Clear the Target field of the console first: a class name that also exists in another open
+# library would be backed up from there.
+
+Calculate result as con('run ',#T,' — release_templatetest_setup v4',kCr)
+
+Calculate name as 'MyLib'
+Calculate name2 as con(mid(sys(10),1,rpos(sys(9),sys(10))),'execExports',sys(9),'release_templatetest_setup',sys(9))
+Calculate name3 as con(name2,name,'.lbs')
+If not(isclear($root.$libs.$findname(name)))
+   Calculate result as con(result,'[setup   ]   ',name,' is open - close it, delete ',name3,' by hand, then run this again. Nothing done.',kCr)
+   Quit method result
+End If
+If FileOps.$doesfileexist(name3)
+   Calculate result as con(result,'[setup   ]   ',name3,' exists - delete it by hand, then run this again. Nothing done.',kCr)
+   Quit method result
+End If
+Do FileOps.$createdir(name2,kTrue)
+Create library (Do not close others) [name3],[name] ## without the option every other open library is closed
+Set reference ref3 to $root.$libs.$findname(name)
+If isclear(ref3)
+   Calculate result as con(result,'[setup   ]   ',name3,' was NOT created - nothing done',kCr)
+   Quit method result
+End If
+Calculate result as con(result,'[setup   ]   ',name3,' created',kCr)
+
+# ====== from here on the library is open: no Quit before the close at the end
+# A new library carries an empty Startup_Task. Variables are declared BEFORE the body that names them:
+# Omnis refuses a line naming a variable the method does not have.
+Calculate text2 as con(' #','# @DEV') ## the developer marker, built so no double hash stands in a literal of this script
+Calculate text3 as con(' #','# @RELEASE') ## the release marker, the same way
+Calculate count as 0 ## bodies taken
+Calculate count2 as 0 ## variables declared
+
+# --- Startup_Task: the version the library reports, and its changelog
+Set reference classRef to ref3.$classes.$findname('Startup_Task')
+If isclear(classRef)
+   Set reference classRef to ref3.$classes.$add(kTask,'Startup_Task')
+End If
+Set reference methodRef to classRef.$methods.$add('$version')
+Do methodRef.$methodtext.$assign(con('# MyLib: the version the library reports. Raised for every release; release_template step 1 checks it.',kCr,'Quit method ''1.0.0''')) Returns flag1
+Calculate count as count+flag1
+Set reference methodRef to classRef.$methods.$add('$changelog')
+# the changelog: comment lines only. Each release has a heading; changes not yet released collect under a heading Unreleased
+Calculate text as '# Changelog of MyLib. Every release has a heading: three dashes, the version, a dash, the date, three dashes.'
+Calculate text as con(text,kCr,'# While you work, changes collect under a heading Unreleased; before a release it is renamed to the version.')
+Calculate text as con(text,kCr,'# release_template step 1 checks both: the heading of the version is there, and no Unreleased heading is left.')
+Calculate text as con(text,kCr,'# --- 1.0.0 - 2026-10-17 ---')
+Calculate text as con(text,kCr,'# - first public release')
+Calculate text as con(text,kCr,'# - added: the window wTest, a button showing the build mode')
+Calculate text as con(text,kCr,'# - fixed: oTools.$mode returned an empty text when no mode was set')
+Calculate text as con(text,kCr,'# --- 0.9.0-beta.1 - 2026-09-30 ---')
+Calculate text as con(text,kCr,'# - changed: settings are kept in oSettings instead of the task')
+Calculate text as con(text,kCr,'# - changed: the version is reported by Startup_Task.$version')
+Calculate text as con(text,kCr,'# --- 0.1.0-alpha - 2026-08-12 ---')
+Calculate text as con(text,kCr,'# - first working build, for the developer only')
+Do methodRef.$methodtext.$assign(text) Returns flag1
+Calculate count as count+flag1
+Save class [con(name,'.Startup_Task')]
+
+# --- oSettings: three class variables, each carrying data in its $userinfo
+Set reference classRef2 to ref3.$classes.$add(kObjectclass,'oSettings')
+Set reference ref to classRef2.$cvardefs.$add('cDevPath',kCharacter,kSimplechar,1000)
+If not(isclear(ref))
+   Calculate count2 as count2+1
+   Do ref.$userinfo.$assign('/Users/developer/private')
+End If
+Set reference ref to classRef2.$cvardefs.$add('cLastLogin',kCharacter,kSimplechar,1000)
+If not(isclear(ref))
+   Calculate count2 as count2+1
+   Do ref.$userinfo.$assign('developer, 2026-10-17 17:00')
+End If
+Set reference ref to classRef2.$cvardefs.$add('cKeep',kCharacter,kSimplechar,1000)
+If not(isclear(ref))
+   Calculate count2 as count2+1
+   Do ref.$userinfo.$assign('ships as it is')
+End If
+# $about: a comment-only method that tells a reader of MyLib what this class demonstrates
+Set reference methodRef to classRef2.$methods.$add('$about')
+Calculate text as '# oSettings keeps settings in class variables. A class variable''s VALUE is saved with its class, and so is'
+Calculate text as con(text,kCr,'# the $userinfo of each variable definition: whatever was stored last travels inside the library file.')
+Calculate text as con(text,kCr,'# cDevPath (a private path) and cLastLogin (the last login) hold the developer''s data and must not ship.')
+Calculate text as con(text,kCr,'# cKeep holds data that ships as it is.')
+Calculate text as con(text,kCr,'# release_template step 5 removes cDevPath and empties the $userinfo of cLastLogin - in the release copy only.')
+Calculate text as con(text,kCr,'# Read the data by notation: the $userinfo of $cvardefs.cDevPath of this class.')
+Do methodRef.$methodtext.$assign(text) Returns flag1
+Calculate count as count+flag1
+Save class [con(name,'.oSettings')]
+
+# --- oTools: $mode with a developer line and a commented release line, $playground with a Breakpoint
+Set reference classRef3 to ref3.$classes.$add(kObjectclass,'oTools')
+Set reference methodRef to classRef3.$methods.$add('$mode')
+Set reference ref to methodRef.$lvardefs.$add('lMode',kCharacter,kSimplechar,100)
+Calculate count2 as count2+not(isclear(ref))
+Calculate text as '# MyLib: line 2 is a developer line, active here and commented in the release copy; line 3 a release line, commented here and active in the release copy; line 4 the control'
+Calculate text as con(text,kCr,'Calculate lMode as ''developer''',text2)
+Calculate text as con(text,kCr,'# Calculate lMode as ''release''',text3)
+Calculate text as con(text,kCr,'Quit method lMode')
+Do methodRef.$methodtext.$assign(text) Returns flag1
+Calculate count as count+flag1
+Set reference methodRef to classRef3.$methods.$add('$playground')
+Set reference ref to methodRef.$lvardefs.$add('lTmp',kCharacter,kSimplechar,100)
+Calculate count2 as count2+not(isclear(ref))
+Calculate text as '# MyLib: the developer''s playground, to try things out. release_template step 6 replaces this body by one comment line in the release copy; the local lTmp stays.'
+Calculate text as con(text,kCr,'Calculate lTmp as ''try this''')
+Calculate text as con(text,kCr,'Breakpoint')
+Calculate text as con(text,kCr,'Quit method lTmp')
+Do methodRef.$methodtext.$assign(text) Returns flag1
+Calculate count as count+flag1
+Save class [con(name,'.oTools')]
+
+# --- wTest: a window with a button whose $event holds a developer line and a Breakpoint without marker
+Set reference classRef to ref3.$classes.$add(kWindow,'wTest')
+Set reference objRef to classRef.$objs.$add(kPushbutton,12,12,24,120)
+Do objRef.$name.$assign('pbTest')
+Set reference methodRef to objRef.$methods.$findname('$event')
+If isclear(methodRef)
+   Set reference methodRef to objRef.$methods.$add('$event')
+End If
+Do methodRef.$methodtext.$assign(con('On evClick',kCr,'OK message MyLib {developer build}',text2,kCr,'Breakpoint')) Returns flag1
+Calculate count as count+flag1
+Save class [con(name,'.wTest')]
+Calculate result as con(result,'[setup   ]   bodies taken ',count,' of 6, variables declared ',count2,' of 5',kCr)
+
+# ====== read back over a path resolved afresh
+Set reference ref3 to $root.$libs.$findname(name)
+Do list.$define()
+Do list.$cols.$add('label',kCharacter,kSimplechar,255)
+Do list.$cols.$add('mref',kItemref)
+Do list.$cols.$add('lines',kInteger,k32bitint)
+Do list.$cols.$add('locals',kInteger,k32bitint)
+Do list.$add('Startup_Task.$version',ref3.$classes.$findname('Startup_Task').$methods.$findname('$version').$ref,2,0)
+Do list.$add('Startup_Task.$changelog',ref3.$classes.$findname('Startup_Task').$methods.$findname('$changelog').$ref,12,0)
+Do list.$add('oSettings.$about',ref3.$classes.$findname('oSettings').$methods.$findname('$about').$ref,6,0)
+Do list.$add('oTools.$mode',ref3.$classes.$findname('oTools').$methods.$findname('$mode').$ref,4,1)
+Do list.$add('oTools.$playground',ref3.$classes.$findname('oTools').$methods.$findname('$playground').$ref,4,1)
+Do list.$add('wTest.pbTest.$event',ref3.$classes.$findname('wTest').$objs.$findname('pbTest').$methods.$findname('$event').$ref,3,0)
+Calculate count3 as 0 ## methods as expected
+For n from 1 to list.$linecount step 1
+   Set reference methodRef to list.[n].mref().$ref
+   Calculate flag1 as kFalse
+   Calculate text as 'NOT found'
+   If not(isclear(methodRef))
+      Calculate flag1 as (methodRef.$methodlines.$count=list.[n].lines)&(methodRef.$lvardefs.$count=list.[n].locals)
+      Calculate text as con(methodRef.$methodlines.$count,' line(s), ',methodRef.$lvardefs.$count,' local(s)')
+   End If
+   Calculate count3 as count3+flag1
+   Calculate result as con(result,'[check   ]   ',list.[n].label,': ',text,pick(flag1,' - NOT as expected',' - as expected'),' (',list.[n].lines,' / ',list.[n].locals,')',kCr)
+End For
+Set reference classRef2 to ref3.$classes.$findname('oSettings')
+Calculate count as 0 ## class variables carrying data
+Calculate text2 as '' ## their names (the marker is no longer needed)
+If not(isclear(classRef2))
+   Set reference ref to classRef2.$cvardefs.$first()
+   While not(isclear(ref))
+      Calculate count as count+(len(ref.$userinfo)>0)
+      Calculate text2 as con(text2,' ',ref.$name,' (',len(ref.$userinfo),' characters)')
+      Set reference ref to classRef2.$cvardefs.$next(ref)
+   End While
+End If
+Calculate result as con(result,'[check   ]   oSettings: ',count,' of 3 class variables carry data:',pick(len(text2)>0,' none',text2),kCr)
+Calculate flag2 as (count3=6)&(count=3)
+
+# ====== CLOSE
+Close library [name]
+Calculate result as con(result,'[close   ]   ',name,' ',pick(isclear($root.$libs.$findname(name)),'still OPEN','closed'),kCr)
+Calculate result as con(result,'[done    ]   ',pick(flag2,'NOT as expected - read the lines above',con('open ',name3,' by hand, then run release_template as it is')),kCr)
+Quit method result

@@ -1,0 +1,15 @@
+# Determines the table class.
+# Must be resolved inside the instance so the variable is known.
+
+Set reference varRef to [pVariableName].$ref
+Calculate fullname as varRef.$fullname
+Calculate type as varRef.$type
+
+If varRef.$classtype()=kTable ## plain list
+	Calculate tableClassName as varRef.$class().$name
+	Quit method tableClassName
+Else If varRef.$group().$group().$classtype()=kTable ## list.col
+	Calculate tableClassName as varRef.$group().$group().$class().$name
+	Quit method tableClassName
+End If
+Quit method

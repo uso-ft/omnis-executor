@@ -1,0 +1,36 @@
+# Shows the values of all instance variables of an instance of a class
+# ===========================================
+# For "Open Values List" to work for the correct object, the command "Open Values List..." must run IN (!) this instance itself
+# and ONE instance variable must be specified. This variable must be found first.
+# Attention: self-modifying code ==> do not stall the stack !!!
+
+If pInstance.$objtype=kSubwindow
+	# Reference to the class must be retrieved from the sub-instance.
+	Set reference classRef to pInstance.$subinst().$class().$ref
+Else
+	Set reference classRef to pInstance.$class().$ref
+End If
+Calculate instanceFullname as pInstance.$fullname ## for debugging
+
+# Look for an instance var
+Do classRef.$ivardefs.$makelist($ref.$ref,$ref.$name,$ref.$objtype) Returns list
+If list.$linecount=0
+	# Attention: the instance variables may also be defined only in a superclass ==> search.
+	# Somewhat cumbersome, but temporarily adding an instance variable is useless, as the values
+	# window should be permanent and no temp variable should remain.
+	Set reference superclassRef to classRef
+	Repeat
+		Set reference superclassRef to $cinst.$classRefOfName(superclassRef.$superclass)
+		Do superclassRef.$ivardefs.$makelist($ref.$ref,$ref.$name,$ref.$objtype) Returns list
+	Until isclear(superclassRef)|list.$linecount>0
+End If
+
+If list.$linecount>0
+	Calculate aInstanceVarName as list.1.C2 ## use first variable found
+	Calculate methodtext as con('Variable menu command: Open Values List... ',aInstanceVarName)
+	Do $cinst.$cloneMethodToAndExecute(methodtext.$ref,pInstance.$class(),pInstance.$ref,,pVariableName) ## @SELF
+Else
+	Sound bell
+End If
+
+Quit method

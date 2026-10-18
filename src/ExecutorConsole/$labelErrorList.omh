@@ -1,0 +1,9 @@
+Calculate columnNames as ''
+Do iErrorsRef.$cols.$sendall(columnNames.$assign(con(columnNames,',',$sendallref.$name)),$sendallref.$ident<8) ## exclude stack list
+Calculate columnNames as mid(columnNames,2)
+Do $cinst.$objs.scrErrorLog.$objs.hlErrors.$columnnames.$assign(columnNames)
+Do $cinst.$objs.scrErrorLog.$objs.hlErrors.$colcount.$assign(iErrorsRef.$colcount-1)
+
+If len(cErrorColWidths) ## empty: the class widths stand (layout_reset v1)
+	Do $cinst.$objs.scrErrorLog.$objs.hlErrors.$columnwidths.$assign(cErrorColWidths)
+End If

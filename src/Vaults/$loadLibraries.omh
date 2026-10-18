@@ -1,0 +1,23 @@
+# Loads all libraries containing "execBackup_" in library name and not open already in folder $backupPath
+
+Calculate cBackupsFolderPath as $ctask.$backupPath()
+Do FileOps.$filelist(kFileOpsIncludeFiles,cBackupsFolderPath,kFileOpsInfoFullName+kFileOpsInfoName,'*.lbs') Returns iOpenedLibraries
+
+# Remove not execBackup_-files
+Do iOpenedLibraries.$search(kFalse)
+Do iOpenedLibraries.$search(pos('execBackup_',iOpenedLibraries.c1)=1,kTrue,kFalse,kTrue,kFalse)
+Do iOpenedLibraries.$remove(kListKeepSelected)
+
+# Remove libraries already open
+Do iOpenedLibraries.$search(kFalse)
+Do $libs.$sendall(iOpenedLibraries.$search(iOpenedLibraries.c2=$sendallref.$pathname,kTrue,kFalse,kTrue,kFalse),pos('execBackup_',$sendallref().$name))
+Do iOpenedLibraries.$remove(kListDeleteSelected)
+
+# Open libraries
+For iOpenedLibraries.$line from 1 to iOpenedLibraries.$linecount step 1
+	Calculate fileName as iOpenedLibraries.C2
+	Open library (Do not close others,Do not open startup task) [fileName]
+End For
+
+# the display list: $listLibraries, which pbSelectFromDisk calls alone
+Do $cinst.$listLibraries()

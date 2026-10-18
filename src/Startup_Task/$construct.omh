@@ -1,0 +1,71 @@
+# =============================================================================
+# START GUARD - Executor 1.0.0
+# =============================================================================
+# In a DELIVERED copy the four lines below are ACTIVE: the library closes at once.
+# Read the CAUTION block, then comment the four lines out to use the Executor.
+OK message Executor will be closed now {Please hit Break and read the comments at the top of Startup_Task.$construct first.} ## READ THE CAUTION BELOW BEFORE COMMENTING THIS LINE
+Breakpoint ## READ THE CAUTION BELOW BEFORE COMMENTING THIS LINE
+Do $ctask.$close() ## READ THE CAUTION BELOW BEFORE COMMENTING THIS LINE
+Quit method kFalse ## READ THE CAUTION BELOW BEFORE COMMENTING THIS LINE
+#
+# =============================================================================
+# CAUTION
+# =============================================================================
+# - The Executor CHANGES CLASSES of the libraries it is pointed at: methods, variables,
+#   objects and properties. Scripts are written by an AI or by a person against a fixed
+#   contract. Read every script before you run it.
+# - Before a run the target classes are copied into a vault, one library per source
+#   library: execBackups/execBackup_<Library>.lbs. Restore from there (window Vaults).
+# - Beside this library it creates: the folders execBackups, execRuns (one folder
+#   per run, never cleaned) and execSnippets, and the library execScratch.lbs.
+# - The execution log is kept inside this library (class ExecutorStore) and grows.
+# - Self-modifying code: the script text is assigned to Executor.$execute and run in a
+#   fresh vessel instance; some tool functions add methods to INSTANCES (look for @SELF).
+# - Some functions call IDE libraries (look for @IDE) or Omnis core tool methods via
+#   $dotoolmethod (look for @CORE). Future Omnis versions may change their behaviour.
+# - Use it at your own risk, on copies or under version control. No warranty: see _License.
+# =============================================================================
+# Tested: Omnis Studio 10.22 Build 31896 64 bit - on macOS 10.14.6 Mojave
+# Omnis Studio 10.22 Build 32066 64 bit - on Windows 10 Enterprise
+# =============================================================================
+# SUPPORT - the Executor is DONATE-WARE
+# =============================================================================
+# - Free under the MIT license. If it saves you time, please consider a donation:
+#   the link is in About (menu Executor) and in Startup_Task.$donateLink().
+# - Why and how: Startup_Task._Donate.
+# - Contact: uso-ft@sonnabend.ch
+# =============================================================================
+
+# Errors are collected into cErrors (run channel, define before possible errors occur
+If cErrors.$colcount<8
+	Do cErrors.$define()
+	Do cErrors.$cols.$add('seq',kInteger,k32bitint)
+	Do cErrors.$cols.$add('time',kCharacter,kSimplechar,20)
+	Do cErrors.$cols.$add('errcode',kCharacter,kSimplechar,20)
+	Do cErrors.$cols.$add('errtext',kCharacter,kSimplechar,100000000)
+	Do cErrors.$cols.$add('linetext',kCharacter,kSimplechar,100000000)
+	Do cErrors.$cols.$add('location',kCharacter,kSimplechar,100000000)
+	Do cErrors.$cols.$add('foreign',kBoolean)
+	Do cErrors.$cols.$add('stack',kList,0)
+	
+End If
+
+If cBackups.$colcount<7
+	Do cBackups.$define()
+	Do cBackups.$cols.$add('protocol',kCharacter,kSimplechar,100000000)
+	Do cBackups.$cols.$add('className',kCharacter,kSimplechar,255)
+	Do cBackups.$cols.$add('sourceClass',kCharacter,kSimplechar,100000000)
+	Do cBackups.$cols.$add('backupCopy',kCharacter,kSimplechar,100000000)
+	Do cBackups.$cols.$add('bytes',kInteger,k32bitint,0)
+	Do cBackups.$cols.$add('ticks',kInteger,k32bitint,0)
+	Do cBackups.$cols.$add('kind',kCharacter,kSimplechar,20)
+End If
+
+Install menu ExecutorMenu
+
+# First start of a fresh copy: the store holds no settings yet, so the console shows itself once, with the run tour.
+# Afterwards it waits for the menu (Executor > Console). The settings are written when the console closes.
+If $clib.$classes.ExecutorStore.$cvardefs.$findname('ExecutorConsole_settings')
+Else
+	Do $classes.ExecutorConsole.$openonce('*')
+End If

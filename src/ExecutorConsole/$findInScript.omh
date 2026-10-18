@@ -1,0 +1,102 @@
+# Finds cFindScriptText in cScript and selects it.
+#   pDirection  0 = from the top   1 = forward   -1 = backward
+#   pSoundBell_opt  ring when nothing was found
+# Returns findPos
+#
+# $firstsel is EXCLUSIVE, $lastsel INCLUSIVE (the help calls both inclusive):
+# firstsel = findPos-1, lastsel = findPos+len-1.
+# With cFindInExecutionLog the search goes on into the log, which replaces the text in the editor.
+Set reference edRef to $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.efScript
+If isclear(edRef)
+	Quit method
+End If
+
+If len(cFindScriptText)=0
+	Do edRef.$firstsel.$assign(0)
+	Do edRef.$lastsel.$assign(0)
+	Quit method
+End If
+
+If pKeepSelection_opt
+	# Next/previous need to know the current selection
+Else
+	# clear current selection from search before
+	Do edRef.$firstsel.$assign(0)
+	Do edRef.$lastsel.$assign(0)
+End If
+
+If pDirection>0
+	Calculate startPos as edRef.$lastsel
+Else
+	If pDirection<0
+		Calculate startPos as edRef.$firstsel
+	Else
+		Calculate startPos as 0
+	End If
+End If
+
+While 1
+	If pDirection<0
+		Calculate part as mid(cScript,1,startPos)
+		Calculate findPos as rpos(low(cFindScriptText),low(part))
+	Else
+		Calculate part as mid(cScript,startPos+1)
+		Calculate findPos as pos(low(cFindScriptText),low(part))
+		If findPos
+			Calculate findPos as findPos+startPos
+		End If
+	End If
+	If findPos
+		Do edRef.$firstsel.$assign(findPos-1)
+		Do edRef.$lastsel.$assign(findPos+len(cFindScriptText)-1)
+		Break to end of loop
+	End If
+	If cFindInExecutionLog&not(pCalledFromSetExecutorValues_opt)
+		# search next/previous log entry for the key word
+		# Only if direct text search via associated buttons
+		# prevent recursive calls
+		If pDirection<0
+			Repeat
+				Calculate cLog.$line as cLog.$line-1
+				Calculate part as cLog.execScript
+				Calculate findPos as pos(low(cFindScriptText),low(part))
+			Until findPos|cLog.$line<=1
+		Else
+			Repeat
+				Calculate cLog.$line as cLog.$line+1
+				Calculate part as cLog.execScript
+				Calculate findPos as pos(low(cFindScriptText),low(part))
+			Until findPos|cLog.$line>=cLog.$linecount
+		End If
+		If findPos
+			Do iTools.$selectAllLines(cLog,kFalse)
+			Calculate cLog.$selected as kTrue
+			
+			Calculate cScript as part
+			Do $cinst.$redraw()
+			If pDirection<0
+				Calculate startPos as len(cScript)
+			Else
+				Calculate startPos as 0
+			End If
+		Else
+			Sound bell
+			Break to end of loop
+		End If
+	Else
+		If pSoundBell_opt
+			Sound bell
+		End If
+		Break to end of loop
+	End If
+End While
+
+If findPos|(edRef.$firstsel<>edRef.$lastsel)
+	# show found selection, or keep selection
+	Queue set current field efScript
+Else
+	# not found, target to find field
+	Queue set current field efFindScriptText
+End If
+
+Quit method findPos

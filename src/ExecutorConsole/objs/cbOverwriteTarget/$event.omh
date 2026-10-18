@@ -1,0 +1,9 @@
+On evClick
+	Process event and continue
+	If cOverwritePathAndTitle
+		# a script that reads targetRef takes its target from the field: the path there stays (A, 2026-09-23)
+		If not($cinst.$targetIsParam(cScript))
+			Calculate cTargetPath as $cinst.$shortPath($cinst.$analyzeTarget(cScript)) ## shown short, resolved from the reference
+		End If
+		Do $cinst.$redraw()
+	End If

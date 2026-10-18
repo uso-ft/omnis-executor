@@ -1,0 +1,35 @@
+# Remove or add #-system classes depending on cFilterSystemClasses.
+
+Set reference node to iTreeRef.$first()
+While node
+	Calculate doNext as kTrue
+	Set reference nodeParent to node.$nodeparent()
+	If not(isclear(nodeParent))&nodeParent.$name='$classes'&cFilterSystemClasses
+		# filtering ON: remove kSystemtable nodes under $classes
+		Set reference ref to node.$tag()
+		If ref.$classtype=kSystemtable
+			Set reference nodeToDelete to node
+			Set reference node to iTreeRef.$nextnode(node,kTrue)
+			Do nodeParent.$remove(nodeToDelete)
+			Calculate doNext as kFalse
+		End If
+	Else If node.$name='$classes'&not(cFilterSystemClasses)
+		# filtering OFF: add the kSystemtable classes back under $classes
+		Set reference ref to node.$tag()
+		Calculate list as ref.$makelist($ref.$name,$ref.$canassign,kTrue,$ref.$ref)
+		Do list.$redefine(name,canassign,group,ref)
+		Calculate isGroup as kTrue
+		Do list.$search(list.ref.$classtype=kSystemtable,kTrue,kFalse,kTrue,kTrue)
+		Do list.$remove(kListKeepSelected)
+		Do list.$sort($ref.C1,kTrue) ## descending
+		For list.$line from 1 to list.$linecount step 1
+			Set reference newChild to node.$add(con(list.name))
+			Do newChild.$tag.$assign(list.ref)
+			Do iTreeRef.$movenode(newChild,node,kMoveNodeToDstFirstChild)
+		End For
+	End If
+	If doNext
+		Set reference node to iTreeRef.$nextnode(node,kTrue)
+	End If
+End While
+Quit method

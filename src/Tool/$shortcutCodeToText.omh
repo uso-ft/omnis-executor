@@ -1,0 +1,101 @@
+# Create a usable string from the shortcut key code $winshortcutkey or $macshortcutkey
+# for the 'Queue keyboard event' command (pEditMode kFalse) or editor display (kTrue).
+# Inverse of $shortcutTextToCode.
+# Remark: Omnis stores shortcut keys as plain numbers. The editor display and the
+# 'Queue keyboard event' string differ — names, delimiters AND modifier order differ:
+#   editor display: Cmnd+Shift+Opt   (Cmnd/Ctrl first, mixed case)
+#   Queue keyboard: shift-com-...     (Shift first, lower case)
+# Letters are stored upper case (ä → Ä). This method is trial-and-error and incomplete.
+# Verified: Shift=131072, F1..F12=1..12, Cmnd+Shift+Opt+A=458817, Alt+Ä=262340
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+If isclear(pShortcutCode)
+	Quit method ''
+End If
+Calculate shortcutKeyCode as mod(pShortcutCode,256)
+If shortcutKeyCode>=1&shortcutKeyCode<=12
+	Calculate shortcutKey as con('F',shortcutKeyCode) ## F1..F12 stored as 1..12
+Else
+	Calculate shortcutKey as chr(shortcutKeyCode)
+End If
+Calculate modifierKeyCode as pShortcutCode-shortcutKeyCode
+
+# --- Delimiter and platform modifier names -----------------------------------
+If pEditMode
+	Calculate delimiter as '+'
+	If sys(6)='X'
+		Calculate ctrl as 'Cmnd'
+	End If
+Else
+	Calculate delimiter as '-'
+	If sys(6)='X'
+		Calculate ctrl as 'Com'
+	End If
+End If
+If sys(6)='X'
+	Calculate opt as 'Opt'
+Else
+	Calculate opt as 'Alt'
+	Calculate ctrl as 'Ctrl'
+End If
+
+# --- Which modifiers are present ---------------------------------------------
+Calculate hasCtrl as bitand(modifierKeyCode,65536)>0
+Calculate hasShift as bitand(modifierKeyCode,131072)>0
+Calculate hasOpt as bitand(modifierKeyCode,262144)>0
+
+# --- Assemble in the right order --------------------------------------------
+# editor (pEditMode): Cmnd/Ctrl → Shift → Opt
+# Queue:              Shift → Com/Ctrl → Opt
+Calculate modifierKey as ''
+If pEditMode
+	If hasCtrl
+		If len(modifierKey)
+			Calculate modifierKey as con(modifierKey,delimiter)
+		End If
+		Calculate modifierKey as con(modifierKey,ctrl)
+	End If
+	If hasShift
+		If len(modifierKey)
+			Calculate modifierKey as con(modifierKey,delimiter)
+		End If
+		Calculate modifierKey as con(modifierKey,'Shift')
+	End If
+Else
+	If hasShift
+		If len(modifierKey)
+			Calculate modifierKey as con(modifierKey,delimiter)
+		End If
+		Calculate modifierKey as con(modifierKey,'Shift')
+	End If
+	If hasCtrl
+		If len(modifierKey)
+			Calculate modifierKey as con(modifierKey,delimiter)
+		End If
+		Calculate modifierKey as con(modifierKey,ctrl)
+	End If
+End If
+If hasOpt
+	If len(modifierKey)
+		Calculate modifierKey as con(modifierKey,delimiter)
+	End If
+	Calculate modifierKey as con(modifierKey,opt)
+End If
+
+# --- Patch assorted key names (complete if necessary) ------------------------
+Switch shortcutKey
+	Case '-'
+		Calculate shortcutKey as 'Minus'
+End Switch
+
+# --- Assemble: avoid leading delimiter when there is no modifier -------------
+If len(modifierKey)
+	Calculate shortCut as con(modifierKey,delimiter,shortcutKey)
+Else
+	Calculate shortCut as shortcutKey
+End If
+
+# Queue editor uses lower case only
+If not(pEditMode)
+	Calculate shortCut as low(shortCut)
+End If
+Quit method shortCut

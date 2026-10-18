@@ -1,0 +1,36 @@
+# Save cScript to a .txt file. Default folder derives from the library (sys(10)).
+If len(cScript)=0
+	OK message {Nothing to save -- the editor is empty.}
+	Quit method
+End If
+Calculate basePath as con(mid(sys(10),1,rpos(sys(9),sys(10))),'execSnippets',sys(9))
+Do FileOps.$createdir(basePath,kTrue) Returns flag1
+
+If len(cLogTitle)
+	Calculate chosenPath as con(cLogTitle,'.txt')
+Else
+	Calculate title as $cinst.$titleFromScript(cScript,cTargetPath,cSourcePath)
+	If len(title)
+		Calculate chosenPath as con(title,'.txt')
+	Else
+		Calculate chosenPath as con('MySnippet','.txt')
+	End If
+End If
+
+Do FileOps.$putfilename(chosenPath,'Save snippet as','*.txt',basePath) Returns flag1
+If not(flag1)
+	Quit method ## user cancelled
+End If
+Do iFileOps.$createfile(chosenPath) Returns flag1
+If flag1
+	Do iFileOps.$getfileinfo(kFileOpsInfoName) Returns infoList
+	Calculate name as infoList.1.c1
+	Do iFileOps.$writecharacter(kUniTypeUTF8,cScript,kFalse,kFalse) Returns flag1
+	Do iFileOps.$closefile()
+	
+	OK message {Snippet saved:////[name]}
+Else
+	Do iFileOps.$getlasterror(errText) Returns flag1
+	OK message Save failed {[errText]}
+End If
+Quit method

@@ -1,0 +1,48 @@
+# Before running: check whether a design/layout EDITOR of the target class(es) is open.
+# Modifying a class while its editor is open is very slow (the editor tracks every change live).
+# A sys(194) row that edits a class has 'classitem' set to that class.
+
+Calculate possibleTargetList as $cinst.$targetsFromText(cScript) ## positional; strips comments itself
+# NOTE rows carry no reference. Comparing an empty one against every
+# open window is pointless, so they go first.
+Do possibleTargetList.$search(len(possibleTargetList.clsName)=0,kTrue,kFalse,kTrue,kFalse)
+Do possibleTargetList.$remove(kListDeleteSelected)
+# The target field is added: a script can change a class it never names in its text.
+If iTargetRef
+	# An editor edits a CLASS: $class() gives the owning class of an object. A library gives none.
+	Set reference tgtClassRef to iTargetRef.$class()
+	If tgtClassRef
+		Calculate clsPath as ''
+		For possibleTargetList.$line from 1 to possibleTargetList.$linecount step 1
+			Calculate clsPath as con(clsPath,kCr,low(possibleTargetList.clsName),kCr)
+		End For
+		If pos(con(kCr,low(tgtClassRef.$name),kCr),clsPath)=0
+			Do possibleTargetList.$add(tgtClassRef.$ref,tgtClassRef.$name,'target field',0,'')
+		End If
+	End If
+End If
+Calculate allWindows as sys(194)
+
+# search possible targets in all open windows
+Do allWindows.$search(kFalse)
+Do possibleTargetList.$sendall(allWindows.$search(allWindows.classitem().$ref=$sendallref.c1().$ref,kTrue,kFalse,kTrue,kFalse))
+
+# Close all editors of all possible classes
+Calculate closed as 0
+For allWindows.$line from 1 to allWindows.$linecount step 1
+	If allWindows.$selected()
+		# Design windows that are not class editors carry no class: skipped, Close design would fail.
+		Calculate clsPath as iTools.$shortenClassPath(allWindows.classitem().$fullname)
+		If len(clsPath)>0
+			Close design [clsPath]
+			Calculate closed as closed+1
+		Else
+			Calculate nameless as nameless+1
+		End If
+	End If
+End For
+# Returns one protocol line with the counts.
+# Classes, not mentions: one class named five times is one class.
+Calculate allWindows as possibleTargetList
+Do allWindows.$cols.clsName.$removeduplicates(kTrue,kTrue)
+Quit method con(allWindows.$linecount,' class(es) in the text or the Target field (',possibleTargetList.$linecount,' mention(s)), ',closed,' editor(s) closed, ',nameless,' selected row(s) carried no class name')

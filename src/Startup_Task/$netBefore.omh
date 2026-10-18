@@ -1,0 +1,42 @@
+# $netBefore v1 2026-09-09 (restorenet v1) — the net for a RESTORE.
+# Puts the LIVE class into pVaultRef under <cls>_before, so a restore onto the
+# wrong class can be undone. It cannot be an ordinary backup: $backupClass
+# writes <cls>, and <cls> is the very copy the restore is reading from — the
+# backup would eat its own source. $copyClass is no use either, for the same
+# reason: it takes its target name from the source and would collide.
+#
+# The name is _before and NOT _prev: _prev belongs to $holdBackup, and the next
+# run deletes any _prev it finds in a vault. A net under that name would be
+# swept away by the next script that touched the class.
+#
+# ONE _before per class. The next restore of the same class replaces it. A net
+# for the last restore, not a history.
+#
+# The method count is compared but never used to refuse: this is a net, and a
+# net that refuses to be spread is worse than one that is spread badly. The
+# note says so and the caller can put it in the protocol.
+# Returns a note WITHOUT a closing full stop, so a caller can place it.
+If isclear(pClassRef)
+	Quit method 'no live class, so no net was needed'
+End If
+If isclear(pVaultRef)
+	Quit method 'no vault, so NO net was written'
+End If
+Calculate cName as con(pClassRef.$name,'_before')
+If pVaultRef.$classes.$findname(cName)
+	Do pVaultRef.$classes.$remove(pVaultRef.$classes.$findname(cName).$ref)
+End If
+Set reference newRef to pVaultRef.$classes.$add(pClassRef.$classtype,cName)
+If isclear(newRef)
+	Quit method con('NO net: ',cName,' could not be created')
+End If
+Do newRef.$classdata.$assign(pClassRef.$classdata) Returns ok
+# never read through the add-returned reference (A8.6)
+Set reference newRef to pVaultRef.$classes.$findname(cName)
+If isclear(newRef)
+	Quit method con('NO net: ',cName,' did not land')
+End If
+Calculate ok as newRef.$methods.$count=pClassRef.$methods.$count
+# who writes, saves (persistence law)
+Save class [con(pVaultRef.$name,'.',cName)]
+Quit method con('net ',cName,pick(ok,' written, but its method count does NOT match the live class',' written'))

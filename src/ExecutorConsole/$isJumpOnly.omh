@@ -1,0 +1,16 @@
+# $isJumpOnly(pText) -> kTrue when pText holds a jump block and nothing runs before it:
+# every line above the marker is empty or a comment.
+# The marker is built from two literals, so this method is not read as a jump block itself.
+# Only the fixed start of the marker: since 1.0 a version may follow it.
+Calculate markPos as pos(con('## =====',' JUMP LINKS'),pText)
+If markPos=0
+	Quit method kFalse
+End If
+Calculate lines as split(replaceall(mid(pText,1,markPos-1),kLf,''),kCr)
+For lines.$line from 1 to lines.$linecount step 1
+	Calculate oneLine as trim(lines.C1)
+	If len(oneLine)>0&left(oneLine,1)<>'#'
+		Quit method kFalse
+	End If
+End For
+Quit method kTrue

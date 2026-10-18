@@ -1,0 +1,52 @@
+# jump to text defining this jump link and select it
+If cView=2
+	# Switch to split view
+	Calculate cView as 1
+	Process event and continue
+	Do $cinst.$applyView()
+	Do $cinst.$redraw()
+End If
+# search from the jump block on: the same path may stand earlier in the code or in a comment
+# the fixed start of the marker only: since 1.0 a version may follow it
+Calculate clipPos as max(pos(con('## =====',' JUMP LINKS'),cScript),1)
+# the target up to its comment, or up to the line end: a shorter target is often the start of a longer one (//$jump// in //$jump//.$modify(22))
+Calculate pos as pos(con(cJumpLinks.target,' ','##'),mid(cScript,clipPos))
+If pos=0
+	Calculate pos as pos(con(cJumpLinks.target,kCr),mid(cScript,clipPos))
+End If
+# a section title (=== ... ===) has no target: its title text is searched instead of the comment marks
+If len(cJumpLinks.target)=0
+	Calculate clipText as mid(cJumpLinks.comment,5,len(cJumpLinks.comment)-8)
+	Calculate pos as pos(clipText,mid(cScript,clipPos))
+End If
+If pos=0
+	Sound bell
+	Quit method
+End If
+Calculate pos as rpos(kCr,mid(cScript,1,clipPos-1+pos))
+# select the whole line, up to its line break or the end of the text; the comment may stand elsewhere too
+Calculate posRight as pos(kCr,mid(cScript,pos+1))
+Calculate posRight as pick(posRight=0,pos+posRight-1,len(cScript))
+
+# show cursor in script and select jumplink
+Set reference ref to $cinst.$objs.scrEditor.$objs.scrScriptResult.$objs.scrScript.$objs.scrScriptText.$objs.efScript
+Calculate $ctarget as ref
+Calculate ref.$firstsel as pos
+Calculate ref.$lastsel as posRight
+# scroll until the selection is visible ($firstvis to $lastvis); stop as soon as $vscroll no longer moves, that is what hung before
+While (ref.$firstsel<ref.$firstvis)&(ref.$vscroll>0)
+	Calculate clipPos as ref.$vscroll
+	Calculate ref.$vscroll as ref.$vscroll-1
+	If ref.$vscroll=clipPos
+		Break to end of loop
+	End If
+End While
+While ref.$firstsel>ref.$lastvis
+	Calculate clipPos as ref.$vscroll
+	Calculate ref.$vscroll as ref.$vscroll+1
+	If ref.$vscroll=clipPos
+		Break to end of loop
+	End If
+End While
+
+Quit method

@@ -1,0 +1,54 @@
+# $windowTopForObject(prObject)  — window-relative TOP pixel position of a
+# placed object, summing the container chain and adding each container
+# Constants in Tool $construct (ckBorder*, ckTabStripHeight, ckTitle*).
+#
+# top_inset added per container = ckBorder<type> + top_chrome, where
+# top_chrome = tab strip (top-tabs only) / group-box title / 0.
+# The kBobj special case below is disabled.
+
+# If prObject.$objtype=kBobj
+# background object reports absolute coordinates
+# Quit method prObject.$top
+# End If
+
+Calculate top as 0
+While prObject&prObject<>prObject.$wind
+	Calculate top as top+prObject.$top
+	
+	# complex grid row: header offset
+	If prObject.$gridsection=kGridRow
+		If prObject.$container().$showheader
+			Calculate top as top+prObject.$container().$headerheight+2
+		End If
+		If prObject.$container().$showhorzheader
+			Calculate top as top+prObject.$container().$horzheaderheight+2
+		End If
+	End If
+	
+	Set reference prObject to $cinst.$containerRef(prObject)
+	
+	If prObject
+		# --- add this container TOP inset = border + top chrome ----
+		Switch prObject.$objtype
+			Case kSubwindow
+				Calculate top as top+ckBorderSubwindow
+			Case kScrollbox
+				Calculate top as top+ckBorderScrollbox
+			Case kPagedPane
+				Calculate top as top+ckBorderPagedpane
+			Case kGroupBox
+				# border + title chrome (scales with the REAL title font size;
+				# $fontsizeOfObject resolves it from $fieldstyle when $fontsize is 0)
+				Calculate top as top+ckBorderGroupbox+ckTitleBaseHeight+rnd(($cinst.$fontsizeOfObject(prObject)-ckTitleBaseSize)*ckTitlePxPerPoint3/3,0)
+			Case kTabPane
+				# border always; tab strip only for TOP tabs
+				Calculate top as top+ckBorderTabpane
+				If prObject.$taborient=kTopTabs
+					Calculate top as top+ckTabStripHeight
+				End If
+			Default
+				# complexgrid and any other container: border-less/handled elsewhere
+		End Switch
+	End If
+End While
+Quit method top

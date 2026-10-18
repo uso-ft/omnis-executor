@@ -1,0 +1,11 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	# a script that reads targetRef takes its target from the field: the path there stays (A, 2026-09-23)
+	If not($cinst.$targetIsParam(cScript))
+		Calculate cTargetPath as $cinst.$shortPath($cinst.$analyzeTarget(cScript)) ## shown short, resolved from the reference
+	End If
+	Calculate cLogTitle as $cinst.$titleFromScript(cScript,cTargetPath,cSourcePath)
+	If cTargetPath=''
+		OK message Warning (Sound bell) {Probably no target set. //Please Check.}
+	End If
+	
+	Do $cinst.$redraw()

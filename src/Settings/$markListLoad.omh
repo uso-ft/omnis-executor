@@ -1,0 +1,15 @@
+# Loads the marker list of ExecutorConsole out of its stored settings package into iMarkList.
+# Always from the store, open console or not: the console reads the same package when it opens.
+Do row.$define()
+If iStore.$has('ExecutorConsole_settings')
+	Do row.$assign(iStore.$get('ExecutorConsole_settings'))
+End If
+Do iMarkList.$define()
+If row.$cols.$findname('cMarkList')
+	Calculate iMarkList as row.cMarkList
+End If
+If iMarkList.$colcount<2|iMarkList.$linecount=0
+	Do code method ExecutorConsole/$markListDefault Returns iMarkList
+End If
+Calculate iMarkList.$line as 1
+Quit method kTrue

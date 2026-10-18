@@ -1,0 +1,23 @@
+# $dangerArg(pArgs,pNumber) -> argument number pNumber of an argument text, trimmed; '' when there is none.
+# Only commas outside ( and [ separate arguments.
+Calculate depth as 0
+Calculate argNo as 1
+Calculate startPos as 1
+For charNo from 1 to len(pArgs) step 1
+	Calculate oneChar as mid(pArgs,charNo,1)
+	If oneChar='('|oneChar='['
+		Calculate depth as depth+1
+	Else If oneChar=')'|oneChar=']'
+		Calculate depth as depth-1
+	Else If oneChar=','&depth=0
+		If argNo=pNumber
+			Quit method trim(mid(pArgs,startPos,charNo-startPos))
+		End If
+		Calculate argNo as argNo+1
+		Calculate startPos as charNo+1
+	End If
+End For
+If argNo=pNumber
+	Quit method trim(mid(pArgs,startPos))
+End If
+Quit method ''

@@ -1,0 +1,29 @@
+# Picks ONE field out of an index line and undoes the escaping that
+# $indexClean put in. Returns the empty string when the field is not there,
+# which is also the honest answer for a field that is there and empty.
+#
+# Fields are name=value joined by tab. The search starts AT a tab, so a field
+# name can never be matched inside a value. The first field carries no leading
+# tab of its own, hence the one that is put in front here.
+#
+# This is the mirror of $indexClean and the only other place that knows the
+# encoding. If the escaping ever grows a scanner, these two move together.
+
+If len(pEntry)=0
+	Quit method ''
+End If
+Calculate text as con(kTab,pEntry)
+Calculate text2 as con(kTab,pFieldName,'=')
+Calculate n as pos(text2,text)
+If n=0
+	Quit method ''
+End If
+Calculate n as n+len(text2)
+Calculate text as mid(text,n,len(text)-n+1)
+Calculate n as pos(kTab,text)
+If n>0
+	Calculate text as mid(text,1,n-1)
+End If
+Calculate text as replaceall(text,'\t',kTab)
+Calculate text as replaceall(text,'\n',kCr)
+Quit method text

@@ -1,0 +1,4 @@
+If pos('CHIRURG',$clib().$name)
+	Do $cinst.$title.$assign('Chirurg')
+	Do $cinst.$objs.Console.$macshortcutkey.$assign('')
+End If

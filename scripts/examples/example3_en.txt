@@ -1,0 +1,101 @@
+# GENERATOR: example3_remove v4 — 2026-10-15 01:00 — example 3: measures what Permanent wrote outside any run, then removes the class
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  execScratch.wJsonExport
+# RUNS-IN:  EXECUTOR 1.0
+#
+# EXAMPLE 3 OF 3 - a script that REMOVES. It cleans up after examples 1 and 2, and it measures first.
+# Permanent (example 2) writes into the class outside any run, and marks what it writes: every method and
+# button event it copies starts with '# Written into the class by Permanent'. This script counts those marks.
+# Then it closes every open window of the class and removes the class. The Executor saved the class into the
+# vault before this script started, as every run does with a class its header names: the backup of THIS run
+# keeps it, the Permanent state included. Only a run brings a change into the vault. Restore it in the
+# console (Vaults).
+#
+# The jump links at the end lead to the vault copy: switch to the Jump or Split view and double-click a row.
+
+Calculate result as con('run ',#T,' — example3_remove v4',kCr)
+
+# --- the class of example 1: there, and built by example 1
+Set reference ref4 to $root.$libs.$findname('execScratch')
+If isclear(ref4)
+   Calculate result as con(result,'[scratch] execScratch is not open - close the console and open it again (Executor > Console), then run this again',kCr)
+   Quit method result
+End If
+Set reference classRef to ref4.$classes.$findname('wJsonExport')
+If isclear(classRef)
+   Calculate result as con(result,'[class  ] execScratch.wJsonExport is not there - nothing to remove. Run example 1 to build it.',kCr)
+   Quit method result
+End If
+Calculate flag1 as kFalse ## built by example 1
+Set reference methodRef to classRef.$methods.$findname('$construct')
+If not(isclear(methodRef))
+   Calculate flag1 as pos('example1_jsonexport',methodRef.$methodtext)>0
+End If
+If not(flag1)
+   Calculate result as con(result,'[class  ] execScratch.wJsonExport was not built by example 1 (no stamp in its $construct) - left alone, nothing removed',kCr)
+   Quit method result
+End If
+
+# --- measure: the methods and button events Permanent wrote, by their first line. (The vault copy from before
+# this run is no yardstick: it is whatever the last run that changed the class left there - an earlier round.)
+Calculate count as 0 ## methods and events marked by Permanent
+Calculate count2 as 0 ## their lines
+Set reference ref to classRef.$methods.$first()
+While not(isclear(ref))
+   If left(ref.$methodtext,37)='# Written into the class by Permanent'
+      Calculate count as count+1
+      Calculate count2 as count2+ref.$methodlines.$count
+   End If
+   Set reference ref to classRef.$methods.$next(ref)
+End While
+Set reference objRef to classRef.$objs.$first()
+While not(isclear(objRef))
+   Set reference ref to objRef.$methods.$findname('$event')
+   If not(isclear(ref))
+      If left(ref.$methodtext,37)='# Written into the class by Permanent'
+         Calculate count as count+1
+         Calculate count2 as count2+ref.$methodlines.$count
+      End If
+   End If
+   Set reference objRef to classRef.$objs.$next(objRef)
+End While
+If count=0
+   Calculate result as con(result,'[class  ] wJsonExport: ',classRef.$objs.$count,' objects, nothing of Permanent - as example 1 built it',kCr)
+Else
+   Calculate result as con(result,'[class  ] wJsonExport: ',classRef.$objs.$count,' objects; ',count,' methods and button events with ',count2,' lines carry the mark of Permanent - written outside any run',kCr)
+End If
+Calculate result as con(result,'[vault  ] the backup of THIS run holds the class as it is now',pick(count>0,'',', Permanent included'),' - only a run brings a change into the vault',kCr)
+
+# --- every open window of the class: what it is, then closed (a class with an open window cannot go)
+Do $root.$iwindows.$makelist($ref.$name,$ref.$class().$name,$ref.$class().$lib().$name) Returns list
+Calculate count3 as 0 ## windows closed
+For n from 1 to list.$linecount step 1
+   If (list.[n].C2='wJsonExport')&(list.[n].C3='execScratch')
+      Set reference ref2 to $root.$iwindows.$findname(list.[n].C1)
+      If not(isclear(ref2))
+         Calculate flag2 as kFalse ## runs temporary code
+         Set reference methodRef2 to ref2.$methods.$findname('$whoAmI')
+         If not(isclear(methodRef2))
+            Calculate flag2 as left(methodRef2.$methodtext,11)='# TEMPORARY'
+         End If
+         Calculate result as con(result,'[window ] ',list.[n].C1,' - title "',ref2.$title,'", ',pick(flag2,pick(isclear(ref2.$objs.$findname('pbWho')),'it runs the code of its class','it runs no code of example 2'),'it runs TEMPORARY code of example 2'),' - closed',kCr)
+         Do ref2.$close()
+         Calculate count3 as count3+1
+      End If
+   End If
+End For
+If count3=0
+   Calculate result as con(result,'[window ] no window of the class was open',kCr)
+End If
+
+# --- remove the class, then look over a fresh path
+Do ref4.$classes.$remove(classRef)
+Set reference classRef3 to $root.$libs.$findname('execScratch').$classes.$findname('wJsonExport')
+Calculate result as con(result,'[remove ] execScratch.wJsonExport ',pick(isclear(classRef3),'is STILL THERE','is gone'),kCr)
+Calculate result as con(result,'[next   ] restore it in the console (Vaults), or start afresh with example 1',kCr)
+Quit method result
+
+## ===== JUMP LINKS 1.0 =====
+# === The vault ===
+# Do execBackup_execScratch.$classes.wJsonExport.$objs ## the copy this run made, before the removal

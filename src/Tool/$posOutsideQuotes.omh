@@ -1,0 +1,67 @@
+# $posOutsideQuotes(pNeedle,pHaystack,pWholeWord) -> position or 0
+# Character scanner: returns the position of the FIRST occurrence of
+# pNeedle in pHaystack that lies OUTSIDE single or double quoted
+# literals. Doubled quotes inside a literal are treated as escapes.
+# pWholeWord=kTrue additionally requires non-word neighbours around the
+# match (word characters: A-Z a-z 0-9 _ $) — so needle Returns does not
+# match inside myReturnsFlag, but DOES match in: x) Returns y.
+# Matching uses the Omnis = operator (case-INsensitive); the whole-word guard already blocks
+# matches inside identifiers.
+# Used by ExecutorConsole.$targetsFromText.
+
+Calculate hlen as len(pHaystack)
+Calculate nlen as len(pNeedle)
+If nlen=0|hlen<nlen
+	Quit method 0
+End If
+Calculate sq as chr(39)
+Calculate dq as chr(34)
+Calculate wordchars as con('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_',chr(36))
+Calculate i as 1
+While i<=hlen
+	Calculate ch as mid(pHaystack,i,1)
+	If inSingle
+		If ch=sq
+			If mid(pHaystack,i+1,1)=sq
+				Calculate i as i+1
+			Else
+				Calculate inSingle as kFalse
+			End If
+		End If
+	Else If inDouble
+		If ch=dq
+			If mid(pHaystack,i+1,1)=dq
+				Calculate i as i+1
+			Else
+				Calculate inDouble as kFalse
+			End If
+		End If
+	Else
+		If ch=sq
+			Calculate inSingle as kTrue
+		Else If ch=dq
+			Calculate inDouble as kTrue
+		Else If i<=hlen-nlen+1
+			If mid(pHaystack,i,nlen)=pNeedle
+				Calculate ok as kTrue
+				If pWholeWord
+					If i>1
+						If pos(mid(pHaystack,i-1,1),wordchars)
+							Calculate ok as kFalse
+						End If
+					End If
+					If i+nlen<=hlen
+						If pos(mid(pHaystack,i+nlen,1),wordchars)
+							Calculate ok as kFalse
+						End If
+					End If
+				End If
+				If ok
+					Quit method i
+				End If
+			End If
+		End If
+	End If
+	Calculate i as i+1
+End While
+Quit method 0

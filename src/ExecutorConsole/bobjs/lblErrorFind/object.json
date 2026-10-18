@@ -1,0 +1,33 @@
+{
+	"ident": 1694,
+	"order": 16391,
+	"objtype": "kText",
+	"properties": {
+		"align": "kLeftJst",
+		"backcolor": "RGBA(kColorBackFill,255)",
+		"backpattern": 15,
+		"bordercolor": "RGBA(0,0,0,255)",
+		"designactive": true,
+		"edgefloat": "kEFleftRight",
+		"effect": "kBorderNone",
+		"fieldstyle": "execFix",
+		"font": 6,
+		"fontsize": 10,
+		"fontstyle": "kPlain",
+		"forecolor": "RGBA(kColorForeFill,255)",
+		"height": 16,
+		"left": 19,
+		"linestyle": 1,
+		"objlink": 103,
+		"text": {
+			"type": 14,
+			"calc": "Find\r"
+		},
+		"textcolor": "kColorWindowText",
+		"top": 5,
+		"userinfo": "",
+		"vertcentertext": false,
+		"visible": true,
+		"width": 28
+	}
+}

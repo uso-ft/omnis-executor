@@ -1,0 +1,118 @@
+# =============================================
+# Compare two lists or row variables for equality in the individual cells.
+# Note: Omnis always evaluates comparisons with lists containing NULLs to NULL
+# Here cells with NULL == NULL are evaluated to kTrue
+# the differing cells are shown with self-modifying code
+# @US/12.02.2014 @US/26.05.2015
+# =============================================
+# @params
+# - pOldList
+# - pNewList
+# - pFirstCol_opt
+# - pLastCol_opt
+# - pCols_opt comma separated
+# - pExcludeCols_opt comma separated
+# - pTestSmartlist_opt
+
+# @return
+# - kTrue if no errors else kFalse
+# =============================================
+
+If isclear(pFirstCol_opt)
+	Calculate firstCol as 1
+Else
+	Calculate firstCol as pFirstCol_opt
+End If
+If isclear(pLastCol_opt)
+	Calculate lastCol as pOldList.$colcount
+Else
+	Calculate lastCol as pLastCol_opt
+End If
+
+If pCols_opt<>''
+	Calculate pCols_opt as con(pCols_opt,',')
+End If
+If pExcludeCols_opt<>''
+	Calculate pExcludeCols_opt as con(pExcludeCols_opt,',')
+End If
+
+If pTestSmartlist_opt
+	If pOldList.$smartlist=pNewList.$smartlist
+	Else
+		Calculate cDifferences as cDifferences+1
+		Variable menu command: Open Value Window pOldList,pNewList
+		Breakpoint smartlist property is set differntly
+		Quit method kFalse
+	End If
+End If
+
+If min(pOldList.$colcount,pNewList.$colcount)>=lastCol ## enough columns
+	
+	If pOldList.$linecount=pNewList.$linecount
+	Else
+		Calculate cDifferences as cDifferences+1
+		Variable menu command: Open Value Window pOldList,pNewList
+		Breakpoint Number of lines do not match
+		Quit method kFalse
+	End If
+	
+	# Lines
+	For line from 1 to max(pOldList.$linecount,pNewList.$linecount) step 1
+		
+		# Cols
+		For col from firstCol to lastCol step 1
+			If pick(pExcludeCols_opt<>'',kTrue,not(pos(con(pOldList.$cols.[col].$name,','),pExcludeCols_opt)))&pick(pCols_opt<>'',kTrue,pos(con(pOldList.$cols.[col].$name,','),pCols_opt))
+				# =========================================================
+				# Check column names
+				If pOldList.C[col].$name=pNewList.C[col].$name
+				Else ## unequal
+					Calculate cDifferences as cDifferences+1
+					Calculate #S1 as pOldList.C[col].$name
+					Calculate #S2 as pNewList.C[col].$name
+					Variable menu command: Open Value Window pOldList,pNewList
+					# Breakpoint {The columns at col do not match}
+					Quit method kFalse
+				End If
+				
+				If pick(isnull(pOldList.[line].[col])&isnull(pNewList.[line].[col]),pOldList.[line].[col]=pNewList.[line].[col],1) ## Note: $linecount/$colcount differences are unfortunately NOT recognized this way
+					# Equality
+					# NULL == NULL is evaluated here to kTrue
+					# aValue == bValue is evaluated here to kTrue, if equal
+					
+				Else ## UNequality
+					# NULL == aValue is evaluated to NULL here, i.e. ends up in the Else sector
+					# aValue == bValue is evaluated to kFalse here if UNequal
+					Calculate cDifferences as cDifferences+1
+					Do $cmethod.$methodlines.$sendall($sendallref.$text.$assign(con('Variable menu command: Open Value Window ',mid(pOldList.[line].[col].$fullname,14,1000),',',mid(pNewList.[line].[col].$fullname,14,1000),' ## @@@SELF@@@')),rxpos('@@@SELF@@@$',$sendallref.$text,kTrue,kFalse,0)) ## Selfmodifing Code !
+					Variable menu command: Open Value Window pOldList.1.cJoinSchemaName,pNewList.1.cJoinSchemaName ## @@@SELF@@@
+					Breakpoint The list content for line col does not match
+					Quit method kFalse
+				End If
+				# =========================================================
+			End If ## Exclude/Include
+			
+		End For
+		
+	End For
+	
+Else ## Number of columns do not match
+	Calculate cDifferences as cDifferences+1
+	Calculate #1 as pOldList.$colcount
+	Calculate #2 as pNewList.$colcount
+	Variable menu command: Open Value Window pOldList,pNewList
+	Breakpoint Number of columns do not match
+	Quit method kFalse
+	
+End If
+
+Quit method kTrue
+
+
+# Debugging:
+# Calculate #S1 as pOldList.$cols.[col].$name
+# If pick(pCols_opt<>'',kTrue,pos(pOldList.$cols.[col].$name,pExcludeCols_opt))
+# Breakpoint
+# End If
+# If pick(pExcludeCols_opt<>'',kTrue,not(pos(con(pOldList.$cols.[col].$name,','),pExcludeCols_opt)))
+# Breakpoint
+# End If

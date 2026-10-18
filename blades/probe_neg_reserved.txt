@@ -1,0 +1,6 @@
+Do ref.$methods.$add('$findname') Returns flag1
+Do ref.$methods.$add('healSettings') Returns flag1
+Do ref.$lvardefs.$add('flag',kBoolean,0,0,kFalse) Returns flag1
+Do ref.$lvardefs.$add('2ndRow',kRow,0,0,kFalse) Returns flag1
+Do row.$cols.$add('my col',kCharacter,kSimplechar,100)
+Do ref.$cvardefs.$add('c$Log',kList,0,0,kFalse) Returns flag1

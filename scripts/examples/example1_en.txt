@@ -1,0 +1,422 @@
+# GENERATOR: example1_jsonexport v13 — 2026-10-18 17:40 — example 1: builds the window execScratch.wJsonExport, a tool for the JSON export of libraries, with the method editor open
+# CREATES:  execScratch.wJsonExport
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR 1.0
+#
+# EXAMPLE 1 OF 3 - a script that CREATES. Run the three in order.
+# While it builds, the method editor opens on each method before its lines go in: you see them arrive.
+# Only a build shows this. Run it a second time and it builds nothing - the window is there already - so no
+# method editor opens: it opens the window and says so. To see the build again, run example 3 first.
+# It builds one window in the scratch library execScratch and opens it. The window is a real tool: it
+# lists the Omnis libraries of a folder, at first the Executor's own. Folder... chooses another folder,
+# Library... a single library anywhere. Export writes the JSON export of every selected library to
+# execExports/<library>/ beside the Executor - the material an AI works from. Show output opens that
+# folder. Example 2 changes the open window; example 3 removes the class again.
+#
+# The run reports some errors as "ignored": 25216, raised while method lines that name an instance variable
+# are written. Harmless - the lines arrive; the read-back proves it.
+#
+# The jump links at the end lead to the window and its code once it is built: switch to the Jump or
+# Split view and double-click a row - it opens the design, or the method at the line named there.
+
+Calculate result as con('run ',#T,' — example1_jsonexport v13',kCr)
+
+# --- the scratch library: the console opens it, or creates it, when it opens
+Set reference ref4 to $root.$libs.$findname('execScratch')
+If isclear(ref4)
+   Calculate result as con(result,'[scratch] execScratch is not open - close the console and open it again (Executor > Console), then run this again',kCr)
+   Quit method result
+End If
+
+# --- run twice: a class built by this example is opened, never rebuilt (the verdict then says unproven: correct). A class of the same name built by
+# something else (an older demo) is left alone and not opened: the guard reads the stamp in its $construct.
+Set reference classRef to ref4.$classes.$findname('wJsonExport')
+If not(isclear(classRef))
+   Calculate flag1 as kFalse ## built by this example
+   Set reference methodRef to classRef.$methods.$findname('$construct')
+   If not(isclear(methodRef))
+      Calculate flag1 as pos('example1_jsonexport',methodRef.$methodtext)>0
+   End If
+   If not(flag1)
+      Calculate result as con(result,'[class  ] execScratch.wJsonExport exists, but this example did not build it (its $construct carries no example1_jsonexport stamp - an older demo?). Nothing built, nothing opened.',kCr)
+      Calculate result as con(result,'[class  ] Close its window, delete the class in the Studio Browser (library execScratch), and run this again.',kCr)
+      Quit method result
+   End If
+   Do classRef.$openonce('*',kWindowCenter,'') Returns ref2
+   Calculate result as con(result,'[class  ] execScratch.wJsonExport exists already - nothing built, so no method editor opens (run example 3 first to see the build). The window is ',pick(isclear(ref2),'open','NOT open'),'.',kCr)
+   Calculate result as con(result,'[class  ] To build it again, run example 3 first: it removes the class (the vault keeps a copy).',kCr)
+   Quit method result
+End If
+
+# --- the class and its instance variables
+Set reference classRef to ref4.$classes.$add(kWindow,'wJsonExport')
+If isclear(classRef)
+   Calculate result as con(result,'[class  ] wJsonExport NOT created - nothing built',kCr)
+   Quit method result
+End If
+Calculate name as 'execScratch.wJsonExport'
+Do classRef.$width.$assign(660)
+Do classRef.$height.$assign(540)
+Do classRef.$clickbehind.$assign(kTrue) ## a click acts also while the window lies behind the editors, as in every Executor window
+Calculate count as 0 ## declarations refused
+Set reference ref to classRef.$ivardefs.$add('iFolder',kCharacter,kSimplechar,100000000)
+Calculate count as count+isclear(ref)
+Set reference ref to classRef.$ivardefs.$add('iExport',kCharacter,kSimplechar,100000000)
+Calculate count as count+isclear(ref)
+Set reference ref to classRef.$ivardefs.$add('iLibs',kList)
+Calculate count as count+isclear(ref)
+Set reference ref to classRef.$ivardefs.$add('iLog',kCharacter,kSimplechar,100000000)
+Calculate count as count+isclear(ref)
+Set reference ref to classRef.$ivardefs.$add('iState',kRow) ## kept free for example 2
+Calculate count as count+isclear(ref)
+
+# --- the objects: folder, list, four buttons, protocol (top, left, height, width)
+# $tooltip and $designcols assigned on the objects of a window CLASS: not measured before, the read-back counts them
+Set reference objRef to classRef.$objs.$add(kEntry,12,12,22,400)
+Do objRef.$name.$assign('efFolder')
+Do objRef.$dataname.$assign('iFolder')
+Do objRef.$enabled.$assign(kFalse) ## shows the folder; Folder... changes it
+Set reference objRef to classRef.$objs.$add(kPushbutton,11,420,24,110)
+Do objRef.$name.$assign('pbFolder')
+Calculate objRef.$text as 'Folder...'
+Do objRef.$tooltip.$assign('Choose a folder: every library in it is listed')
+Set reference objRef to classRef.$objs.$add(kPushbutton,11,538,24,110)
+Do objRef.$name.$assign('pbFiles')
+Calculate objRef.$text as 'Library...'
+Do objRef.$tooltip.$assign('Pick one library: exactly that one is listed')
+Set reference objRef to classRef.$objs.$add(kHeadedListBox,44,12,250,636)
+Do objRef.$name.$assign('hlLibs')
+Do objRef.$dataname.$assign('iLibs')
+Do objRef.$multipleselect.$assign(kTrue)
+Do objRef.$designcols.$assign(3)
+Do objRef.$columnnames.$assign('Library,Status,Path')
+Do objRef.$columnwidths.$assign('170,150,300')
+Do objRef.$calculation.$assign('con(iLibs.c1,kTab,iLibs.status,kTab,iLibs.c2)')
+Do objRef.$tooltip.$assign('Cmd/Ctrl-click selects or deselects a library')
+Set reference objRef to classRef.$objs.$add(kPushbutton,304,12,24,120)
+Do objRef.$name.$assign('pbRun')
+Calculate objRef.$text as 'Export'
+Do objRef.$tooltip.$assign('JSON export of the selected libraries into execExports beside the Executor')
+Set reference objRef to classRef.$objs.$add(kPushbutton,304,140,24,120)
+Do objRef.$name.$assign('pbShow')
+Calculate objRef.$text as 'Show output'
+Do objRef.$tooltip.$assign('Open the export folder: Finder on macOS, Explorer on Windows')
+Set reference objRef to classRef.$objs.$add(kMultilineEntry,338,12,190,636)
+Do objRef.$name.$assign('efLog')
+Do objRef.$dataname.$assign('iLog')
+
+# --- the methods and their variables, declared BEFORE any body line
+Set reference methodRef to classRef.$methods.$findname('$construct') ## a fresh window class brings it
+If isclear(methodRef)
+   Set reference methodRef to classRef.$methods.$add('$construct')
+End If
+Set reference ref to methodRef.$lvardefs.$add('pFolder_opt',kCharacter,kSimplechar,100000000,kTrue)
+Calculate count as count+isclear(ref)
+
+Set reference methodRef to classRef.$methods.$add('$loadFolder')
+
+Set reference methodRef to classRef.$methods.$add('$markOpen')
+Set reference ref to methodRef.$lvardefs.$add('lOpen',kList)
+Calculate count as count+isclear(ref)
+
+Set reference methodRef to classRef.$methods.$add('$log')
+Set reference ref to methodRef.$lvardefs.$add('pText',kCharacter,kSimplechar,100000000,kTrue)
+Calculate count as count+isclear(ref)
+
+Set reference methodRef to classRef.$methods.$add('$chooseFolder')
+Set reference ref to methodRef.$lvardefs.$add('lDir',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lOk',kBoolean,'',0,kFalse)
+Calculate count as count+isclear(ref)
+
+Set reference methodRef to classRef.$methods.$add('$chooseLibrary')
+Set reference ref to methodRef.$lvardefs.$add('lPath',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lOk',kBoolean,'',0,kFalse)
+Calculate count as count+isclear(ref)
+
+Set reference methodRef to classRef.$methods.$add('$run')
+Set reference ref to methodRef.$lvardefs.$add('lName',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lPath',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lOpen',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lNames',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lDir',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lWasOpen',kBoolean,'',0,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lOk',kBoolean,'',0,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lDone',kInteger,k32bitint,0,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lFail',kInteger,k32bitint,0,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lSkip',kInteger,k32bitint,0,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lLibs',kList)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lErrs',kList)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lWarns',kList)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lRef',kItemref,'',0,kFalse)
+Calculate count as count+isclear(ref)
+
+Set reference methodRef to classRef.$methods.$add('$showOutput')
+Set reference ref to methodRef.$lvardefs.$add('lRc',kInteger,k32bitint,0,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lAsRes',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+Set reference ref to methodRef.$lvardefs.$add('lAsErr',kCharacter,kSimplechar,100000000,kFalse)
+Calculate count as count+isclear(ref)
+
+Calculate result as con(result,'[vars   ] declarations refused: ',count,' where 0 is ok',kCr)
+
+# --- the bodies. A line '# >> <name>' switches the target (a method, or the $event of a button) and is not written.
+Do list.$define()
+Do list.$cols.$add('src',kCharacter,kSimplechar,100000000)
+Do list.$add('# >> $construct')
+Do list.$add('# Example 1 of the Executor: lists the Omnis libraries of a folder and makes their JSON export.')
+Do list.$add('# Built by the Executor script example1_jsonexport v13. The export goes to execExports/<library>/ beside the Executor.')
+Do list.$add('# iState is kept free for example 2: it holds what that example changes in this window.')
+Do list.$add('# $clib is execScratch, which lies beside the Executor: the export folder is computed from its path.')
+Do list.$add('Calculate iExport as con(mid($clib.$pathname,1,rpos(sys(9),$clib.$pathname)),''execExports'',sys(9))')
+Do list.$add('If len(pFolder_opt)>0')
+Do list.$add('Calculate iFolder as pFolder_opt')
+Do list.$add('Else')
+Do list.$add('Calculate iFolder as mid($clib.$pathname,1,rpos(sys(9),$clib.$pathname))')
+Do list.$add('End If')
+Do list.$add('Do $cinst.$title.$assign(''JSON export - Executor example 1'')')
+Do list.$add('Do $cinst.$loadFolder()')
+Do list.$add('# >> $loadFolder')
+Do list.$add('# Lists every *.lbs in iFolder and selects all lines.')
+Do list.$add('If mid(iFolder,len(iFolder),1)<>sys(9)')
+Do list.$add('Calculate iFolder as con(iFolder,sys(9))')
+Do list.$add('End If')
+Do list.$add('Do FileOps.$filelist(kFileOpsIncludeFiles,iFolder,kFileOpsInfoFullName+kFileOpsInfoName,''*.lbs'') Returns iLibs')
+Do list.$add('Do iLibs.$cols.$add(''status'',kCharacter,kSimplechar,200)')
+Do list.$add('Do $cinst.$markOpen()')
+Do list.$add('Do $cinst.$log(con(iLibs.$linecount,'' libraries in '',iFolder,'', all selected. Cmd/Ctrl-click deselects one.''))')
+Do list.$add('Do $cinst.$log(con(''Export writes them to '',iExport))')
+Do list.$add('# >> $markOpen')
+Do list.$add('# Selects every line of iLibs and marks the libraries that are open already (by path; low() for Windows).')
+Do list.$add('Do $root.$libs.$makelist($ref.$name,$ref.$pathname) Returns lOpen')
+Do list.$add('For iLibs.$line from 1 to iLibs.$linecount step 1')
+Do list.$add('Do iLibs.$selected.$assign(kTrue)')
+Do list.$add('For lOpen.$line from 1 to lOpen.$linecount step 1')
+Do list.$add('If low(lOpen.c2)=low(iLibs.c2)')
+Do list.$add('Calculate iLibs.status as con(''open as '',lOpen.c1)')
+Do list.$add('End If')
+Do list.$add('End For')
+Do list.$add('End For')
+Do list.$add('Do iLibs.$line.$assign(1)')
+Do list.$add('Do $cinst.$objs.hlLibs.$redraw()')
+Do list.$add('# >> $log')
+Do list.$add('# Appends one line to the protocol and keeps the newest line in view.')
+Do list.$add('Calculate iLog as con(iLog,pText,kCr)')
+Do list.$add('Do $cinst.$objs.efLog.$redraw()')
+Do list.$add('Do $cinst.$objs.efLog.$vscroll.$assign($cinst.$objs.efLog.$linecount)')
+Do list.$add('# >> $chooseFolder')
+Do list.$add('# Asks for a folder and lists every library in it. Cancelled: nothing changes.')
+Do list.$add('# A folder dialog: on macOS the files in it show grey - that is normal there, a folder is chosen, not a file.')
+Do list.$add('Calculate lDir as iFolder')
+Do list.$add('Do FileOps.$selectdirectory(lDir,''Choose a folder - every library in it is listed'',iFolder) Returns lOk')
+Do list.$add('If lOk&(len(lDir)>0)')
+Do list.$add('Calculate iFolder as lDir')
+Do list.$add('Calculate iLog as ''''')
+Do list.$add('Do $cinst.$loadFolder()')
+Do list.$add('End If')
+Do list.$add('# >> $chooseLibrary')
+Do list.$add('# Asks for ONE library and lists exactly that one. Cancelled: nothing changes.')
+Do list.$add('# Omnis 10.22 lets this dialog take one file only; a list as the first argument (several files) came with Studio 11.1.')
+Do list.$add('# The filter is description|pattern pairs (help); on macOS that form is not measured here (Vaults passes ''*.lbs'' alone).')
+Do list.$add('Calculate lPath as ''''')
+Do list.$add('Do FileOps.$getfilename(lPath,''Pick a library'',''Omnis libraries|*.lbs'',iFolder) Returns lOk')
+Do list.$add('If lOk&(rpos(sys(9),lPath)>0)')
+Do list.$add('Do iLibs.$define()')
+Do list.$add('Do iLibs.$cols.$add(''name'',kCharacter,kSimplechar,1000)')
+Do list.$add('Do iLibs.$cols.$add(''fullname'',kCharacter,kSimplechar,100000000)')
+Do list.$add('Do iLibs.$cols.$add(''status'',kCharacter,kSimplechar,200)')
+Do list.$add('Do iLibs.$add(mid(lPath,rpos(sys(9),lPath)+1,len(lPath)),lPath,'''')')
+Do list.$add('Calculate iFolder as mid(lPath,1,rpos(sys(9),lPath))')
+Do list.$add('Calculate iLog as ''''')
+Do list.$add('Do $cinst.$markOpen()')
+Do list.$add('Do $cinst.$log(con(''1 library picked: '',lPath))')
+Do list.$add('Do $cinst.$log(con(''Export writes it to '',iExport))')
+Do list.$add('End If')
+Do list.$add('# >> $run')
+Do list.$add('# Exports every selected library to iExport/<library>/. A library that is open is exported as it is;')
+Do list.$add('# one that is not is opened without its startup task, exported and closed again.')
+Do list.$add('# A failure is logged with up to three errors, and the export goes on with the next library.')
+Do list.$add('Calculate iLog as ''''')
+Do list.$add('Do $cinst.$objs.pbRun.$enabled.$assign(kFalse)')
+Do list.$add('Do $cinst.$objs.pbFolder.$enabled.$assign(kFalse)')
+Do list.$add('Do FileOps.$createdir(iExport,kTrue)')
+Do list.$add('Calculate lDone as 0')
+Do list.$add('Calculate lFail as 0')
+Do list.$add('Calculate lSkip as 0')
+Do list.$add('Do $cinst.$log(con(''--- export '',#T,'' to '',iExport))')
+Do list.$add('For iLibs.$line from 1 to iLibs.$linecount step 1')
+Do list.$add('If iLibs.$selected')
+Do list.$add('Calculate lName as iLibs.c1')
+Do list.$add('Calculate lPath as iLibs.c2')
+Do list.$add('Calculate lOpen as ''''')
+Do list.$add('Calculate lWasOpen as kFalse')
+Do list.$add('Do $root.$libs.$makelist($ref.$name,$ref.$pathname) Returns lLibs')
+Do list.$add('For lLibs.$line from 1 to lLibs.$linecount step 1')
+Do list.$add('If low(lLibs.c2)=low(lPath)')
+Do list.$add('Calculate lOpen as lLibs.c1')
+Do list.$add('Calculate lWasOpen as kTrue')
+Do list.$add('End If')
+Do list.$add('End For')
+Do list.$add('If not(lWasOpen)')
+Do list.$add('Calculate lNames as '',''')
+Do list.$add('For lLibs.$line from 1 to lLibs.$linecount step 1')
+Do list.$add('Calculate lNames as con(lNames,lLibs.c1,'','')')
+Do list.$add('End For')
+Do list.$add(con('Open library (Do not close others,Do not open startup task) ',chr(91),'lPath',chr(93)))
+Do list.$add('Do $root.$libs.$makelist($ref.$name) Returns lLibs')
+Do list.$add('For lLibs.$line from 1 to lLibs.$linecount step 1')
+Do list.$add('If pos(con('','',lLibs.c1,'',''),lNames)=0')
+Do list.$add('Calculate lOpen as lLibs.c1')
+Do list.$add('End If')
+Do list.$add('End For')
+Do list.$add('End If')
+Do list.$add('If len(lOpen)=0')
+Do list.$add('Calculate lFail as lFail+1')
+Do list.$add('Calculate iLibs.status as ''NOT opened''')
+Do list.$add('Do $cinst.$log(con(lName,'': NOT opened - refused, or it needs a conversion''))')
+Do list.$add('Else')
+Do list.$add('Set reference lRef to $root.$libs.$findname(lOpen)')
+Do list.$add('Calculate lDir as con(iExport,lOpen,sys(9))')
+Do list.$add('Do FileOps.$createdir(lDir,kTrue)')
+# $exportjson gets the folder WITHOUT its trailing separator: on Windows a trailing \ fails with 23455 (lore 11.5)
+Do list.$add('Do $root.$exportjson(lRef,mid(lDir,1,len(lDir)-1),lErrs,lWarns) Returns lOk')
+Do list.$add('If lOk')
+Do list.$add('Calculate lDone as lDone+1')
+Do list.$add('Calculate iLibs.status as con(''exported '',#T)')
+Do list.$add('Do $cinst.$log(con(lName,'': ok, '',lWarns.$linecount,'' warning(s)'',pick(lWasOpen,'''','', open already - exported as it is'')))')
+Do list.$add('Else')
+Do list.$add('Calculate lFail as lFail+1')
+Do list.$add('Calculate iLibs.status as ''FAILED - see the protocol''')
+Do list.$add('Do $cinst.$log(con(lName,'': FAILED, '',lErrs.$linecount,'' error(s)''))')
+Do list.$add('For lErrs.$line from 1 to min(lErrs.$linecount,3) step 1')
+Do list.$add('Do $cinst.$log(con(''   '',lErrs.errorcode,'' '',lErrs.errortext))')
+Do list.$add('End For')
+Do list.$add('End If')
+Do list.$add('If not(lWasOpen)')
+Do list.$add('Do $root.$libs.$remove(lRef)')
+Do list.$add('End If')
+Do list.$add('End If')
+Do list.$add('Else')
+Do list.$add('Calculate lSkip as lSkip+1')
+Do list.$add('End If')
+Do list.$add('End For')
+Do list.$add('Do iLibs.$line.$assign(1)')
+Do list.$add('Do $cinst.$objs.hlLibs.$redraw()')
+Do list.$add('Do $cinst.$log(con(''--- done: '',lDone,'' exported, '',lFail,'' failed, '',lSkip,'' not selected. Show output opens the folder.''))')
+Do list.$add('Do $cinst.$objs.pbRun.$enabled.$assign(kTrue)')
+Do list.$add('Do $cinst.$objs.pbFolder.$enabled.$assign(kTrue)')
+Do list.$add('# >> $showOutput')
+Do list.$add('# Opens the export folder: on macOS in the Finder, on Windows in the Explorer (the protocol names it as well).')
+Do list.$add('# Windows: Launch program with a document alone, after the comma, opens it in its associated program (help);')
+Do list.$add('# that a FOLDER opens in the Explorer this way is not measured.')
+Do list.$add('Do FileOps.$createdir(iExport,kTrue)')
+Do list.$add('If sys(6)=''X''')
+Do list.$add('Calculate lRc as $root.$runapplescript(con(''tell application "Finder" to open POSIX file "'',iExport,''"''),lAsRes,lAsErr)')
+Do list.$add('If lRc=0')
+Do list.$add('Calculate lRc as $root.$runapplescript(''tell application "Finder" to activate'',lAsRes,lAsErr)')
+Do list.$add('End If')
+Do list.$add('If lRc<>0')
+Do list.$add('Do $cinst.$log(con(''The Finder did not open the folder: '',lRc,'' '',lAsErr))')
+Do list.$add('End If')
+Do list.$add('Else')
+Do list.$add('Do $cinst.$log(con(''The export folder: '',iExport))')
+Do list.$add(con('Launch program ,',chr(91),'iExport',chr(93)))
+Do list.$add('End If')
+Do list.$add('# >> pbFolder')
+Do list.$add('On evClick')
+Do list.$add('Do $cinst.$chooseFolder()')
+Do list.$add('# >> pbFiles')
+Do list.$add('On evClick')
+Do list.$add('Do $cinst.$chooseLibrary()')
+Do list.$add('# >> pbRun')
+Do list.$add('On evClick')
+Do list.$add('Do $cinst.$run()')
+Do list.$add('# >> pbShow')
+Do list.$add('On evClick')
+Do list.$add('Do $cinst.$showOutput()')
+
+Calculate count2 as 0 ## lines written
+Calculate count3 as 0 ## lines refused
+For n from 1 to list.$linecount step 1
+   Calculate text2 as list.[n].src
+   If left(text2,5)='# >> '
+      Calculate name2 as mid(text2,6,len(text2))
+      If left(name2,2)='pb'
+         Set reference objRef2 to classRef.$objs.$findname(name2)
+         Set reference methodRef to objRef2.$methods.$findname('$event')
+         If isclear(methodRef)
+            Set reference methodRef to objRef2.$methods.$add('$event')
+         End If
+      Else
+         Set reference methodRef to classRef.$methods.$findname(name2)
+      End If
+      If isclear(methodRef)
+         Calculate result as con(result,'[MISSING] no method for ',name2,kCr)
+      Else
+         # SHOW: the editor opens on this method first, so its lines are seen arriving
+         Do methodRef.$modify(1)
+      End If
+      Set reference group to methodRef.$methodlines ## taken AFTER the editor opened (lore)
+   Else
+      Set reference ref3 to group.$add(text2)
+      If isclear(ref3)
+         Calculate count3 as count3+1
+         Calculate result as con(result,'[REFUSED] ',name2,': ',text2,kCr)
+      Else
+         Calculate count2 as count2+1
+      End If
+   End If
+End For
+Calculate result as con(result,'[body   ] lines written ',count2,' of 158, refused ',count3,' where 0 is ok',kCr)
+Save class [name]
+
+# --- read-back over a fresh path: the lines of the eleven methods, the instance variables, the objects,
+# the list columns and the tooltips
+Set reference classRef2 to $root.$libs.$findname('execScratch').$classes.$findname('wJsonExport')
+If isclear(classRef2)
+   Calculate result as con(result,'[verify ] fresh path: class NOT found',kCr)
+   Quit method result
+End If
+Set reference group2 to classRef2.$methods
+Calculate n2 as group2.$findname('$construct').$methodlines.$count+group2.$findname('$loadFolder').$methodlines.$count+group2.$findname('$markOpen').$methodlines.$count+group2.$findname('$log').$methodlines.$count+group2.$findname('$chooseFolder').$methodlines.$count+group2.$findname('$chooseLibrary').$methodlines.$count+group2.$findname('$run').$methodlines.$count+group2.$findname('$showOutput').$methodlines.$count
+Set reference group3 to classRef2.$objs
+Calculate n2 as n2+group3.pbFolder.$methods.//$event//.$methodlines.$count+group3.pbFiles.$methods.//$event//.$methodlines.$count+group3.pbRun.$methods.//$event//.$methodlines.$count+group3.pbShow.$methods.//$event//.$methodlines.$count
+Calculate n3 as (len(group3.pbFolder.$tooltip)>0)+(len(group3.pbFiles.$tooltip)>0)+(len(group3.hlLibs.$tooltip)>0)+(len(group3.pbRun.$tooltip)>0)+(len(group3.pbShow.$tooltip)>0)
+Calculate result as con(result,'[verify ] fresh path: ',n2,' lines in the eleven methods, ',count2,' written; ',classRef2.$ivardefs.$count,' of 5 instance variables; ',group3.$count,' of 7 objects',kCr)
+Calculate result as con(result,'[verify ] list columns ',group3.hlLibs.$designcols,' of 3 (',group3.hlLibs.$columnnames,'); tooltips ',n3,' of 5; click behind ',pick(classRef2.$clickbehind,'NO','yes'),kCr)
+
+# --- open it, on the Executor's own folder
+If count+count3=0
+   Do classRef2.$openonce('*',kWindowCenter,'') Returns ref2
+   Calculate result as con(result,'[window ] ',pick(isclear(ref2),'open - Folder... or Library..., then Export','NOT opened'),kCr)
+Else
+   Calculate result as con(result,'[window ] not opened: refused declarations or lines above',kCr)
+End If
+
+Quit method result
+
+## ===== JUMP LINKS 1.0 =====
+# === The window ===
+# Do execScratch.$classes.wJsonExport.$objs ## the design: folder, list, four buttons, protocol
+# Do execScratch.$classes.wJsonExport.$ivardefs.iState ## kept free for example 2
+# === The code ===
+# Do execScratch.$classes.wJsonExport.$methods.//$construct//.$modify(5) ## where the export folder is computed
+# Do execScratch.$classes.wJsonExport.$methods.//$chooseLibrary//.$modify(5) ## the file dialog: one library in 10.22
+# Do execScratch.$classes.wJsonExport.$methods.//$run//.$modify(12) ## the loop over the selected libraries
+# Do execScratch.$classes.wJsonExport.$methods.//$showOutput//.$modify(5) ## macOS or Windows

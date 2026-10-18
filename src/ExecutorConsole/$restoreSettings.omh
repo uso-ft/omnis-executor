@@ -1,0 +1,37 @@
+# Restores the class variables of this console from ExecutorStore: the
+# settings package, and the data package that carries the logs.
+# Each package is read on its own: a copy may ship the log without settings.
+# $healSettings sets the factory value for anything the store does not hold.
+# Returns flag: kFalse when a package was read and the log list did not come with it
+Do row.$define()
+If iStore.$has(con($cclass().$name,'_settings'))
+	Do row.$assign(iStore.$get(con($cclass().$name,'_settings')))
+End If
+If row.$colcount
+	# Set all cvars
+	Do row.$cols.$sendall(eval([$sendallref.$name()].$assign(row.[$sendallref.$name()])))
+End If
+# The data package. Older stores carry the logs in the settings row above.
+Do row2.$define()
+If iStore.$has(con($cclass().$name,'_data'))
+	Do row2.$assign(iStore.$get(con($cclass().$name,'_data')))
+	If row2.$colcount
+		Do row2.$cols.$sendall(eval([$sendallref.$name()].$assign(row2.[$sendallref.$name()])))
+	End If
+End If
+# D6: fields the package never held fall back to factory, also when no package was there
+Do $cinst.$healSettings(row)
+# First open, no settings package yet: the first log row goes into the script field (in a release copy: the run tour)
+If row.$colcount=0
+	If cLog.$linecount>0
+		Calculate cLog.$line as 1
+		Calculate cScript as cLog.execScript
+		Calculate cLogTitle as cLog.execTitle
+	End If
+End If
+If row.$colcount>0|row2.$colcount>0
+	If cLog.$colcount=0
+		Quit method kFalse
+	End If
+End If
+Quit method kTrue

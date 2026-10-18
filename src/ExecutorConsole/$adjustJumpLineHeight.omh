@@ -1,0 +1,29 @@
+# Fits every jump line to its comment text, or collapses it when cFixJumpLine is set.
+# From: https://lists.omnis-dev.com/pipermail/omnisdev-en/2021-March/045460.html
+# Rows are set BOTTOM-UP: several $setrowheight calls in one method overlap, and a later
+# call's row is resolved through positions an earlier expansion is still shifting.
+# Top-down, heights got lost or landed on the neighbour row; bottom-up only moves rows
+# that are already done (measured 2026-09-25: one call always right, top-down a lottery).
+Set reference multilineRef to $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.cgrJumpList.$objs.dfComment
+Set reference gridRef to multilineRef.$container()
+
+Do heightList.$cols.$add('h',kInteger,k32bitint,0)
+For n from 1 to cJumpLinks.$linecount step 1
+	If cFixJumpLine
+		Do heightList.$add(-1)
+	Else
+		Calculate textHeight as iTools.$heightForText(replaceall(cJumpLinks.[n].comment,con(chr(92),'n'),kCr),multilineRef)
+		Calculate diff as textHeight-multilineRef.$height
+		Calculate toHeight as gridRef.$rowheight+diff
+		Do heightList.$add(toHeight)
+	End If
+End For
+For n from heightList.$linecount to 1 step -1
+	If heightList.[n].h<0
+		Do gridRef.$setrowheight(kGridRowSizeCollapse,n,-1,kAnimationCurveEaseIn,0)
+	Else
+		Do gridRef.$setrowheight(kGridRowSizeExpand,n,heightList.[n].h,kAnimationCurveEaseIn,0)
+	End If
+End For
+
+Quit method

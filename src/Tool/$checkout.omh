@@ -1,0 +1,31 @@
+# Checks out the classes in pListToCheckOut from the VCS, one library at a time.
+
+If pListToCheckOut.$linecount
+	
+	Do libs.$define(libName)
+	Do pListToCheckOut.$sendall(libs.$add(pListToCheckOut.C1().$lib().$name)) ## pCheckOutList.$colcount>2  ;; from icon array
+	Do libs.$cols.libName.$removeduplicates(kTrue,kTrue)
+	
+	If libs.$linecount>1 ## can only check out classes from one project
+		OK message Programmer {Only classes of ONE library can be checked out at a time! //['(']at least with the standard VCS[')']}
+		Quit method
+	End If
+	
+	# This definition matches the VCS classes; the called methods redefine it.
+	Do lclassList.$define(lOptionsIcons,lIconName,lType,lSuperclass,lDesc,lCreated,lModified,lSize,lIconID,lFilterLevel,lclassRef,lClassType,lClassIdent,lIconID2,lLockedClass)
+	# Do lclassList.$add('icon',lclassRef().$name,lclassRef.$classtype,lclassRef.$superclass,lclassRef.$desc,lclassRef.$createdate,lclassRef.$moddate,lclassRef.$disksize,'icon',lclassRef.$parentfolder,lclassRef,lclassRef.$classtype,lclassRef.$ident) ## pCheckOutList.$colcount>2  ;; from icon array
+	
+	Do pListToCheckOut.$sendall(lclassList.$add('icon',pListToCheckOut.C1().$name,pListToCheckOut.C1.$classtype,pListToCheckOut.C1().$superclass,pListToCheckOut.C1.$desc,pListToCheckOut.C1.$createdate,pListToCheckOut.C1.$moddate,pListToCheckOut.C1.$disksize,'icon',pListToCheckOut.C1.$parentfolder,pListToCheckOut.C1,pListToCheckOut.C1.$classtype,pListToCheckOut.C1().$ident)) ## pCheckOutList.$colcount>2  ;; from icon array
+	
+	# Set the BrowserTree's current node to the desired library (probably not needed, switch off library folders) ## keep
+	Calculate browserList as $itasks.V40.$getBrowserlist() ## seems to work only via a detour @IDE
+	Set reference browserRef to browserList.1.c1
+	Set reference appNodeRef to browserRef.$findappNode(lclassList.1.lclassRef)
+	Do browserRef.$setNode(appNodeRef)
+	
+	Do $itasks.VCS.$getToolref(,tool) ## @IDE
+	# Do tool.$checkout(lclassList,lclassRef.$lib().$name,mid(lclassRef.$pathname,rxpos(':.*:',lclassRef.$pathname,kTrue,kFalse,len)+1,len-2),lclassRef.$lib().$name,,,'',kFalse,kFalse,browserRef)
+	Do tool.$checkout(lclassList,lclassList.1.lclassRef.$lib().$name,'',lclassList.1.lclassRef.$lib().$name,,,'',kFalse,kFalse,browserRef)
+	
+End If
+Quit method

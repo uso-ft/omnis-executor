@@ -1,0 +1,41 @@
+# Restores the saved settings, brings cLog to its current columns and builds the marker list.
+
+If $cinst.$restoreSettings()
+	Do 1 ## could restore or was empty
+Else
+	OK message Could not restore Settings (Sound bell) {Default values are used.}
+End If
+
+If cLog.$colcount=0
+	Do cLog.$define(execDate,execMode,execTitle,execTargetPath,execScript,execSourcePath)
+End If
+If cLog.$colcount<8
+	Do cLog.$cols.$add('execTicks',kInteger,k32bitint,0)
+	Do cLog.$cols.$add('execVerdict',kCharacter,kSimplechar,100000000)
+End If
+If cLog.$colcount<10
+	Do cLog.$cols.$add('execResult',kCharacter,kSimplechar,100000000) ## what came out of the run
+End If
+If cLog.$colcount<11
+	Do cLog.$cols.$add('execErrors',kInteger,k32bitint,0) ## errors in run
+	Do cLog.$cols.$add('execBackups',kInteger,k32bitint,0) ## classes backuped
+End If
+
+If cLog.$colcount<12
+	Do cLog.$cols.$add("execMark",kInteger,k32bitint,0) ## line of cMarkList, 0 = none
+	For cLog.$line from 1 to cLog.$linecount step 1
+		Calculate cLog.execMark as 0
+		Calculate cLog.$selected as kFalse ## the selection is free again
+	End For
+	Calculate cLog.$line as cLog.$linecount
+End If
+
+If cLog.$cols.$findname('execText')
+	Do cLog.$cols.$findname('execText').$name.$assign('execScript')
+End If
+
+# the marker list is persisted with the settings; the factory set when the store holds none
+If cMarkList.$colcount<2|cMarkList.$linecount=0
+	Calculate cMarkList as $cinst.$markListDefault()
+End If
+Do $cinst.$buildMarkPick() ## what dlMark offers

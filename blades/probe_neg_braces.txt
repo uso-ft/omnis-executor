@@ -1,0 +1,4 @@
+Test for valid calculation {eval(text2)}
+OK message Fertig {alles gut}
+Calculate result as con('a','b')
+Send to trace log {[#ERRCODE]}

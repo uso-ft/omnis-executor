@@ -1,0 +1,52 @@
+On evClick
+	# Restores every class SELECTED in the backup log.
+	#
+	# Only rows of kind restorable (column seven) carry a copy in c4, and only those are offered.
+	# The target library is taken from the copy: the copy exists, the source may be what is missing.
+	#
+	# Nothing happens without a confirmation. A restore replaces a living class.
+	
+	Calculate vList as ''
+	Calculate vCount as 0
+	For iBackupsRef.$line from 1 to iBackupsRef.$linecount step 1
+		If iBackupsRef.$selected()
+			If iBackupsRef.c7='restorable'
+				Calculate vCount as vCount+1
+				Calculate vList as con(vList,kCr,iBackupsRef.c2)
+			End If
+		End If
+	End For
+	
+	If vCount=0
+		OK message Restore (Icon) {Nothing to restore.//Select one or more lines that carry a backup copy.//A line without one is a refusal, or the summary line of a library sweep.}
+		Quit method
+	End If
+	
+	Yes/No message Restore (Icon) {[vCount] class(es) will be REPLACED by their backup copy:/[vList]////A class that is in use is refused and left untouched.//Continue?}
+	If flag false
+		Quit method
+	End If
+	
+	Calculate vOut as con('restore ',#T,kCr)
+	For iBackupsRef.$line from 1 to iBackupsRef.$linecount step 1
+		If iBackupsRef.$selected()
+			If iBackupsRef.c7='restorable'
+				Set reference vRef to [iBackupsRef.c4].$ref
+				If isclear(vRef)
+					Calculate vOut as con(vOut,'no copy at ',iBackupsRef.c4,' any more - skipped. ',kCr)
+				Else
+					Calculate vName as mid(vRef.$lib().$name,12,len(vRef.$lib().$name)-11)
+					Set reference vLibRef to $root.$libs.$findname(vName)
+					If isclear(vLibRef)
+						Calculate vOut as con(vOut,'the library ',vName,' is not open - skipped. ',kCr)
+					Else
+						Calculate vOut as con(vOut,$itasks.Executor.$restoreClass(vLibRef,iBackupsRef.c2,vRef.$lib()),kCr)
+					End If
+				End If
+			End If
+		End If
+	End For
+	
+	Send to trace log [vOut]
+	Calculate cResult as vOut
+	Do $cinst.$redraw()

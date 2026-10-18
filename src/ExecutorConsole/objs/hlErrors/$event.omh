@@ -1,0 +1,14 @@
+On evHeadedListHeadResize
+	Calculate cErrorColWidths as $cfield.$columnwidths
+	
+On evClick
+	# The following is a workaround, access the stack column from a static list not from a reference to. This results in arbitrary results !!!
+	Calculate list as iErrorsRef
+	Calculate iStack as list.stack
+	Calculate iStack.$line as 1
+	Do $cfield.$container().$objs.hlStack.$redraw()
+	
+On evDoubleClick
+	If len(iErrorsRef.location)
+		Do iTools.$edit(iErrorsRef.location)
+	End If

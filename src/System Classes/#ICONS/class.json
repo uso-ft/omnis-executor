@@ -1,0 +1,123 @@
+{
+	"classtype": "kSystemtable",
+	"omnisversion": "10.2",
+	"internalversion": 44,
+	"iconversion": 2,
+	"nextident": 2,
+	"properties": {
+		"componenttype": "kCompStoreHidden",
+		"createdate": "2026-07-17 15:26:51",
+		"desc": "",
+		"external": false,
+		"moddate": "2026-07-23 09:14:45",
+		"showascheckedout": false,
+		"userinfo": "",
+		"vcsrevision": 0,
+		"version": "1004"
+	},
+	"iconids": [
+		{
+			"iconid": 1010001,
+			"pageid": 1,
+			"iconpos": 1,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010002,
+			"pageid": 1,
+			"iconpos": 2,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010003,
+			"pageid": 1,
+			"iconpos": 3,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010011,
+			"pageid": 1,
+			"iconpos": 6,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010012,
+			"pageid": 1,
+			"iconpos": 7,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010013,
+			"pageid": 1,
+			"iconpos": 8,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010021,
+			"pageid": 1,
+			"iconpos": 11,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010022,
+			"pageid": 1,
+			"iconpos": 12,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010023,
+			"pageid": 1,
+			"iconpos": 13,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010031,
+			"pageid": 1,
+			"iconpos": 16,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010032,
+			"pageid": 1,
+			"iconpos": 17,
+			"defaultsize": 1,
+			"flags": 0
+		},
+		{
+			"iconid": 1010033,
+			"pageid": 1,
+			"iconpos": 18,
+			"defaultsize": 1,
+			"flags": 0
+		}
+	],
+	"pages": [
+		{
+			"pageid": 1,
+			"name": "Diamonts",
+			"bitmapid": 1,
+			"flags": 1794
+		}
+	],
+	"bitmaps": [
+		{
+			"bitmapid": 1,
+			"solid": {
+				"$png": "solid1.png"
+			},
+			"alpha": {
+				"$png": "alpha1.png"
+			}
+		}
+	]
+}

@@ -1,0 +1,15 @@
+# Builds iMarkPick, the choice dlMark offers: "none" first, then every non-empty row of cMarkList.
+# markno is the line in cMarkList, and that is what cLog.execMark stores.
+# Called by $initClassVars, and again whenever cMarkList was changed in Settings.
+Do iMarkPick.$define()
+Do iMarkPick.$cols.$add('markno',kInteger,k32bitint,0)
+Do iMarkPick.$cols.$add('iconid',kInteger,k32bitint,0)
+Do iMarkPick.$cols.$add('label',kCharacter,kSimplechar,1000)
+Do iMarkPick.$add(0,0,'none')
+For n from 1 to cMarkList.$linecount step 1
+	If cMarkList.[n].iconid
+		Do iMarkPick.$add(n,cMarkList.[n].iconid,cMarkList.[n].label)
+	End If
+End For
+Calculate iMarkPick.$line as 1
+Quit method kTrue

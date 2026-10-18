@@ -1,0 +1,16 @@
+# Determines the superclass reference of pClassRef.
+# The $superclass attribute can be of the form MyClass or MyLib.MyClass.
+# Resolution is done by the CORE (undocumented, reverse engineered from
+# IDE shell oLibraries.$cmenuclick Case 30, Superclass methods):
+#   $dotoolmethod(kEnvToolBrowser,185,libRef,superclassString) Returns superRef
+# The core resolves both forms, cross-library, incl. locked classes.
+# Returns the superclass itemref, or NULL if the class has no superclass.
+# Related: 208 = modal set-superclass dialog (libRef,className,outName)
+# Returns selected. The dialog only PICKS, the caller must assign:
+#   Calculate libRef.$classes.[name].$superclass as outName
+Calculate superclassName as pClassRef.$superclass
+If len(superclassName)=0
+	Quit method classRef.$ref
+End If
+Do $root.$modes.$dotoolmethod(kEnvToolBrowser,185,pClassRef.$lib().$ref,superclassName) Returns classRef ## @CORE
+Quit method classRef.$ref

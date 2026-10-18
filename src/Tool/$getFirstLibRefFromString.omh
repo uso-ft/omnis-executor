@@ -1,0 +1,21 @@
+# Finds the first library named in the string (the frontmost token that is a valid open library).
+# A token is a run of name characters; everything else (spaces, . ' ( ) / \ < > [ ] , : etc.)
+# separates. '$' is treated as a name character. Parallel to $getFirstClassRefFromString.
+
+Calculate startPos as 1
+Calculate matchPos as rxpos('[\w$]+',pString,kFalse,kFalse,matchLen) ## first token
+
+While matchPos>0
+	Calculate name as mid(pString,startPos+matchPos-1,matchLen) ## the matched token
+	
+	Set reference ref to $libs.$findname(name).$ref
+	If ref<>'' ## valid library → its $lib() resolves to a named library
+		Quit method ref ## first valid library wins
+	End If
+	
+	# advance past this token and search the remainder
+	Calculate startPos as startPos+matchPos-1+matchLen
+	Calculate matchPos as rxpos('[\w$]+',mid(pString,startPos,len(pString)),kFalse,kFalse,matchLen)
+End While
+
+Quit method ''

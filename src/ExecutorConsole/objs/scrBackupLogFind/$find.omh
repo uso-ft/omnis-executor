@@ -1,0 +1,8 @@
+# Searches specified text in specified list, redraws the list and sets focus to list
+Do $cinst.$findInLists(cFindBackupText,iBackupsRef.$ref,pDirection_opt,pSoundBell_opt) Returns line
+If line
+	# Reference to headed list box
+	Do $cfield.$container().$container().$objs.$sendall(iTools.$setRef(ref,$sendallref),$sendallref.$objtype=kHeadedListBox)
+	Do ref.$redraw()
+	Calculate $ctarget as ref
+End If

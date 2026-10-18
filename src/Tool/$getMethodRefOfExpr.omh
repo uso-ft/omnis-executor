@@ -1,0 +1,123 @@
+# Resolves an EXPRESSION (found in the method editor of class pClass) to a method reference.
+#   Branch 1  $cinst.….$myMethod        → resolve in a living instance (prototype), else static
+#   Branch 2  varName.$bla().….$myMethod   → task var, or instance var, resolved in a living instance
+# pExpr is normally resolved in LIVING instances within the inheritance tree of pClass (and, for
+# Branch 2, possibly the right task). If no living instance exists, Branch 1 falls back to building
+# a static reference textually. We first collect all living instances along the vertical inheritance
+# path (sub- and superclasses with instances), then resolve the two branches:
+
+# @? Branch 2 instance case collapses the expression to (class+name) and may lose $obj container info (later)
+
+# --- common base: living instances along the inheritance path (sub + super), only with instances ---
+Do list.$define(ref,version)
+Do $libs.$sendall($ref.$classes.$sendall(list.$add($sendallref,$sendallref.$version),$sendallref.$isa(pfClassRef)&$sendallref.$insts().$count)) ## subclasses; isa via $sendall does not catch superclasses @?
+Set reference classRef to $cinst.$superclassRef(pfClassRef)
+Repeat
+	If classRef.$class&classRef.$insts().$count
+		Do list.$add(classRef,classRef.$version)
+	End If
+	Set reference classRef to $cinst.$superclassRef(classRef)
+Until isclear(classRef)
+
+# ============================================================ Branch 1: $cinst expression
+If pos('$cinst',pExpr)=1
+	
+	# Stage 1 — resolve in a living instance: clone-and-run the prototype in each instance until
+	# one can evaluate pExpr (the prototype has its own $cando guard and returns '' otherwise).
+	# Iterating all instances matters when pExpr runs through a subwindow container that may have
+	# different classes loaded per instance — the prototype decides per instance.
+	For loop from 1 to list.$linecount step 1
+		Set reference classRef to list.[loop].c1().$ref
+		Set reference instRef to classRef.$insts.$first().$ref
+		While instRef.$class&fullname=''
+			Do $cinst.$cloneMethodToAndExecute($cinst.$methods.$findname('$prototypeGetMethodRefOfExpr').$ref,classRef,instRef,,pExpr) Returns fullname ## @SELF
+			If fullname=''
+				Set reference instRef to classRef.$insts.$next(instRef.$ref).$ref
+			End If
+		End While
+		If fullname<>''
+			Set reference methodRef to [fullname].$ref
+			Break to end of loop
+		End If
+	End For
+	
+	# Stage 2 — static fallback: no living instance resolved it → build the static reference textually.
+	# Replace $cinst with the class $fullname, turn the trailing .$method into .$methods.//$method//
+	If not(methodRef.$class)
+		Calculate rest as mid(pExpr,7) ## strip leading '$cinst'
+		Calculate methodname as mid(rest,rpos('.$',rest)+1) ## trailing $method
+		Calculate containerPath as mid(rest,1,rpos('.$',rest)-1) ## container path (may be empty)
+		Calculate staticPath as con(pfClassRef.$fullname,containerPath,'.$methods.//',methodname,'//')
+		If [staticPath].$class ## resolves to a class → valid static reference
+			Set reference methodRef to [staticPath].$ref
+		End If
+	End If
+	
+	# ============================================================ Branch 2: name.$…$method
+Else If len(pExpr)
+	
+	# First test on task var — search ALL tasks, so a snippet placed anywhere (e.g. in the IDE
+	# while debugging) can jump to a method living in any running task. $prototypeExprIsSafe
+	# guards against the unnamed_value runtime error when evaluating the chain in a task.
+	Calculate methodtext as con('Quit method ',pExpr,'.$class().$fullname')
+	Set reference taskRef to $itasks.$first
+	While taskRef.$class
+		Do $cinst.$cloneMethodToAndExecute($cinst.$methods.$findname('$prototypeExprIsSafe').$ref,taskRef.$class(),taskRef,,pExpr) Returns isSafe ## @SELF
+		If isSafe
+			Do $cinst.$cloneMethodToAndExecute(methodtext.$ref,taskRef.$class(),taskRef) Returns fullname ## @SELF
+			If fullname<>''
+				Set reference classRef to [fullname].$ref
+				Calculate methodname as mid(pExpr,rpos('$',pExpr))
+				Repeat
+					Set reference methodRef to classRef.$methods.$findname(methodname)
+					If methodRef.$class
+						Break to end of loop
+					End If
+					Set reference classRef to $cinst.$superclassRef(classRef)
+				Until isclear(classRef)
+				If methodRef.$class
+					Break to end of loop
+				End If
+			End If
+		End If
+		Set reference taskRef to $itasks.$next(taskRef)
+	End While
+	
+	# Else test instance vars (reuse the common 'list')
+	If not(methodRef.$class)
+		For loop from 1 to list.$linecount step 1
+			Set reference classRef to list.[loop].c1().$ref
+			Set reference instRef to classRef.$insts.$first().$ref
+			
+			# Find an instance where pExpr can be evaluated, then resolve it to the static method
+			# reference via $exprRefToMethodRef (handles $obj methods vs class methods + superclass climb).
+			If instRef.$objtype=kSubwindow
+				# Subwindow container: different subwindow CLASSES can be loaded per instance → try ALL.
+				While instRef.$class&isclear(methodRef)
+					If instRef.$subinst().[pExpr].$cando
+						Set reference methodRef to $cinst.$exprRefToMethodRef(instRef.$subinst().[pExpr].$ref).$ref
+					End If
+					If isclear(methodRef)
+						Set reference instRef to classRef.$insts.$next(instRef.$ref).$ref ## classRef stays the LIST class
+					End If
+				End While
+			Else
+				# Normal class: ivar/cvar are class-bound and identical in every instance → one is enough.
+				If instRef.[pExpr].$cando
+					Set reference methodRef to $cinst.$exprRefToMethodRef(instRef.[pExpr].$ref).$ref
+				End If
+			End If
+			
+			If methodRef.$class
+				Break to end of loop
+			End If
+		End For
+	End If
+End If
+
+If methodRef.$class
+	Quit method methodRef
+Else
+	Sound bell ## No OK message: user could press Break and kill the stack, leaving method corpses behind.
+End If
+Quit method

@@ -1,0 +1,52 @@
+On evKey
+	Calculate iTextAssigned as kFalse
+	Do $cinst.$objs.cbTextAssigned.$redraw()
+	# Go to Title if tab, or to Find if shift tab
+	If pSystemKey=kTabKey&#SHIFT
+		Queue set current field efFindScriptText
+	Else If pSystemKey=kTabKey
+		Queue set current field efLogTitle
+	End If
+	
+	If pKey='v'&#CTRL
+		Calculate iTextChangedSignificantly as kFalse
+		# user is about to paste over the current selection
+		If len($cfield.$contents)=0
+			# script was empty
+			Calculate iTextChangedSignificantly as kTrue
+		Else If (($cfield.$lastsel-$cfield.$firstsel)/len($cfield.$contents))>.9
+			# a substantial part of the text changes: new title and redraw
+			Calculate iTextChangedSignificantly as kTrue
+		End If
+	Else
+		Calculate iTextChangedSignificantly as kFalse
+	End If
+	
+On evAfter
+	If #MODIFIED
+		Calculate firstSel as $cfield.$firstsel
+		Calculate lastSel as $cfield.$lastsel
+		Do $cinst.$setExecutorValues(kFalse)
+		Do $cinst.$logSetValues()
+		Do $cinst.$redraw()
+		Calculate $cfield.$firstsel as firstSel
+		Calculate $cfield.$lastsel as lastSel
+	End If
+	
+On evClipChangedData
+	Calculate firstSel as $cfield.$firstsel
+	Calculate lastSel as $cfield.$lastsel
+	Process event and continue
+	If iTextChangedSignificantly
+		If cOverwritePathAndTitle
+			
+			Calculate cScript as $cfield.$contents ## sets the correct value, makes it no more undoable
+			Do $cinst.$setExecutorValues(kTrue)
+			Do $cinst.$logSetValues()
+			Calculate $cfield.$firstsel as firstSel
+			Calculate $cfield.$lastsel as lastSel
+			Redraw efLogTitle,efSourcePath,efTargetPath,dfLOC,dlMark,rbViewScript,rbViewSplit,rbViewJump
+			Calculate $ctarget as $cfield
+		End If
+		Calculate iTextChangedSignificantly as kFalse
+	End If

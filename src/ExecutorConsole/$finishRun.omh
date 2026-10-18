@@ -1,0 +1,62 @@
+# The one ending for both roads: $runExecutor calls it after the vessel, a manual script calls it directly.
+# pMode_opt: 1 vessel, 2 manual (the default for every caller but $runExecutor), 0 rows before the column existed.
+# A manual run has no manifest and no verdict.
+
+
+If pMode_opt<>1
+	Calculate pMode_opt as 2 ## not the vessel, so a hand-started script
+End If
+Calculate vErrors as $itasks.[$clib().$name].$renderErrors()
+Calculate cResult as con(cResult,' - errors ',$itasks.[$clib().$name].$errorCount(),kCr,kCr,pResult,vErrors)
+
+
+# Same title on the same text is normal. The same title on DIFFERENT
+# text is the one that costs time, so only that is said out loud.
+Calculate cLog.$line as cLog.$linecount
+If cLog.$linecount
+	If cLog.execTitle=cLogTitle
+		If cLog.execScript=cScript
+		Else
+			Calculate cResult as con(cResult,kCr,'[title   ]   unchanged from the previous run, though the text differs.',kCr)
+			Calculate cResult as con(cResult,'             Click the name in the log grid to change it.',kCr)
+		End If
+	End If
+End If
+# Run folder: the script first, then the folder name into cResult, then the protocol.
+# A failed write is reported and the run carries on.
+Calculate vResult as $cinst.$writeRunFile('script.txt',cScript)
+Calculate cResult as con(cResult,kCr,'[folder  ]   ',cRunFolder,kCr)
+If len(vResult)
+	Calculate cResult as con(cResult,'             ',vResult,kCr)
+End If
+Calculate vResult as $cinst.$writeRunFile('protocol.txt',cResult)
+If len(vResult)
+	Calculate cResult as con(cResult,'             ',vResult,kCr)
+End If
+
+If cLog.execDate|cLog.$linecount=0
+	Do cLog.$add(#T,pMode_opt,cLogTitle,cTargetPath,cScript,cSourcePath,cRunTicks,cVerdict,cResult,$itasks.[$clib().$name].$errorCount(),iBackupsRef.$linecount)
+	Calculate cLog.$line as cLog.$linecount
+Else
+	Do cLog.$assigncols(#T,pMode_opt,cLogTitle,cTargetPath,cScript,cSourcePath,cRunTicks,cVerdict,cResult,$itasks.[$clib().$name].$errorCount(),iBackupsRef.$linecount)
+End If
+
+Do $cinst.$selectCurrentLogRow() ## the new row is the only selected one
+# Make current cLog and $cvars persistent
+Do $cinst.$backupSettings()
+Send to trace log [con('================ End ',#T,' - errors ',$itasks.[$clib().$name].$errorCount(),' ==============================')]
+
+Do $cinst.$redraw()
+# Multiline.$linecount: calculate after the rendering $redraw()
+Calculate iResultLines as $cinst.$objs.dfResult.$linecount
+Do $cinst.$objs.cbToggleResult.$redraw()
+
+If cCopyResultToClipboard
+	Copy to clipboard cResult
+End If
+If cResult<>''
+	OK message {Result=[cResult]}
+Else
+	OK message Done !
+End If
+Quit method cResult

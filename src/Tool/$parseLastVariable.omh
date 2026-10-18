@@ -1,0 +1,5 @@
+# Looks for the last variable in pCalculation. The last one most likely carries the most information.
+# Can only be accomplished in the instance itself (a check for a valid variable needs the running instance).
+
+Do $cinst.$cloneMethodToAndExecute($cinst.$methods.$findname('$prototypeParseLastVariable').$ref,pInstance.$class(),pInstance.$ref,,pCalculation,pInstance.$ref) Returns variablename ## @SELF
+Quit method variablename

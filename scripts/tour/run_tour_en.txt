@@ -1,0 +1,74 @@
+# GENERATOR: run_tour_en v11 — 2026-10-18 02:16 — a guided tour of one run, from the Execute button to the sealed log row
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR 1.0
+#
+# ==================================================================
+#   THE RUN TOUR
+# ==================================================================
+#   This script changes nothing. It shows, in 34 stations, what the
+#   Executor does when you press Execute.
+#
+#   HOW TO TAKE THE TOUR
+#     1. Switch to the Jump view (or the Split view).
+#     2. Double-click station 01 in the jump list. The method
+#        editor opens at the line the station is about, and the
+#        note of the station stands in the Jump view.
+#     3. Go on with 02, 03 ... up to 34.
+#
+#   WHAT EXECUTE DOES WITH THIS SCRIPT
+#     It runs it. A message points you to the tour, then the console
+#     ends the run as it ends every run: its closing message, the
+#     result, a new row in the log, a folder in execRuns, the verdict.
+#     That is the very run the tour describes.
+#
+#   The line numbers of the stations belong to this release.
+# ==================================================================
+
+Calculate result as con('run ',#T,' — run_tour_en v11',kCr)
+OK message Run tour (Icon) {This script changes nothing.////For the tour: switch to the Jump view and double-click the stations 01 to 34, one after the other.////After this message the console ends the run as usual, with its own closing message.}
+Calculate result as con(result,'The run tour changes nothing. Switch to the Jump view and double-click the stations 01 to 34.',kCr)
+Quit method result
+
+## ===== JUMP LINKS 1.0 =====
+# === Start ===
+# Do Executor.$classes.ExecutorConsole.$objs.scrEditor.$objs.pbRun.$methods.//$event//.$modify(2) ## 01 Execute button #> 01 Execute\n\n- The button calls $runExecutor. Every run from the console goes through this one method.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(4) ## 02 cResult: the result of the run #> 02 cResult - the result of the run\n\n- cResult is the overall result of the run. It grows step by step: the run stamp here, along the way the lines of backup, script, manifest and verdict, at the end errors, folder and the title note.\n- It stands in the Result field, in the log row and in protocol.txt.\n- It is also meant for the AI: with Copy Result to Clipboard (on by default) it is on the clipboard after the run and can be handed back.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(9) ## 03 own error handler #> 03 Own error handler\n\n- During the run the Executor's own error handler is active, Startup_Task.$handleError. After the run the previous one is back.\n- An Omnis error does not stop the run, it is collected (next station).
+# Do Executor.$classes.Startup_Task.$methods.//$handleError//.$modify(1) ## 04 the error handler itself #> 04 The error handler\n\n- Every runtime error goes to the trace log, with message and location, and into the error list of the run.\n- Location: an error in the copy inside the vessel points to the line in Executor.$execute, because the vessel is gone after the run. A double-click in the error list opens that line.\n- Ignore list (line 65): these errors show as 'ignored' but do not count. Room for your own entries (line 67).\n- With Break if error the run stops at an error, optionally only for a search text.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(11) ## 05 errors cleared, trace framed #> 05 Error list and trace\n\n- The error list is cleared, so the error count at the end describes this run only.\n- The trace log is cleared and framed: date and description from the first line of the script, and the start time.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(31) ## 06 Omnis code into Executor.$execute #> 06 Omnis code into the code class\n\n- $assignScriptToExecutor writes the Omnis code from the editor into the method $execute of the code class Executor.\n- What runs is never the text in the field but this method, more exactly a copy of it (station 19).\n- If the code was assigned before with Assign, this step is skipped.\n- If the assignment fails, the run ends here: no backup, no log row.
+# Do Executor.$classes.ExecutorConsole.$methods.//$assignScriptToExecutor//.$modify(30) ## 07 assigned line by line #> 07 Line by line into Executor.$execute\n\n- The lines go into Executor.$execute one at a time, with $methodlines.$add. A refused line returns an empty reference: that is the test.\n- Why one at a time: Omnis refuses an invalid line silently. With the whole block nobody could tell afterwards which line is missing.\n- The first refused line reports itself: error list with jump target, text on the clipboard (for the AI), message, Breakpoint.\n- Typical cause: an unknown command, or a variable that Executor.$execute does not have.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(38) ## 08 danger scan #> 08 Danger scan\n\n- Searches the assigned code for places where whole classes are removed or overwritten.\n- Stage A: the class is chosen only at run time and then removed, or its $classdata, $methodtext or $name is written.\n- Stage B: a named class is removed, or a class chosen at run time is changed otherwise.\n- Every finding is a [danger] line in the protocol and a note in the error list (a double-click opens the line). Findings do not count as errors.\n- With Warn on danger a dialog asks: for stage A always, for stage B only without backup. Cancelling leaves only the assignment behind.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(45) ## 09 close target editors #> 09 Close the editors\n\n- The design editors of the classes the code names, and of the target class, are closed (Close Target Classes). The protocol gets a [close] line.\n- An open editor follows every change live and makes rebuilding its class very slow.\n- Close design closes without saving the class.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(56) ## 10 title and run folder #> 10 Title and run folder\n\n- Every run gets a folder of its own in execRuns beside the library, named by date, time and title. Everything about this run is stored there: script.txt and protocol.txt.\n- Title (cLogTitle) and folder are fixed before the code runs.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(57) ## 11 into the vessel road #> 11 The run\n\n- $runInVessel takes over: backup, vessel, measurement, verdict, build, commit. Then it goes on here to $finishRun.
+# === Backup ===
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(8) ## 12 vaults open before the run #> 12 Remember the open vaults\n\n- The vaults (execBackup_<Library>) already open before the run are noted. At the end the run closes only the ones it opened itself.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(19) ## 13 the target class #> 13 Target class\n\n- Only when the code reads its target from the Target field (targetRef) is that class backed up. If the field holds an object, the class it belongs to counts.\n- Its name Lib.Class is taken now: if the code removes the class and adds it again, a reference taken before is dead. After the run the class is found again by its name.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(25) ## 14 bList from the text #> 14 Which classes are backed up\n\n- The list comes from the code (the classes it names) and from the header (CREATES, MODIFIES, REMOVES). The header can only make it longer.\n- The same list serves twice: backup before the run, Save class after it.\n- It comes from the TEXT. What the code touches in addition at run time only the manifest finds.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(31) ## 15 seatbelt: backup held #> 15 Seatbelt\n\n- The target class and every class of the list are copied into the vault of their library: execBackups/execBackup_<Library>.lbs, created and opened when needed.\n- A copy already there is put aside as <class>_prev. Which one stays is decided only by the commit after the run (station 27).
+# === The run ===
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(63) ## 16 fresh vessel instance #> 16 Fresh vessel\n\n- Every run gets a new instance of the empty object class ExecutorVessel: no instance variables, nothing left from an earlier run.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(66) ## 17 snapshot BEFORE #> 17 Snapshot before\n\n- Every class of every open library is recorded, with name and $moddate. Only with this picture of before can the run tell afterwards what really changed.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(68) ## 18 verdict and ticks cleared #> 18 Reset\n\n- cVerdict and cRunTicks are cleared. Both describe exactly one run; an old value would be sealed into the log row.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(71) ## 19 inject and execute #> 19 Inject and execute\n\n- Executor.$execute is copied with its local variables into the vessel instance, and the copy is called. Target and source go along as parameters. The duration is measured (cRunTicks).\n- The vessel has no $execute of its own: what runs is clearly the copy, in an instance without old state.\n- Option Step: a Breakpoint on line 1 of the copy. End with Continue, never kill the stack.
+# Do Executor.$classes.Tool.$methods.//$cloneMethodToAndExecute//.$modify(37) ## 20 copy created in the vessel #> 20 Create the copy\n\n- The method is added to the instance, then the local variables and the text are carried over.
+# Do Executor.$classes.Tool.$methods.//$cloneMethodToAndExecute//.$modify(55) ## 21 the copy runs #> 21 The copy runs\n\n- Called with up to five parameters. The return value, the result of the script, goes back to $runInVessel.
+# === Measuring and verdict ===
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(79) ## 22 Save class before the snapshot #> 22 Save before measuring\n\n- Save class for the target class and every class of the list, each found again by its name.\n- $moddate is a time stamp on disk: a class changed but not saved still carries the old one and would be invisible to the measurement.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(96) ## 23 snapshot AFTER and manifest #> 23 Snapshot after, and the manifest\n\n- Second snapshot, then $manifestDiff compares the two: which classes were changed, added or are gone. That is the manifest, the measurement.\n- It also finds classes the code never names. It only reports; it prevented nothing.
+# Do Executor.$classes.ExecutorConsole.$methods.//$verdictFromRun//.$modify(83) ## 24 the verdict #> 24 The verdict\n\n- Compares the header of the script (what it announced) with the manifest (what was measured).\n- ok: everything announced was seen, nothing extra.\n- unproven: something announced was not seen, e.g. a refused line or a change without effect.\n- extra: a change that was not announced, often collateral damage.\n- conflict: a change although the header says 'nothing'.\n- open: no header, so no verdict.\n- It is kept in cVerdict and sealed into the log row.
+# === Closing the run ===
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(115) ## 25 build number #> 25 Build number\n\n- Once for every library the manifest saw really changed, the build number goes up. A run without effect makes none.\n- It stands as a line EXEC-BUILD= in the $userinfo of the library. Whatever else stands there is kept.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(118) ## 26 commit against the manifest #> 26 Commit\n\n- $commitBackups gets the manifest and decides about every copy put aside.
+# Do Executor.$classes.Startup_Task.$methods.//$commitBackups//.$modify(48) ## 27 keep or roll back #> 27 Keep or roll back\n\n- Class changed according to the manifest: the fresh copy stays, _prev is deleted.\n- Not changed: the fresh copy is dropped, _prev comes back. Otherwise a run without effect would overwrite the last useful backup.\n- So the vault holds the state before the last run that really changed the class. No version history.\n- A run whose stack was killed never gets here. Its copy is decided by the next commit, and it rolls back.
+# Do Executor.$classes.ExecutorConsole.$methods.//$runInVessel//.$modify(124) ## 28 vaults closed again #> 28 Close the vaults\n\n- Every vault this run opened is closed again ([vault] line). One that was open before stays open.
+# === The ending ===
+# Do Executor.$classes.ExecutorConsole.$methods.//$runExecutor//.$modify(61) ## 29 the one ending #> 29 The one ending\n\n- Every run ends in $finishRun.
+# Do Executor.$classes.ExecutorConsole.$methods.//$finishRun//.$modify(10) ## 30 errors into cResult #> 30 Errors into cResult\n\n- Error count, the protocol of the run and the error list go into cResult. Danger findings and ignored errors do not count.
+# Do Executor.$classes.ExecutorConsole.$methods.//$finishRun//.$modify(17) ## 31 same title, other text #> 31 Same title, other text\n\n- If the run carries the same title as the previous one but a different text, cResult says so. Otherwise two different scripts end up under one name in the log.
+# Do Executor.$classes.ExecutorConsole.$methods.//$finishRun//.$modify(27) ## 32 script.txt and protocol.txt #> 32 Files of the run\n\n- script.txt (the code that ran) and protocol.txt (the finished cResult) go into the run folder. The script first: if the protocol fails, at least the code is kept. A write error is reported, the run carries on.
+# Do Executor.$classes.ExecutorConsole.$methods.//$finishRun//.$modify(38) ## 33 the log row is sealed #> 33 Seal the log row\n\n- One row with time, title, target, script, source, duration, verdict, result, error count and number of backups.\n- Sealed: a row clicked later shows its own values, not the current ones.
+# Do Executor.$classes.ExecutorConsole.$methods.//$finishRun//.$modify(46) ## 34 settings and log persisted #> 34 Save\n\n- Settings and log go into the store (class ExecutorStore). Then the end of the trace, the clipboard (Copy Result to Clipboard) and the final message.\n- The store grows with the log, and every backup of Executor copies it.

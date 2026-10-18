@@ -1,0 +1,12 @@
+On evAfter
+	Calculate cSourcePath as $cinst.$shortPath(cSourcePath) ## any of the four fronts; a path that does not resolve stays as typed
+	Set reference iSourceRef to iTools.$pathToRefQuiet(cSourcePath) ## silent, reads Lib.Class, and agrees with the colour $redrawPathField gives the field
+	Do $cinst.$logSetValues()
+	Do $cfield.$redraw()
+	
+On evKey
+	If pSystemKey=kTabKey&#SHIFT
+		Queue set current field efTargetPath
+	Else If pSystemKey=kTabKey
+		Queue set current field efFindScriptText
+	End If

@@ -1,0 +1,8 @@
+Calculate group as methodRef.$methodlines.$fullname
+Set reference text to $clib
+Calculate list.$line as 1
+Set reference classRef to Executor.$classes.$findname('Tool')
+Calculate row as ref3.$settingsSpec()
+For row.$line from 1 to row.$linecount step 1
+Calculate count as 1
+End For

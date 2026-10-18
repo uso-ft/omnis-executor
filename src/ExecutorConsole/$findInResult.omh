@@ -1,0 +1,68 @@
+# Finds cFindResultText in dfResult and selects it.
+#   pDirection  0 = from the top   1 = forward   -1 = backward
+#   pSoundBell_opt  ring when nothing was found
+#
+# $firstsel is EXCLUSIVE, $lastsel INCLUSIVE (the help calls both inclusive):
+# firstsel = findPos-1, lastsel = findPos+len-1.
+Set reference edRef to $cinst.$objs.dfResult
+If isclear(edRef)
+	Quit method
+End If
+
+If len(cFindResultText)=0
+	Do edRef.$firstsel.$assign(0)
+	Do edRef.$lastsel.$assign(0)
+	Quit method
+End If
+
+If pKeepSelection_opt
+	# Next/previous need to know the current selection
+Else
+	# clear current selection from search before
+	Do edRef.$firstsel.$assign(0)
+	Do edRef.$lastsel.$assign(0)
+End If
+
+If pDirection>0
+	Calculate startPos as edRef.$lastsel
+Else
+	If pDirection<0
+		Calculate startPos as edRef.$firstsel
+	Else
+		Calculate startPos as 0
+	End If
+End If
+
+While 1
+	If pDirection<0
+		Calculate part as mid(edRef.$contents,1,startPos)
+		Calculate findPos as rpos(low(cFindResultText),low(part))
+	Else
+		Calculate part as mid(edRef.$contents,startPos+1)
+		Calculate findPos as pos(low(cFindResultText),low(part))
+		If findPos
+			Calculate findPos as findPos+startPos
+		End If
+	End If
+	
+	If findPos
+		Do edRef.$firstsel.$assign(findPos-1)
+		Do edRef.$lastsel.$assign(findPos+len(cFindResultText)-1)
+		Break to end of loop
+	End If
+	
+	If pSoundBell_opt
+		Sound bell
+	End If
+	Break to end of loop
+End While
+
+If findPos|(edRef.$firstsel<>edRef.$lastsel)
+	# show found selection, or keep selection
+	Queue set current field dfResult
+Else
+	# not found, target to find field
+	Queue set current field efFindResultText
+End If
+
+Quit method

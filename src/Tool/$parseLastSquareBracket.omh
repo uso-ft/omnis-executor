@@ -1,0 +1,18 @@
+# Parses and returns the last (inner) square bracket contents.
+
+Calculate pos as len(pString)
+While pos>0
+	
+	If asc(pString,pos)=asc(']',1)
+		Calculate squareBracket as '' ## initialise — this may be a nested one
+		Calculate readSquareBracket as kTrue
+	Else If asc(pString,pos)=asc('[',1)
+		Quit method squareBracket
+	Else If readSquareBracket
+		Calculate squareBracket as con(mid(pString,pos,1),squareBracket)
+	End If
+	Calculate pos as pos-1
+	
+End While
+
+Quit method ''

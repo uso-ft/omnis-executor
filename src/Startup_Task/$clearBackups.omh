@@ -1,0 +1,13 @@
+# Clears the backup list. Brings the column set up to date FIRST: a list
+# with only 4 columns from an older session is widened in place, because
+# $construct only ever defines when the list has NO columns at all.
+# $cols.$add takes the column NAME as a string — unlike $define, which takes
+# VARIABLES and borrows their names and types. So no dummy variables here.
+If cBackups.$colcount<6
+	Do cBackups.$cols.$add('bytes',kInteger,k32bitint,0)
+	Do cBackups.$cols.$add('ticks',kInteger,k32bitint,0)
+End If
+If cBackups.$colcount<7
+	Do cBackups.$cols.$add('kind',kCharacter,kSimplechar,20)
+End If
+Do cBackups.$clear()

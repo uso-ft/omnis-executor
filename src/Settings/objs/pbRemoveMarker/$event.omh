@@ -1,0 +1,9 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	If iMarkList.$linecount
+		Do iMarkList.$search(kFalse)
+		Calculate iMarkList.$line as iMarkList.$linecount
+		Calculate iMarkList.$selected as kTrue
+		Do iMarkList.$remove(kListDeleteSelected)
+		Calculate iMarkerModified as kTrue
+		Do $cinst.$redraw()
+	End If

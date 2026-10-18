@@ -1,0 +1,2 @@
+On evClick
+	Do $cinst.$findInScript(0,kTrue,kFalse)

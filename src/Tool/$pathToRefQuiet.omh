@@ -1,0 +1,123 @@
+# $pathToRefQuiet(pPath) -> item reference, or empty
+#
+# Walks the path segment by segment and never puts an unknown NAME into notation:
+# a segment starting with $ is a group (ref.[seg] is safe), every other segment goes through
+# $findname and cannot raise. A bracket form raises 25207 on an unknown name.
+#  - //Some Name// escapes ONE segment; the slashes come off before $findname.
+#  - the path may begin with a library name, e.g. Lib.$classes.X.$methods.//$y//.$methodlines.3
+#  - after a library a plain name is a CLASS: Lib.Class reads as Lib.$classes.Class. refKind says what ref is: 0 other, 1 the $libs group, 2 a library.
+#  - a method line answers $name with its line number. An object without a name does not: a numeric segment $findname misses is tried with $findident ($objs.1017).
+# A path with a call, such as $insts(), cannot be walked: use $pathToRef.
+If isclear(pPath)
+	Quit method ''
+End If
+If pos('(',pPath)
+	Quit method '' ## a call cannot be walked
+End If
+
+# --- split on dots OUTSIDE an escape ---
+Do parts.$define(part)
+Calculate part as ''
+Calculate n as 0
+For i from 1 to len(pPath) step 1
+	Calculate ch as mid(pPath,i,1)
+	If mid(pPath,i,2)='//'
+		Calculate n as 1-n ## the toggle fires on the FIRST slash of a pair only
+	End If
+	If (ch='.')&(n=0)
+		Do parts.$add(part)
+		Calculate part as ''
+	Else
+		Calculate part as con(part,ch)
+	End If
+End For
+Do parts.$add(part)
+
+# --- walk ---
+For parts.$line from 1 to parts.$linecount step 1
+	Calculate seg as parts.part
+	Calculate esc as kFalse
+	If left(seg,2)='//'
+		Calculate seg as mid(seg,3,len(seg)-4)
+		Calculate esc as kTrue
+	End If
+	If len(seg)=0
+		Quit method ''
+	End If
+	If parts.$line=1
+		If seg='$root'
+			Set reference ref to $root
+			Calculate refKind as 0
+		Else If seg='$clib'
+			Set reference ref to $clib
+			Calculate refKind as 2 ## a library
+		Else If left(seg,1)='$'
+			If $root.[seg].$cando
+				Set reference ref to $root.[seg] ## '$libs.Executor' without the leading '$root.'
+				Calculate refKind as pick(low(seg)='$libs',0,1) ## a name after the $libs group is a library
+			Else
+				Quit method '' ## a group cannot be the first segment
+			End If
+		Else
+			Set reference ref2 to $root.$libs.$findname(seg) ## a library name
+			If isclear(ref2)
+				Quit method ''
+			End If
+			Set reference ref to ref2.$ref
+			Calculate refKind as 2 ## a library
+		End If
+	Else
+		If esc|(left(seg,1)<>'$')
+			If refKind=2
+				Set reference ref2 to ref.$classes.$findname(seg) ## after a library a name is a class: Lib.Class
+			Else
+				Set reference ref2 to ref.$findname(seg) ## a name is an argument, and the escape marked it one
+			End If
+			# a name in another case: Floating.$classes.startup_task found nothing, Startup_Task did (owner, 2026-10-01).
+			# One pass through the group by low(), only after $findname missed. Inferred from that symptom, not measured on its own.
+			If isclear(ref2)
+				If refKind=2
+					Set reference ref2 to ref.$classes.$first()
+					While not(isclear(ref2))&(low(ref2.$name)<>low(seg))
+						Set reference ref2 to ref.$classes.$next(ref2)
+					End While
+				Else
+					Set reference ref2 to ref.$first()
+					While not(isclear(ref2))&(low(ref2.$name)<>low(seg))
+						Set reference ref2 to ref.$next(ref2)
+					End While
+				End If
+			End If
+			# an object without a name: $findname misses $objs.1017, $findident finds it (attributes_probe v1, 2026-09-29)
+			If isclear(ref2)&not(esc)&(refKind<>2)&isnumber(seg)
+				Set reference ref2 to ref.$findident(seg*1)
+			End If
+			# a name under the $libs group is a library
+			Calculate refKind as pick(refKind=1,0,2)
+		Else
+			
+			If ref.[seg].$cando
+				# If ref.$attributes.[seg].$cando
+				# es ist ein Attribut ==> property manager öffnen
+				# Do 1
+				# Else
+				# Do 1
+				# End If
+				
+			Else
+				Quit method '' ## mistyped group name
+			End If
+			Set reference ref2 to ref.[seg] ## a group name is fixed notation
+			Calculate refKind as pick(low(seg)='$libs',0,1)
+		End If
+		If isclear(ref2)
+			Calculate i as parts.$line
+			Do parts.$sendall(pfUnValidTail.$assign(con('.',pfUnValidTail,parts.c1)),parts.$line>=i)
+			# NO leading '.'
+			Calculate pfUnValidTail as mid(pfUnValidTail,2)
+			Quit method ''
+		End If
+		Set reference ref to ref2.$ref
+	End If
+End For
+Quit method ref.$ref

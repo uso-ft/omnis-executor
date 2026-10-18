@@ -1,0 +1,110 @@
+# $commitBackups v1 2026-09-09 (holdcommit v1) — the second half of
+# commit-instead-of-write. $holdBackup put the previous vault copy aside as
+# <cls>_prev; the MANIFEST decides its fate:
+#   the class really changed -> the fresh copy stays, _prev goes
+#   the class did not change -> the fresh copy goes, _prev comes back, and its
+#                               index entry comes back with it
+#
+# So a refused, empty or merely checking run no longer eats the one backup that
+# mattered. This does NOT make a version history: it keeps the copy of the last
+# run that really wrote, instead of the copy of the last run that merely ran.
+#
+# pDiff is mDiff from $runInVessel: columns change, libName, clsName. libName is
+# the SOURCE library, and the vault of a library is execBackup_ plus its name -
+# eleven characters, which is where the mid() below starts.
+#
+# EVERY open vault carrying an execVaultHold is worked, not only the ones this
+# run wrote into. A hold left standing by a run that died mid-flight is finished
+# here, and finished the safe way: its class did not change in THIS run, so it
+# is rolled back to the copy it was holding.
+#
+# Returns the protocol text.
+Calculate proto as ''
+Calculate marker as ''
+If pDiff.$linecount>0
+	For pDiff.$line from 1 to pDiff.$linecount step 1
+		Calculate marker as con(marker,kCr,low(pDiff.libName),'.',low(pDiff.clsName),kCr)
+	End For
+End If
+Calculate kept as 0
+Calculate dropped as 0
+Do $root.$libs.$makelist($ref.$name) Returns libList
+For libList.$line from 1 to libList.$linecount step 1
+	Calculate vaultName as libList.C1
+	If pos('execBackup_',vaultName)=1
+		Set reference vaultRef to $root.$libs.$findname(vaultName)
+		Set reference holdRef to vaultRef.$classes.$findname('execVaultHold')
+		If isclear(holdRef)
+		Else
+			Calculate srcLib as mid(vaultName,12,len(vaultName)-11)
+			Do vaultRef.$classes.$makelist($ref.$name) Returns clsList
+			For clsList.$line from 1 to clsList.$linecount step 1
+				Calculate prevName as clsList.C1
+				# len>5 before the mid: a five-character name would ask mid() to start at 1 and
+				# a shorter one to start before the string. _prev plus a name is always longer.
+				If len(prevName)>5
+					If mid(prevName,len(prevName)-4,5)='_prev'
+						Calculate cName as mid(prevName,1,len(prevName)-5)
+						If pos(con(kCr,low(srcLib),'.',low(cName),kCr),marker)>0
+							Do vaultRef.$classes.$remove(vaultRef.$classes.$findname(prevName).$ref)
+							Calculate kept as kept+1
+							Calculate proto as con(proto,'kept ',srcLib,'.',cName,'; ')
+						Else
+							# the entry FIRST, out of the snapshot, while nothing has been moved yet
+							Calculate entry as ''
+							Calculate key as con(kCr,'class=',cName,kTab)
+							Calculate text as con(kCr,holdRef.$userinfo)
+							Calculate n as pos(key,text)
+							If n>0
+								Calculate tail as mid(text,n+1,len(text)-n)
+								Calculate n2 as pos(kCr,tail)
+								If n2=0
+									Calculate entry as tail
+								Else
+									Calculate entry as mid(tail,1,n2-1)
+								End If
+							End If
+							# the fresh copy goes and the older one takes its name back
+							If vaultRef.$classes.$findname(cName)
+								Do vaultRef.$classes.$remove(vaultRef.$classes.$findname(cName).$ref)
+							End If
+							Set reference oldRef to vaultRef.$classes.$findname(prevName)
+							Do oldRef.$name.$assign(cName)
+							Save class [con(vaultName,'.',cName)]
+							# and the index entry it belongs to, cut and appended the way $indexPut does it
+							Set reference idxRef to vaultRef.$classes.$findname('execVaultIndex')
+							If isclear(idxRef)
+							Else
+								Calculate text as con(kCr,idxRef.$userinfo)
+								Calculate n as pos(key,text)
+								If n>0
+									Calculate tail as mid(text,n+1,len(text)-n)
+									Calculate n2 as pos(kCr,tail)
+									If n2=0
+										Calculate text as mid(text,1,n-1)
+									Else
+										Calculate text as con(mid(text,1,n-1),mid(tail,n2,len(tail)-n2+1))
+									End If
+								End If
+								Calculate text as mid(text,2,len(text)-1)
+								If len(entry)>0
+									If len(text)>0
+										Calculate text as con(text,kCr)
+									End If
+									Calculate text as con(text,entry)
+								End If
+								Do idxRef.$userinfo.$assign(text)
+								Save class [con(vaultName,'.execVaultIndex')]
+							End If
+							Calculate dropped as dropped+1
+							Calculate proto as con(proto,srcLib,'.',cName,'; ')
+						End If
+					End If
+				End If
+			End For
+			# the marker goes last: while it stands, the hold is unfinished
+			Do vaultRef.$classes.$remove(vaultRef.$classes.$findname('execVaultHold').$ref)
+		End If
+	End If
+End For
+Quit method con(kept,' kept, ',dropped,' unchanged',pick(dropped>0,'',' - previous vault copy back'),'. ',proto)

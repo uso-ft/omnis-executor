@@ -1,0 +1,96 @@
+#
+# Compares what the header DECLARED against what the manifest MEASURED.
+# Returns field/value:  verdict = open | ok | unproven | extra | conflict
+#   plus one undeclared row per changed class that was not announced,
+#   and one unproven row per declared class the manifest never saw.
+#
+# open: no header. extra: undeclared change. conflict: undeclared change although the header says nothing.
+# unproven: declared, but not in the manifest. That can be a refusal, a no-op, or a change never saved
+# before mAfter; the protocol lines above the verdict tell them apart.
+# The name test is looser than in $backupListFromText: prose in a header line is reported, not ignored.
+# The word nothing is tested against the whole value, and every dot is peeled, not only one.
+Do out.$define(field,value)
+Calculate declared as kCr
+Calculate hasHead as kFalse
+Calculate saysNothing as kFalse
+Calculate hdr as $cinst.$parseHeader(pText)
+For hdr.$line from 1 to hdr.$linecount step 1
+	If hdr.field='family'
+		Calculate hasHead as kTrue
+	End If
+	If hdr.field='CREATES'|hdr.field='MODIFIES'|hdr.field='REMOVES'
+		If pos('nothing',low(hdr.value))=1
+			Calculate saysNothing as kTrue
+			# the word nothing is not a class name
+		Else
+			Calculate toks as $cinst.$splitCommaList(hdr.value)
+			For toks.$line from 1 to toks.$linecount step 1
+				Calculate tok as toks.tok
+				# only the last segment matters: Lib.Class and Class both give Class
+				Calculate p as pos('.',tok)
+				While p
+					Calculate tok as mid(tok,p+1)
+					Calculate p as pos('.',tok)
+				End While
+				If len(tok)
+					Calculate declared as con(declared,low(tok),kCr)
+				End If
+			End For
+		End If
+	End If
+End For
+
+If hasHead
+Else
+	Do out.$add('verdict','open')
+	Quit method out
+End If
+
+Calculate nUndecl as 0
+For pDiff.$line from 1 to pDiff.$linecount step 1
+	If pos(con(kCr,low(pDiff.clsName),kCr),declared)
+	Else
+		Calculate nUndecl as nUndecl+1
+		Do out.$add('undeclared',con(pDiff.change,' ',pDiff.libName,'.',pDiff.clsName))
+	End If
+End For
+
+# --- the second direction: declared, and not in the manifest ---------------
+# raw, tok and p are reused. done prevents reporting a class named in two header lines twice.
+Calculate nMissing as 0
+Calculate done as kCr
+Calculate raw as mid(declared,2)
+While len(raw)
+	Calculate p as pos(kCr,raw)
+	Calculate tok as mid(raw,1,p-1)
+	Calculate raw as mid(raw,p+1)
+	If pos(con(kCr,tok,kCr),done)
+	Else
+		Calculate done as con(done,tok,kCr)
+		Calculate seen as kFalse
+		For pDiff.$line from 1 to pDiff.$linecount step 1
+			If low(pDiff.clsName)=tok
+				Calculate seen as kTrue
+			End If
+		End For
+		If seen
+		Else
+			Calculate nMissing as nMissing+1
+			Do out.$add('unproven',con(tok,' - declared, and the manifest did not see it'))
+		End If
+	End If
+End While
+If nUndecl=0
+	If nMissing=0
+		Do out.$add('verdict','ok')
+	Else
+		Do out.$add('verdict','unproven')
+	End If
+Else
+	If saysNothing
+		Do out.$add('verdict','conflict')
+	Else
+		Do out.$add('verdict','extra')
+	End If
+End If
+Quit method out

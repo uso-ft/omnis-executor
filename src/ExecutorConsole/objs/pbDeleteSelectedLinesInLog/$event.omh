@@ -1,0 +1,29 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	# Deletes the SELECTED log rows. The open draft row at the bottom
+	# is never deleted: $logSetValues and $finishRun write into the last row when it has no execDate.
+	If cLog.$linecount=0
+		Sound bell
+	Else
+		Calculate cLog.$line as cLog.$linecount
+		If cLog.execDate
+		Else
+			Calculate cLog.$selected as kFalse ## the draft row
+		End If
+		Calculate vCount as 0
+		For cLog.$line from 1 to cLog.$linecount step 1
+			If cLog.$selected
+				Calculate vCount as vCount+1
+			End If
+		End For
+		Calculate cLog.$line as cLog.$linecount
+		If vCount=0
+			Sound bell
+		Else
+			No/Yes message Delete log rows (Sound bell) {Delete [vCount] selected row(s) from the log ?}
+			If flag true
+				Do cLog.$remove(kListDeleteSelected)
+				Calculate cLog.$line as cLog.$linecount
+			End If
+		End If
+		Do $cinst.$redraw()
+	End If

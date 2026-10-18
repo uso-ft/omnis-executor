@@ -1,0 +1,19 @@
+# sort log
+# Method is a helper only, not called by this environment
+
+# sort by SCRIOPT and DATE
+Do cLog.$sort($ref.execScript,kFalse,$ref.execDate,kFalse)
+# select older duplicates, useful if you want clean up cLog
+Do cLog.$search(cLog.execScript=cLog.[cLog.$line+1].execScript,kTrue,kFalse,kTrue,kTrue)
+Redraw hlLog
+Quit method
+
+# TITLE order
+Do cLog.$sort($ref.execTitle,kFalse,$ref.execDate,kFalse)
+Redraw hlLog
+Quit method
+
+# ===> STANDARD date order
+Do cLog.$sort($ref.execDate,kFalse)
+Redraw hlLog
+Quit method

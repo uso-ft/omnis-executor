@@ -1,0 +1,5 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	
+	Do $classes.Settings.$insts().$sendall($sendallref.$close)
+	Do $classes.Settings.$openonce('*',kWindowCenter,$cinst().$ref)
+	Quit method

@@ -1,0 +1,17 @@
+Calculate cScript as cLog.execScript
+Calculate cTargetPath as cLog.execTargetPath
+Calculate cSourcePath as cLog.execSourcePath
+Calculate cLogTitle as cLog.execTitle
+Calculate cResult as cLog.execResult ## the outcome belongs to the run, not to the field
+Calculate cVerdict as cLog.execVerdict
+
+Do $cinst.$setExecutorValues(kTrue,kTrue)
+Do $cinst.$redraw() ## synchronizes cLog in hlLog and dlLogNavigator
+Calculate iResultLines as $cinst.$objs.dfResult.$linecount
+Do $cinst.$objs.cbToggleResult.$redraw()
+
+# the script opens at its top with the cursor at the start, as on the first open; nothing of the row before
+Do $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.efScript.$firstsel.$assign(0)
+Do $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.efScript.$lastsel.$assign(0)
+Do $cinst.$objs.scrEditor.$objs.scrScriptText.$objs.efScript.$vscroll.$assign(0)
+Quit method

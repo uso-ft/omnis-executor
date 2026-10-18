@@ -1,0 +1,13 @@
+On evAfter
+	Calculate cTargetPath as $cinst.$shortPath(cTargetPath) ## any of the four fronts; a path that does not resolve stays as typed
+	Set reference iTargetRef to iTools.$pathToRefQuiet(cTargetPath) ## silent, reads Lib.Class, and agrees with the colour $redrawPathField gives the field
+	Do $cinst.$logSetValues()
+	Do $cfield.$redraw()
+	
+	
+On evKey
+	If pSystemKey=kTabKey&#SHIFT
+		# in field order
+	Else If pSystemKey=kTabKey
+		# in field order
+	End If

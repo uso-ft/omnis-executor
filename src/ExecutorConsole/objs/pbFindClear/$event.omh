@@ -1,0 +1,4 @@
+On evClick
+	Calculate cFindScriptText as ''
+	Do $cinst.$objs.efFindScriptText.$redraw()
+	Queue set current field efFindScriptText

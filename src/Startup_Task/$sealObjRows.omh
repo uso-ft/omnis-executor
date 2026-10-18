@@ -1,0 +1,33 @@
+# $sealObjRows(pNode,pList,pPath,pMode) -> row count. Appends the object rows below pNode (sealwalk v1).
+# pMode 1 window: recursive, $objtype, $bobjs. 2 remote form: recursive, $objtype.
+# 3 flat - report, toolbar, menu, RESTful URIs: one level, name and methods only.
+# The recursion is structural, as in Tool.$collectObjects: children make a container.
+# Every object row is followed by the rows of its own methods, so the order is the tree.
+Set reference node to pNode.$objs.$first()
+While not(isclear(node))
+	Calculate path as pick(len(pPath)>0,node.$name,con(pPath,'.',node.$name))
+	If pMode<3
+		Do pList.$add('o',con(path,' ',node.$objtype),'')
+	Else
+		Do pList.$add('o',path,'')
+	End If
+	Set reference itemRef to node.$methods.$first()
+	While not(isclear(itemRef))
+		Do pList.$add('om',con(path,'.',itemRef.$name),replaceall(replaceall(itemRef.$methodtext,'$ctask.',''),'$cinst.',''))
+		Set reference itemRef to node.$methods.$next(itemRef)
+	End While
+	If pMode<3
+		If node.$objs.$count>0
+			Do $cinst.$sealObjRows(node,pList,path,pMode)
+		End If
+	End If
+	Set reference node to pNode.$objs.$next(node)
+End While
+If pMode=1
+	Set reference node to pNode.$bobjs.$first()
+	While not(isclear(node))
+		Do pList.$add('b',con(pPath,'/',node.$name,' ',node.$objtype),'')
+		Set reference node to pNode.$bobjs.$next(node)
+	End While
+End If
+Quit method pList.$linecount

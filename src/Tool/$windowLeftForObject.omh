@@ -1,0 +1,42 @@
+# $windowLeftForObject(prObject)  — window-relative LEFT pixel position of a
+# placed object. Sums the container chain and adds each container LEFT
+# inset, which is just the border (no chrome on the left). Grid columns
+# keep their special handling (vertical header + dividers). Constants in
+# Tool $construct (ckBorder*).
+
+Calculate left as 0
+While prObject&prObject<>prObject.$wind
+	Calculate left as left+prObject.$left
+	
+	# complex grid column/header: vertical header + divider positions
+	If prObject.$gridsection=kGridRow|prObject.$gridsection=kGridColumnHeader
+		If prObject.$gridcolumn>1
+			If prObject.$container().$showvertheader()
+				Calculate left as left+prObject.$container().$vertheaderwidth()
+			End If
+			Calculate left as left+prObject.$container().$dividers.[prObject.$gridcolumn-1].$posn
+		End If
+		Calculate left as left+prObject.$gridcolumn ## one pixel per column (grid quirk)
+	End If
+	
+	Set reference prObject to $cinst.$containerRef(prObject)
+	
+	If prObject
+		# --- add this container LEFT inset = border only -----------
+		Switch prObject.$objtype
+			Case kSubwindow
+				Calculate left as left+ckBorderSubwindow
+			Case kScrollbox
+				Calculate left as left+ckBorderScrollbox
+			Case kPagedPane
+				Calculate left as left+ckBorderPagedpane
+			Case kGroupBox
+				Calculate left as left+ckBorderGroupbox
+			Case kTabPane
+				Calculate left as left+ckBorderTabpane
+			Default
+				# complexgrid handled by the column block above / elsewhere
+		End Switch
+	End If
+End While
+Quit method left

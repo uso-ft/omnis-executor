@@ -1,0 +1,49 @@
+# Assign stored $heights for container objects
+
+Calculate containerTree as iContainerTree
+
+# pReset: window size and expander states come from $resetLayout, before this runs
+
+# Sort top down level for BFS assigning, kEFposnClient containers at end, can't assign.
+Do containerTree.$sort($ref.level,kFalse,$ref.c1.$edgefloat*1=kEFposnClient*1,kFalse)
+# only containers with an expander, down to level 2
+Do containerTree.$search(containerTree.level<=2&containerTree.canExpand,kTrue,kFalse,kTrue,kTrue)
+Do containerTree.$remove(kListKeepSelected)
+
+# Apply saved $height
+For containerTree.$line from 1 to containerTree.$linecount step 1
+	
+	If containerTree.c1.$edgefloat*1=kEFposnClient*1
+		Do 1 ## can't assign, debugging purpose only
+	Else If containerTree.c1.$objtype*1=kComplexGrid*1
+		Do 1 ## Setting $height for kComplexgrid makes no sense here
+	Else
+		# shrink
+		Calculate currentHeight as containerTree.c1().$height
+		If pReset|isclear(containerTree.storedHeight) ## no stored height: the reset height
+			If eval(containerTree.ExpanderRef.$dataname)
+				Calculate containerTree.c1().$height as containerTree.c1.$minHeight
+			Else
+				Calculate containerTree.c1().$height as containerTree.ExpanderRef.$height
+			End If
+			
+		Else
+			Calculate containerTree.c1().$height as containerTree.storedHeight
+		End If
+		
+		If containerTree.canExpand
+			If eval(containerTree.ExpanderRef.$dataname)
+				Calculate containerTree.c1().$dragborder as kTrue
+				# Show the find fields
+				Do containerTree.ExpanderRef.$container().$objs.$sendall($sendallref.$visible.$assign(kTrue),$sendallref.$objtype=kScrollbox)
+			Else
+				Calculate containerTree.c1().$dragborder as kFalse
+				# Hide the find fields
+				Do containerTree.ExpanderRef.$container().$objs.$sendall($sendallref.$visible.$assign(kFalse),$sendallref.$objtype=kScrollbox) Returns #1
+			End If
+		End If
+	End If
+	
+End For
+
+Quit method

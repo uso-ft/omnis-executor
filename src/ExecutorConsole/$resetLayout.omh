@@ -1,0 +1,12 @@
+# The layout back to factory, called from $construct when pReset is set.
+# Values from $settingsSpec.fac. Empty means: the class decides. Runs BEFORE anything stored is applied.
+Calculate spec as $cinst.$settingsSpec()
+For spec.$line from 1 to spec.$linecount step 1
+	If pos(con(",",spec.nm,","),",cWindowGeometry,cBackupColWidths,cErrorColWidths,cExecutionColWidths,cTraceLogColWidths,cExpandedResult,cExpandedExecutionLog,cExpandedBackupLog,cExpandedErrorLog,cExpandedTraceLog,cTextSize,")>0
+		Do eval([spec.nm].$assign(spec.fac))
+	End If
+End For
+Do cSavedContainerHeights.$clear()
+Do cPaneHeights.$clear()
+Do iExpanderList.$sendall($sendallref.c1.$userinfo.$assign(""))
+Quit method

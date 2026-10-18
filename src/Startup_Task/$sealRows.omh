@@ -1,0 +1,85 @@
+# $sealRows(pClassRef,pList) -> row count. The seal rows of ONE class (sealwalk v1, thread 040).
+# One row per compared item: kind, key, body. Kinds: m class method, v variable, o object,
+# om object method, b background object. Method text normalised for the requalification
+# law ($ctask. and $cinst. removed), as the method-level seal always did.
+# WHICH groups are read is decided by the class type, from the Omnis help
+# (notation/root/libs/lib/<type>), never by $cando: it says YES for tokens an item does
+# not carry (lore). Data classes compare the attributes that define a column or line.
+# NOT compared: properties and layout, $inheritedobjs (they belong to the superclass),
+# file $indexes and $vals, report $sorts, the text of menu lines. Remote object and
+# system table: none of their groups is read, 0 rows.
+Do pList.$define()
+Do pList.$cols.$add('kind',kCharacter,kSimplechar,10)
+Do pList.$cols.$add('key',kCharacter,kSimplechar,100000000)
+Do pList.$cols.$add('body',kCharacter,kSimplechar,100000000)
+Do pList.$clear()
+Calculate cType as pClassRef.$classtype*1
+Calculate hasMethods as cType=kWindow*1|cType=kRemoteForm*1|cType=kReport*1|cType=kMenu*1|cType=kToolbar*1|cType=kTask*1|cType=kRemoteTask*1|cType=kObjectclass*1|cType=kTable*1|cType=kCode*1
+If hasMethods
+	Set reference itemRef to pClassRef.$methods.$first()
+	While not(isclear(itemRef))
+		Do pList.$add('m',itemRef.$name,replaceall(replaceall(itemRef.$methodtext,'$ctask.',''),'$cinst.',''))
+		Set reference itemRef to pClassRef.$methods.$next(itemRef)
+	End While
+	Set reference itemRef to pClassRef.$cvardefs.$first()
+	While not(isclear(itemRef))
+		Do pList.$add('v',con('c ',itemRef.$name,' ',itemRef.$type),'')
+		Set reference itemRef to pClassRef.$cvardefs.$next(itemRef)
+	End While
+	If cType<>kCode*1
+		Set reference itemRef to pClassRef.$ivardefs.$first()
+		While not(isclear(itemRef))
+			Do pList.$add('v',con('i ',itemRef.$name,' ',itemRef.$type),'')
+			Set reference itemRef to pClassRef.$ivardefs.$next(itemRef)
+		End While
+	End If
+	If cType=kTask*1|cType=kRemoteTask*1
+		Set reference itemRef to pClassRef.$tvardefs.$first()
+		While not(isclear(itemRef))
+			Do pList.$add('v',con('t ',itemRef.$name,' ',itemRef.$type),'')
+			Set reference itemRef to pClassRef.$tvardefs.$next(itemRef)
+		End While
+	End If
+End If
+If cType=kWindow*1
+	Do $cinst.$sealObjRows(pClassRef,pList,'',1)
+Else If cType=kRemoteForm*1
+	Do $cinst.$sealObjRows(pClassRef,pList,'',2)
+Else If cType=kReport*1|cType=kToolbar*1|cType=kMenu*1
+	Do $cinst.$sealObjRows(pClassRef,pList,'',3)
+Else If cType=kRemoteTask*1
+	If pClassRef.$restful ## only a RESTful remote task has objects: its URIs, with the HTTP methods
+		Do $cinst.$sealObjRows(pClassRef,pList,'',3)
+	End If
+Else If cType=kFile*1
+	Set reference node to pClassRef.$objs.$first()
+	While not(isclear(node))
+		Do pList.$add('o',con(node.$name,' ',node.$objtype,' ',node.$objsubtype,' ',node.$objsublen),'')
+		Set reference node to pClassRef.$objs.$next(node)
+	End While
+Else If cType=kSchema*1
+	Set reference node to pClassRef.$objs.$first()
+	While not(isclear(node))
+		Do pList.$add('o',con(node.$name,' ',node.$coltype,' ',node.$colsubtype,' ',node.$colsublen,' ',node.$primarykey),'')
+		Set reference node to pClassRef.$objs.$next(node)
+	End While
+Else If cType=kQuery*1
+	Set reference node to pClassRef.$objs.$first()
+	While not(isclear(node))
+		Do pList.$add('o',con(node.$colname,' ',node.$alias,' ',node.$schema),'')
+		Set reference node to pClassRef.$objs.$next(node)
+	End While
+Else If cType=kSearch*1
+	Set reference node to pClassRef.$objs.$first()
+	While not(isclear(node))
+		Do pList.$add('o',con(node.$dataname,' ',node.$linetype,' ',node.$text),'')
+		Set reference node to pClassRef.$objs.$next(node)
+	End While
+Else If cType=kRemoteMenu*1
+	Set reference node to pClassRef.$objs.$first()
+	While not(isclear(node))
+		Do pList.$add('o',con(node.$name,' ',node.$text),'')
+		Set reference node to pClassRef.$objs.$next(node)
+	End While
+End If
+Quit method pList.$linecount

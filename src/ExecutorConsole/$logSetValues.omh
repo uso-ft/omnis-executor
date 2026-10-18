@@ -1,0 +1,24 @@
+# Writes the current values into cLog. An empty execDate marks an open draft row
+# (overwritten on the next change); a stamped row means it ran, so a new row is added.
+
+If len(cScript)=0
+	Quit method
+End If
+
+Calculate cLog.$selected as kFalse
+Calculate cLog.$line as cLog.$linecount
+If cLog.execDate|cLog.$linecount=0
+	# has execution Date or list is empty, so add a new fresh line with NO execDate
+	Do cLog.$add(#NULL,0,cLogTitle,cTargetPath,cScript,cSourcePath)
+	Calculate cLog.$line as cLog.$linecount
+	
+Else
+	# line with NO execDate
+	Do cLog.$assigncols(#NULL,0,cLogTitle,cTargetPath,cScript,cSourcePath)
+End If
+
+Calculate cLog.$selected as kTrue
+Do $cinst.$objs.scrExecutionLog.$objs.hlLog.$redraw()
+Do $cinst.$objs.scrExecutionLog.$objs.dlLogNavigator.$redraw()
+
+Quit method

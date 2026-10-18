@@ -1,0 +1,52 @@
+# $checkForDangerousCode(pfProtocol) -> kTrue: the run goes on; kFalse: the run is cancelled.
+# Called by $runExecutor AFTER the assign and BEFORE close and backup: the scan reads the method
+# that will run, and a cancel leaves nothing behind but the assign.
+# Every finding writes one [danger  ] line into pfProtocol and one error log row, errcode danger,
+# with a location that opens $execute at the line on double-click. $errorCount and $renderErrors skip these rows.
+# The dialog (cDangerWarnings): stage A always, stage B only when cBackupBeforeRun is off.
+Calculate methodText as iExecutorMethodRef.$methodtext ## read into a variable first, as $cloneMethodToAndExecute does
+Calculate findings as $cinst.$dangerFindings(methodText)
+If findings.$linecount=0
+	Quit method kTrue
+End If
+
+Set reference errRef to $itasks.[$clib().$name].$errors().$ref
+Calculate address as con($clib().$name,'.$classes.Executor.$methods.//$execute//.$methodlines.')
+For findings.$line from 1 to findings.$linecount step 1
+	Calculate pfProtocol as con(pfProtocol,'[danger  ]   stage ',findings.stage,', line ',findings.lineno,', ',findings.rule,': ',findings.linetext,kCr)
+	If not(isclear(errRef))
+		Do errRef.$add(errRef.$linecount,con(#T),'danger',con('stage ',findings.stage,' - ',findings.rule),findings.linetext,con(address,findings.lineno),kFalse)
+	End If
+	If findings.stage='A'
+		Calculate countA as countA+1
+		If firstA=0
+			Calculate firstA as findings.lineno
+		End If
+	Else
+		Calculate countB as countB+1
+		If firstB=0
+			Calculate firstB as findings.lineno
+		End If
+	End If
+End For
+
+If not(cDangerWarnings)
+	Quit method kTrue
+End If
+Calculate jumpLine as firstA
+If jumpLine=0&not(cBackupBeforeRun)
+	Calculate jumpLine as firstB
+End If
+If jumpLine=0
+	Quit method kTrue
+End If
+
+No/Yes message Warn on danger (Sound bell) {[countA] generic and [countB] named finding(s), the first at line [jumpLine].//The backup cannot hold a class the script picks at run time.//All findings are in the error log.////Run anyway ?}
+If flag true
+	Quit method kTrue
+End If
+No/Yes message Warn on danger {The run is cancelled.////Open the Executor method at line [jumpLine] ?}
+If flag true
+	Do iExecutorMethodRef.$modify(jumpLine)
+End If
+Quit method kFalse

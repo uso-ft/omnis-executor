@@ -1,0 +1,6 @@
+On evClick ## Event Parameters - pRow( Itemreference )
+	If $cinst.$mayClose()
+		Calculate iMarkerModified as kFalse
+		Do $cinst.$close()
+	End If
+	Quit method

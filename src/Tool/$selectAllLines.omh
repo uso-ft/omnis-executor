@@ -1,0 +1,7 @@
+# Select or deselect all Lines of pList
+# Does NOT change the current list line which can interfere with redraws, selections or similar !
+
+For i from 1 to pfList.$linecount step 1
+	Calculate pfList.[i].$selected as pSelect
+End For
+Quit method

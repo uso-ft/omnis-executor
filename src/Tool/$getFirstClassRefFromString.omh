@@ -1,0 +1,61 @@
+# Returns the reference to the first class named in a source-code string (or '' if none).
+# Analyses only SINGLE names - the library name is ignored, e.g. "MyOtherLib.MyClass"
+# only searches for "MyClass". Tokens are runs of [\w$]; each is tested with $classRefOfName.
+#
+# pStrict_opt (default off): the name must be unique among the open libraries ($classRefOfName
+# with pUnique), and the library of the candidate must be named in the same text. Without it,
+# a token like result can resolve to a class in a foreign library.
+#
+# Speed (classref_speed v1/v2, 2026-09-27): every token used to go to $classRefOfName, and that walks
+# every class of every open library - 704 tokens x 40 ms = 28.5 s for one script (measured 12:56).
+# The class names of all open libraries are collected ONCE (upper case, the comparison $classRefOfName
+# makes). A token goes on to $classRefOfName only when
+#   - it was not tried before in this text (tried),
+#   - a class of that name exists in an open library (allNames),
+#   - with pStrict_opt: that name exists only ONCE (dupNames) - a name held twice, e.g. by a class
+#     and its copy in an open vault, makes $classRefOfName(name,kTrue) answer empty anyway.
+# Same answer every time, one walk. v1 took it to 2.8 s with 74 calls left (13:00), v2 removes those.
+Do nameList.$define(name)
+Do $libs.$sendall($ref.$classes.$sendall(nameList.$add(upp($ref.$class().$name))))
+Do nameList.$sort($ref.name,kFalse)
+Calculate allNames as ','
+Calculate dupNames as ','
+Calculate name as ''
+For nameList.$line from 1 to nameList.$linecount step 1
+	If nameList.C1=name
+		If pos(con(',',name,','),dupNames)=0
+			Calculate dupNames as con(dupNames,name,',')
+		End If
+	Else
+		Calculate allNames as con(allNames,nameList.C1,',')
+	End If
+	Calculate name as nameList.C1
+End For
+Calculate tried as ','
+
+Calculate startPos as 1
+Calculate matchPos as rxpos('[\w$]+',pString,kFalse,kFalse,matchLen) ## first token
+While matchPos>0
+	Calculate name as upp(mid(pString,startPos+matchPos-1,matchLen)) ## the matched token, upper case as in the lists
+	If pos(con(',',name,','),tried)=0
+		Calculate tried as con(tried,name,',')
+		If pos(con(',',name,','),allNames)&not(pStrict_opt&(pos(con(',',name,','),dupNames)>0))
+			Set reference ref to $cinst.$classRefOfName(name,pStrict_opt)
+			If ref.$class
+				If pick(pClasstype_opt>0,1,ref.$classtype=pClasstype_opt) ## classtype filter (0 = any)
+					If pStrict_opt
+						If pos(low(ref.$lib().$name),low(pString))
+							Quit method ref ## the name resolved once, and its library is written down
+						End If
+					Else
+						Quit method ref ## first valid class wins
+					End If
+				End If
+			End If
+		End If
+	End If
+	# advance past this token and search the remainder
+	Calculate startPos as startPos+matchPos-1+matchLen
+	Calculate matchPos as rxpos('[\w$]+',mid(pString,startPos,len(pString)),kFalse,kFalse,matchLen)
+End While
+Quit method ''

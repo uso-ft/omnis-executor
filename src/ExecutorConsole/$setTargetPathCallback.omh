@@ -1,0 +1,9 @@
+# Callback from the notation browser: takes the chosen path as target, derives the title,
+# stops auto-overwrite, writes to the log and redraws.
+
+Calculate cTargetPath as $cinst.$shortPath(pTargetPath) ## the browser returns $fullname
+Set reference iTargetRef to iTools.$pathToRefQuiet(cTargetPath)
+Calculate cLogTitle as $cinst.$titleFromScript(cScript,cTargetPath,cSourcePath)
+Calculate cOverwritePathAndTitle as kFalse
+Do $cinst.$logSetValues()
+Do $cinst.$redraw()

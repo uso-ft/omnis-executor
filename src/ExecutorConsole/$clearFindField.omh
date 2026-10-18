@@ -1,0 +1,8 @@
+# Empties the entry field in the same container as the clear button and puts the cursor back into it.
+# The field is found by type: every find container holds exactly one kEntry.
+# $setRef is used because 'Set reference' is a command and cannot stand
+# inside the $sendall expression.
+Do pButtonRef.$container().$objs.$sendall(iTools.$setRef(ref,$sendallref),$sendallref.$objtype=kEntry)
+Do [ref.$dataname].$assign('')
+Do ref.$redraw()
+Calculate $ctarget as ref

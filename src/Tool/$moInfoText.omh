@@ -1,0 +1,63 @@
+# This method TRIES to produce the most appropriate tooltip text possible.
+If isclear(pPathToInstance)
+	Quit method ''
+End If
+
+Set reference instanceRef to [pPathToInstance].$ref
+If not(instanceRef.$class)
+	Quit method '' ## only a class.method path, because of $notifyonce
+End If
+
+Calculate helpText as con('',instanceRef.$class().$name,chr(13))
+
+If not(isnull($libs.WiMasterDetailClasses.$name()))
+	Calculate isEntityPure as instanceRef.$isa($cinst.$classRefOfName('WiEntityPure'))
+End If
+If isEntityPure
+	Calculate helpText as con(helpText,'Schema ',instanceRef.$sqlclassname(),chr(13))
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MdEntityController'))
+	# Note: the entity controller's model could also sit in an EntityPure outside.
+	# Note: before $finishInitialisation the managers do not exist yet.
+	If instanceRef.$managerList().$class
+		Calculate helpText as con(helpText,'Schema ',instanceRef.$managerList().$schemaClassname(),chr(13))
+	Else If instanceRef.iPaneDelegateRef.$sqlclassname().$cando
+		Calculate helpText as con(helpText,'Schema: ',instanceRef.iPaneDelegateRef.$sqlclassname(),chr(13)) ## sorry, no accessor!
+	End If
+	Calculate helpText as con(helpText,'PaneId: ',instanceRef.$paneId,chr(13))
+	Calculate helpText as con(helpText,'Delegate: ',instanceRef.iPaneDelegateRef.$class().$name(),chr(13))
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MoControllerFrameset'))
+	Calculate helpText as con(helpText,'PaneId: ',instanceRef.$paneId,chr(13))
+	Calculate helpText as con(helpText,'Delegate: ',instanceRef.iPaneDelegateRef.$class().$name(),chr(13)) ## sorry, no accessor!
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MdEntityPaneControllerGeneric'))
+	Calculate helpText as con(helpText,'Schema: ',instanceRef.iMdEntityControllerRef.$managerList().$schemaClassname(),chr(13)) ## sorry, no accessor!
+	Calculate helpText as con(helpText,'PaneId: ',instanceRef.$paneId,chr(13))
+	Calculate helpText as con(helpText,'Delegate: ',instanceRef.iPaneDelegateRef.$class().$name(),chr(13)) ## sorry, no accessor!
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MdManagerListGeneric'))
+	Calculate helpText as con(helpText,'Schema: ',instanceRef.$schemaClassname,chr(13))
+	Calculate helpText as con(helpText,'Delegate: ',instanceRef.$entityDelegate().$class().$name(),chr(13))
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MdManagerRecordGeneric'))
+	Calculate helpText as con(helpText,'Schema: ',[instanceRef.$objectpath()].iMdEntityDelegateRef.$sqlclassname(),chr(13))
+	Calculate helpText as con(helpText,'Delegate: ',[instanceRef.$objectpath()].iMdEntityDelegateRef.$class().$name(),chr(13))
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MoControllerPaneSuperclass'))
+	Calculate helpText as con(helpText,'PaneId: ',instanceRef.$paneId,chr(13))
+	Calculate helpText as con(helpText,'Delegate: ',instanceRef.iPaneDelegateRef.$class().$name(),chr(13)) ## sorry, no accessor!
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MoCommandController'))
+	Calculate helpText as con(helpText,'PaneId: ',instanceRef.$componentClassRef().$class().$name,chr(13))
+	
+Else If instanceRef.$isa($cinst.$classRefOfName('MoContextWindowSuperclass'))
+	Calculate helpText as con(helpText,'Window: ',instanceRef.$windowClassName,chr(13))
+	Calculate helpText as con(helpText,'Delegate: ',instanceRef.$delegate().$class().$name(),chr(13))
+	
+Else ## ClassBroker, ManagerFunctions, ManagerContext, Session
+	# Breakpoint
+	Do 1 ## Nop
+End If
+# Quit method mid(helpText,1,len(helpText)-1)
+Quit method helpText

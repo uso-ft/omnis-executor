@@ -1,0 +1,4 @@
+If pos('CHIRURG',$clib().$name)
+	Calculate $cfield.$backgroundtheme as kBGThemeNone
+	Calculate $cfield.$forecolor as kYellow
+End If

@@ -1,0 +1,21 @@
+# probe_neg_jumpform -- negative and positive cases for check_jumplinks rules 3 and 9
+# Expected: 5 FAIL (lines marked BAD), 4 valid (lines marked GOOD).
+## ===== JUMP LINKS =====
+# GOOD: a class, bare path, measured on a menu
+# Do Executor.$classes.ExecutorMenu ## class as a whole
+# GOOD: a method, short form
+# Do Executor.$classes.Tool.$methods.//$edit//.$modify(1) ## method
+# GOOD: an object, bare path
+# Do Executor.$classes.Tool.$objs.cgrJumpList ## object
+# GOOD: a variable
+# Do Executor.$classes.ExecutorConsole.$cvardefs.cTargetPath ## variable
+# BAD: the old class form, shows the property manager
+# Do iTools.$modify(Executor.$classes.ExecutorMenu.$ref,kFalse) ## old form
+# BAD: long library form
+# Do $root.$libs.Executor.$classes.Tool.$objs.cgrJumpList ## long form
+# BAD: $libs without $root
+# Do $libs.Executor.$classes.Tool ## long form
+# BAD: method syntax on a class
+# Do Executor.$classes.Tool.$modify(1) ## class with $modify
+# BAD: a class that does not exist, bare path
+# Do Executor.$classes.NoSuchClass ## typo

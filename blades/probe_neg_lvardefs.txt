@@ -1,0 +1,8 @@
+# probe_neg_lvardefs - every jump line below must FAIL check_jumplinks (rule 5b).
+# Run against an export at build 63 or later (Executor_50): the local tools is deleted there.
+## ===== JUMP LINKS =====
+# Do Executor.$classes.Tool.$methods.//$doCleanUp//.$lvardefs.nosuchvar ## name not in the method
+# Do Executor.$classes.Tool.$methods.//$prototypeOpenEntityList//.$lvardefs.tools ## deleted by hand in _50
+# Do Executor.$classes.Tool.$methods.$doCleanUp.$lvardefs.ref ## method name not escaped
+# Do Executor.$classes.Tool.$methods.//$nosuch//.$lvardefs.ref ## method not in class
+# Do Executor.$classes.Nosuch.$methods.//$x//.$lvardefs.ref ## class not in export

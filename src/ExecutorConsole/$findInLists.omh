@@ -1,0 +1,46 @@
+# Finds pText in the character and date columns of pListRef and selects the line.
+#   pDirection_opt  0 = from the top   1 = forward   -1 = backward
+#   pSoundBell_opt  ring when nothing was found
+# The search works on a local copy
+#
+If pListRef.$linecount=0
+	Quit method
+End If
+If len(pText)=0
+	Quit method
+End If
+
+# search on a local copy for both search directions
+Calculate list as pListRef
+
+If pDirection_opt<0
+	Do list.$cols.$add(line)
+	Do list.$sendall(list.line.$assign($sendallref.$line))
+	Do list.$sort($ref.line,kTrue)
+	Do list.$search(list.line=pListRef.$line,kTrue,kFalse,kFalse,kFalse)
+End If
+
+Calculate listname as nam(list)
+
+# Search in all character and date columns
+Calculate calculation as ''
+Do list.$cols.$sendall(calculation.$assign(con(calculation,',',listname,'.',$sendallref.$name)),pos(con($sendallref.$coltype),'char/date')) Returns cols
+Calculate calculation as con('pos(upp(',nam(pText),'),upp(con(',mid(calculation,2),')))')
+Do list.$search(eval(calculation),pDirection_opt=0,kFalse,kFalse,kFalse) Returns findPos
+
+If findPos
+	Do iTools.$selectAllLines(pListRef,kFalse)
+	# set line of original list
+	If pDirection_opt<0
+		Calculate pListRef.$line as list.line
+	Else
+		Calculate pListRef.$line as list.$line
+	End If
+	Do pListRef.$selected.$assign(kTrue)
+	Quit method pListRef.$line
+	
+Else If pSoundBell_opt
+	Sound bell
+End If
+
+Quit method 0

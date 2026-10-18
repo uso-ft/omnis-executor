@@ -1,0 +1,15 @@
+Optimize method
+# Returns the default class icons shown in the IDE
+# One pick() instead of Switch/Case: about 10 times faster.
+
+If pClassTypeInt<16
+	# starting id 1-12
+	Quit method pick(pClassTypeInt,0,1702,1704,1707,1708,1703,1706,1709,1705,1700,1701,1712,1716)
+	
+Else If pClassTypeInt<48
+	# starting id is 32-37
+	Quit method pick(pClassTypeInt-30,0,0,1718,1719,614,1856,1712,0,1710)
+End If
+
+# Default icon
+Quit method 1710

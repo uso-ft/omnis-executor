@@ -1,0 +1,8 @@
+# Converts a shortcut string from editor notation (Cmnd+Shift+X) to Queue notation (Com-Shift-X).
+# pEditorString = shortcut as shown/stored in the editor.
+# Returns the Queue keyboard event string, or '' if it can't be parsed.
+Calculate code as $cinst.$shortcutTextToCode(pEditorString) ## string → numeric code
+If isclear(code)
+	Quit method ''
+End If
+Quit method $cinst.$shortcutCodeToText(code,kFalse) ## code → Queue string (pEditMode=kFalse)

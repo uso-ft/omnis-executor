@@ -1,0 +1,27 @@
+# Jumps to pRef depending on its type; only $modify() of a method is fully reliable.
+
+If isclear(pRef)
+	OK message {No target to show.}
+	Quit method
+End If
+# type via $group (single step, explicit). NB a GROUP itself has $group.$name='' ,
+# so check the ref's OWN name to spot a $methods / $objs group as target.
+Set reference ref to pRef.$group
+Calculate grpName as ref.$name
+Switch grpName
+	Case '$methods'
+		Do pRef.$modify(1) ## a method -> straight to it (reliable)
+	Case '$objs'
+		If pRef.$methods.$count>0
+			Do pRef.$methods.$first().$modify(1) ## object's own method (F3 for layout)
+		Else
+			Do iTools.$modify(pRef,kFalse) ## object without method -> layout editor
+		End If
+	Default
+		If pRef.$name='$methods' ## the methods GROUP itself -> method editor
+			Do iTools.$modify(pRef,kTrue)
+		Else
+			Do iTools.$modify(pRef,kFalse) ## class / objs group / vardef -> layout editor
+		End If
+End Switch
+Quit method

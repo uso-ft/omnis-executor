@@ -1,0 +1,130 @@
+# Here runtime errors are caught, such as invalid references or calculation errors.
+# Every error goes to the trace log with the error message and the calling method (name and code).
+# Then the ignore list decides. An IGNORED error enters cErrors as errcode 'ignored': the grid shows it,
+# $errorCount does not count it, $renderErrors reports only how many - and it never breaks.
+# Every other error may break (console: Break if error, text filter in efBreakText) and enters cErrors.
+
+Calculate errText as replaceall(#ERRTEXT,chr(13),' ')
+Calculate errText as replaceall(errText,chr(10),'')
+Calculate errCode as #ERRCODE
+
+Do $classes.ExecutorConsole.$insts().$first().$methods.$makelist($ref) Returns #L1
+
+# ================= Stack ====================================
+Calculate stack as sys(192)
+
+# Render parameters in a readable form
+Do stack.$cols.$add(paramsText)
+For stack.$line from 1 to stack.$linecount step 1
+	Calculate paramsText as ''
+	Calculate paramsList as stack.params
+	For paramsList.$line from 1 to paramsList.$linecount step 1
+		Calculate paramsText as con(paramsText,kCr,paramsList.c1,'=',kSp,paramsList.c2)
+	End For
+	Calculate paramsText as mid(paramsText,2)
+	Calculate stack.paramsText as paramsText
+End For
+# where the error comes from
+Calculate stack.$line as 2
+
+# ================= Filter out ====================================
+If stack.2.method='$stackPath'&0
+	If $libs.$findname('MoBaseClasses')
+		# Filter out events from MoBaseClasses.MoNotificationCenter
+		SEA continue execution ## #ERRCODE #ERRTEXT
+		Quit method
+	End If
+End If
+
+# ================= Where ====================================
+# computed BEFORE the trace log, the ignore list and the break: all three read it
+If stack.2.classitem().$name='ExecutorVessel'
+	# Remark: Look at stack.2.methoditem. Omnis creates a incorrect path: "...ExecutorVessel.$objs.$methods..." !! at least V 10.22
+	# The vessel does not survive the run, so set the jump link to the prototype method $codes.Executor.$execute which was cloned to iVessel
+	# Additional: testing for stack.2.methoditem().$cando results in an error which changes the #ERRCODE
+	Calculate location as con('$clib.$codes.Executor.$methods.//',stack.2.method,'//.$methodlines.',stack.2.line,'')
+Else
+	Calculate location as con(stack.2.methoditem().$fullname,'.$methodlines.',stack.2.line,'')
+End If
+Calculate lineText as stack.2.linetext
+Calculate foreign as stack.2.classitem().$class().$lib().$name<>$clib().$name ## [PROBE] heuristic: code outside the RUNNING library = discovery, not script guilt
+
+# ================= Trace Log ====================================
+Send to trace log [errText] [location]
+# keep following: (inactive)
+# Do iTools.$stackToTraceLog() ## report stack to Trace log
+# Do code method TraceValues/$logValues (errText,location) ## write error in file
+
+# ================= Ignore list ====================================
+# Entries separated by commas. A bare code is ignored everywhere. code@text is ignored only when the
+# running line (stack.2.linetext) contains text - case-sensitive, no comma inside the text.
+# 8095 Classes-are-Identical is a status, not an error.
+# 25216 Attempt to use an instance or task variable when no instance exists: arrives when a method line
+# naming an instance variable is WRITTEN (lore 10.4). Harmless on the writing lines, a real error anywhere
+# else - so it is ignored only there.
+Calculate ignoreCodes as '8095,25216@$methodlines,25216@$methodtext,25216@group.$add(,25216@$text.$assign('
+# Own additions: one line each, armed by removing the '# '. The release script comments them again.
+# Calculate ignoreCodes as con(ignoreCodes,',','<code>@<text in the running line>') ## LOCAL ignore list
+Calculate ignored as kFalse
+Calculate rest as con(ignoreCodes,',')
+While (len(rest)>1)&not(ignored)
+	Calculate entry as trim(mid(rest,1,pos(',',rest)-1))
+	Calculate rest as mid(rest,pos(',',rest)+1,len(rest))
+	If pos('@',entry)
+		Calculate ignored as (mid(entry,1,pos('@',entry)-1)=errCode)&(pos(mid(entry,pos('@',entry)+1,len(entry)),lineText)>0)
+	Else
+		Calculate ignored as (len(entry)>0)&(entry=errCode)
+	End If
+End While
+If ignored
+	# Remark: list.$add() adds line first then calculates list.$linecount, so no +1
+	Do cErrors.$add(cErrors.$linecount,con(#T),'ignored',con(errCode,' ',errText),lineText,location,foreign,stack)
+	SEA continue execution ## #ERRCODE #ERRTEXT
+	Calculate #F as 0
+	Quit method
+End If
+
+# ================= Breakpoint ====================================
+# Console: Break if error ON and efBreakText empty = break on every error that is not ignored.
+# With a text: break only when code, error text, running line or location contain it (case-insensitive).
+If $classes.ExecutorConsole.$insts().$count
+	If $classes.ExecutorConsole.$insts().$first().$getVar('cBreakIfError')
+		Calculate breakText as trim($classes.ExecutorConsole.$insts().$first().$getVar('cBreakText'))
+		If len(breakText)=0
+			Breakpoint An error occured ! Important: Finish method with "SEA continue execution" to esure proper resume, see below
+		Else If pos(upp(breakText),upp(con(errCode,' ',errText,' ',lineText,' ',location)))
+			Breakpoint The error matches the break text ! Finish method with "SEA continue execution" to esure proper resume, see below
+		End If
+	End If
+End If
+# keep: breaks armed by hand for a hunt
+# If pos('too complex',#ERRTEXT)
+# Breakpoint
+# End If
+# If pos(con(',',#ERRCODE,','),con(',ErrorIDsCommaSeparated,'))=0
+# Breakpoint ## re-arm this when hunting an error
+# End If
+
+# ================= Error Log ====================================
+# Remark: list.$add() adds line first then calculates list.$linecount, so no +1
+Do cErrors.$add(cErrors.$linecount,con(#T),errCode,errText,lineText,location,foreign,stack)
+
+# ================= Continue ====================================
+# Important: Use SEA continue execution for proper finish ! Tip from Doug Easterbrook
+# Help: This command continues method execution at the command following the command which called an error handler;
+SEA continue execution ## #ERRCODE #ERRTEXT
+
+Calculate #F as 0
+Quit method
+
+
+
+# ================= Debugging keep ====================================
+# Possible other problems (leave here for documentation)
+If pos('as sys(192)',stack.2.linetext)
+	# Send to trace log {Stack-Error [#ERRCODE] [replaceall(#ERRTEXT,chr(13),' ')]}
+	# Accessing the stack via sys(192) may itself raise an error.
+	# (because the item reference of the calling method is unknown in the result list?)
+	# or (because it occurs in $construct, i.e. task or instance is not alive yet?)
+	# The following error message #ERRTEXT appears: "Attempt to use an instance or task variable when no instance exists"
+End If

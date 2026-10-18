@@ -1,0 +1,68 @@
+# $loadClasses v2 — loads the classes of every SELECTED vault and hangs the
+# index entry of each one beside it. $indexGet and $indexField are the only
+# two places that know the encoding; nothing here parses a tab.
+
+Do iClasses.$define()
+Do iClasses.$cols.$add('ref',kItemref)
+Do iClasses.$cols.$add('entry',kCharacter,kSimplechar,100000000)
+Do iClasses.$cols.$add('vault',kCharacter,kSimplechar,255)
+Do iClasses.$cols.$add('run',kCharacter,kSimplechar,255)
+Do iClasses.$cols.$add('when',kCharacter,kSimplechar,255)
+Do iClasses.$cols.$add('methods',kCharacter,kSimplechar,255)
+Do iClasses.$cols.$add('bytes',kCharacter,kSimplechar,255)
+Do iClasses.$cols.$add('seal',kCharacter,kSimplechar,100000000)
+Do iClasses.$cols.$add('origin',kCharacter,kSimplechar,255)
+Do iClasses.$cols.$add('folder',kCharacter,kSimplechar,100000000)
+Do iClasses.$cols.$add('desc',kCharacter,kSimplechar,100000000)
+Do iClasses.$cols.$add('version',kCharacter,kSimplechar,255)
+Do iClasses.$cols.$add('source',kCharacter,kSimplechar,20)
+
+For iBackupLibraries.$line from 1 to iBackupLibraries.$linecount step 1
+	If iBackupLibraries.$selected()
+		Do iBackupLibraries.c1().$classes.$appendlist(iClasses,$ref)
+	End If
+End For
+
+# the five filters, unchanged: c1 is still the reference they read
+Do iClasses.$search(kFalse)
+Do iClasses.$search($ref.c1.$classtype=kSystemtable,kTrue,kFalse,kTrue,kFalse)
+Do iClasses.$search('execVaultHold'=$ref.c1().$name,kTrue,kFalse,kTrue,kFalse)
+Do iClasses.$search('execVaultIndex'=$ref.c1().$name,kTrue,kFalse,kTrue,kFalse)
+Do iClasses.$search(pos('_prev',$ref.c1().$name),kTrue,kFalse,kTrue,kFalse)
+Do iClasses.$search(pos('_aside',$ref.c1().$name),kTrue,kFalse,kTrue,kFalse)
+Do iClasses.$search(pos('_before',$ref.c1().$name),kTrue,kFalse,kTrue,kFalse)
+
+If cFilterSystemClasses
+	Do iClasses.$remove(kListDeleteSelected)
+End If
+
+# the index, once per row. vault comes from the class itself and is always
+# right; everything else comes from the entry and is empty when there is none.
+For iClasses.$line from 1 to iClasses.$linecount step 1
+	Calculate iClasses.vault as iClasses.ref().$lib().$name
+	Calculate iClasses.entry as $itasks.Executor.$indexGet(iClasses.ref().$lib(),iClasses.ref().$name)
+	Calculate iClasses.run as $itasks.Executor.$indexField(iClasses.entry,'run')
+	Calculate iClasses.when as $itasks.Executor.$indexField(iClasses.entry,'when')
+	Calculate iClasses.methods as $itasks.Executor.$indexField(iClasses.entry,'methods')
+	Calculate iClasses.bytes as $itasks.Executor.$indexField(iClasses.entry,'bytes')
+	Calculate iClasses.seal as $itasks.Executor.$indexField(iClasses.entry,'seal')
+	Calculate iClasses.origin as $itasks.Executor.$indexField(iClasses.entry,'origin')
+	Calculate iClasses.folder as $itasks.Executor.$indexField(iClasses.entry,'folder')
+	Calculate iClasses.desc as $itasks.Executor.$indexField(iClasses.entry,'desc')
+	Calculate iClasses.version as $itasks.Executor.$indexField(iClasses.entry,'version')
+	# is the original still there? The library name is the vault name from the
+	# twelfth character on. Asked twice rather than held: this method has no
+	# locals, and pick() would evaluate the branch it does not need and ask
+	# $classes of a clear reference.
+	Calculate iClasses.source as 'lib closed'
+	If $root.$libs.$findname(mid(iClasses.vault,12,len(iClasses.vault)-11))
+		If $root.$libs.$findname(mid(iClasses.vault,12,len(iClasses.vault)-11)).$classes.$findname(iClasses.ref().$name)
+			Calculate iClasses.source as 'live'
+		Else
+			Calculate iClasses.source as 'GONE'
+		End If
+	End If
+End For
+
+Do iClasses.$line.$assign(1)
+Quit method

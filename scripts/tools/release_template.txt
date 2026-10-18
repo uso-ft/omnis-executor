@@ -1,0 +1,805 @@
+# GENERATOR: release_template v9 — 2026-10-18 17:40 — builds a release copy of your own library: checks, copy, clean-up, read-back from disk, files, JSON export
+# CREATES:  nothing
+# MODIFIES: nothing
+# REMOVES:  nothing
+# RUNS-IN:  EXECUTOR 1.0
+#
+# THE CONSOLE WILL WARN YOU, AND THAT IS EXPECTED
+# Before a script runs, the console scans it for places that write through a reference chosen only
+# at run time. It finds six here and lists them as [danger] lines; two of them (step 5 removes a
+# variable, step 6 writes a method text) open a dialog when "Warn on danger" is on. Every one of
+# them writes the release COPY, never your library: the copy is opened under a name of its own in
+# step 4, and the protocol says so in its first line. Answer the dialog to go on.
+#
+# THE SCRIPT NEVER CHANGES YOUR LIBRARY
+# It reads your library, copies its file, and changes only the copy. What has to change in the
+# library itself - the version, the changelog - you change by hand: the rows marked DO in the Jump
+# view lead you there.
+#
+# WHAT IT IS
+# A starting point for the release build of YOUR library, not a finished tool. Every step is a block
+# that begins with '## ADAPT HERE': a list of names, texts or switches with an example in it. Change
+# the examples to the names of your library, empty a list to skip its step, copy a block to add one.
+# The examples use the library MyLib with the classes Startup_Task, oSettings, oTools and wTest;
+# release_templatetest_setup builds that library, so the template runs on it as it is: try it there
+# first, then adapt it to your own.
+#
+# HOW TO START
+# 1. Execute release_templatetest_setup: it builds MyLib. Open MyLib.
+# 2. Execute this script. Its first run makes the folder execInput/release_template/ and stops: lay a
+#    README.txt into it and Execute again. Answer No: a TRIAL copy is built.
+# 3. Read the Result field, then switch to the Jump view: the rows there lead through MyLib and the
+#    build, each with an explanation. Then adapt the ADAPT HERE blocks to your own library.
+#
+# READING THIS SCRIPT, if you do not know the Executor
+# - A script is the body of one method that the Executor runs. Its variables are a fixed set: ref,
+#   classRef, methodRef, objRef, list, row, text, name, n, count, flag1 and their siblings 2 and 3.
+#   More names are added as columns of the row vars and read as vars.version, vars.folder ...
+# - result is the protocol. Each step adds lines '[step    ]   finding', and the script ends with
+#   Quit method result. The console shows it in the Result field and keeps it in its log.
+# - Set reference fills an item reference: a pointer to a library, class, method, line or object.
+#   $findname looks an item up by name and gives a cleared reference when there is none; isclear()
+#   tests that. .$ref passes a reference as a reference, not as the value it points to.
+# - $methodtext is the whole text of a method, $methodlines its lines one by one, $text the text of one
+#   line; $cvardefs, $lvardefs are the definitions of class and local variables. All of them can be
+#   read and written by code, and Save class writes the change to disk.
+# - tools.$collectObjects is the one public tool method of the Executor: it lists every object of a
+#   window, at every depth.
+# - The block JUMP LINKS at the end is no code. The console shows it as a list in its Jump view: a
+#   double-click opens the place named in the row, and the row explains what to do there.
+#
+# WHY A SCRIPT
+# Omnis can read and change its own classes, methods, variables and objects from code, and save them.
+# A release can therefore be BUILT instead of prepared by hand: from the same working library, every
+# time the same way, and every step reads back what it did. Nothing here is special to this library;
+# each step is one pattern you can turn to other parts of a release.
+#
+# WHAT IT DOES, IN THIS ORDER
+#  0  CHOOSE   the library named in the ADAPT HERE line must be OPEN; the version is set there too.
+#  1  PLACES   texts that must (or must not) stand in methods of the library: the version where the
+#              library reports it, a changelog heading for it, no leftover 'Unreleased' section.
+#  2  FILES    the files to ship beside the library lie in execInput/release_template/ beside the
+#              Executor. The first run makes that folder and stops with the list of files to lay in.
+#  3  ASK      TRIAL or REAL, a No/Yes message; No, the default, builds a TRIAL. In a TRIAL a failed
+#              check of 1 or 2 only warns; in a REAL build it stops before anything is copied.
+#  4  COPY     the FILE of the library is copied to execRelease/<library>/<version>/ beside the
+#              Executor (a TRIAL to <version>-trial/) and opened as <library>_Release, WITHOUT its
+#              startup task. Your library itself is never written. Unsaved changes are not in the
+#              copy: save first. Copying the file of an open library is measured on macOS only.
+#  5  DATA     class variables that hold the developer's data are removed, or their $userinfo emptied.
+#  6  NEUTRAL  methods that must not ship as they are (a playground, a test) get a neutral text;
+#              their local variables stay.
+#  7  CLASSES  the classes of the copy against the list you expect; reports, removes nothing.
+#  8  VERSION  every class gets the release version in its $version.
+#  9  LINES    every line of every class method and of every method of a window object is walked:
+#              a line marked as a developer line is commented, a commented line marked as a release
+#              line is armed, and the lines that stay active are searched for forbidden texts.
+# 10  DISK     every class is saved, the copy closed and opened again FROM DISK, and steps 5 to 9 are
+#              read back there. What is reported as done is what the file holds.
+# 11  SHIP     the files of step 2 are copied beside the library copy.
+# 12  JSON     the copy is exported as JSON into json/ in the same folder, every error row listed.
+# 13  CLOSE    the copy is closed on every path after it was opened; the last line says whether the
+#              copy is a release or INCOMPLETE.
+#
+# THE MARKERS (step 9)
+# A developer line ends in ' ## @DEV' and is active in your working library:
+#     OK message Debug {[lValue]} ## @DEV           ->  # OK message Debug {[lValue]} ## @DEV
+# A release line is commented in your working library and ends in ' ## @RELEASE':
+#     # Calculate iMode as 'release' ## @RELEASE      ->  Calculate iMode as 'release' ## @RELEASE
+# The marker is an ordinary end-of-line comment; Omnis keeps it. Choose your own markers in step 9.
+#
+# WHAT ELSE CAN BE DONE THE SAME WAY (each is a few lines in the shape of the steps below)
+# - remove test classes from the copy: classRef.$classes.$remove(...), then nothing to save.
+# - rename text in every method of a class: classRef.$findandreplace(find,replace) - close its design
+#   editors and the Find and Replace dialog first, and set $root.$prefs.$alloweditifnotcheckedout.
+# - write a property of a class or an object: a window title, a tooltip, the text of a button
+#   (objRef.$text, objRef.$tooltip), found through $objs of the class - a class $objs holds only
+#   its direct children, tools.$collectObjects collects them all.
+# - check the superclasses: every classRef.$superclass of the form Lib.Class must lie in an open library.
+# - rebuild the library from its JSON tree: $root.$importjson(jsonFolder,newLibPath) writes a new file
+#   without the dead space a library collects. A tree with a broken line does not import.
+# - NOT possible: $prefs.$defaultname of a library cannot be assigned by notation (25207).
+#
+# BEFORE YOU RUN IT
+# - Save your library. Open every library its code names, and every library holding a superclass.
+# - Switch off "Break if error": a line refused in step 9 raises an error and the run goes on.
+# - The six [danger] lines and the dialog: see the top of this script. Steps 5 and 6 ask (stage A);
+#   the $userinfo of step 5, the $version of step 8 and the two line writes of step 9 are listed only
+#   (stage B). All of them aim at the copy.
+# - Run it as a TRIAL first, open the TRIAL copy and test it. Then build REAL and do not open the REAL
+#   copy before it goes out: opening it with its startup task may store state in it.
+#
+# Run twice: each run starts from a fresh copy; the previous copy of the same version is deleted first,
+# the json/ folder too. Your library and the files in execInput are only read.
+# The Executor's header says nothing: the copy is not open when the run starts and is closed before it
+# ends; changes to it are saved with Save class.
+
+Calculate result as con('run ',#T,' — release_template v9',kCr)
+
+# ====== 0  CHOOSE
+## ADAPT HERE: your OPEN library and the version of this release
+Calculate name2 as 'MyLib' ## the library built by release_templatetest_setup; your own library here
+Do vars.$cols.$add('version',kCharacter,kSimplechar,100)
+Calculate vars.version as '1.0.0' ## the version of this release; SemVer, e.g. '1.2.0' or '1.2.0-beta.1' (it also names the release folder)
+
+# --- the first line of the protocol answers the warning of the console (chr(91)/chr(93): brackets in a literal are evaluated)
+Calculate result as con(result,'[note    ]   the ',chr(91),'danger',chr(93),' lines above are expected: they all write the release copy ',name2,'_Release, never ',name2,' itself',kCr)
+
+# --- the values the steps share, in vars under speaking names (the variables of a script are a closed set)
+Do vars.$cols.$add('dev',kCharacter,kSimplechar,100)
+Do vars.$cols.$add('rel',kCharacter,kSimplechar,100)
+Do vars.$cols.$add('input',kCharacter,kSimplechar,100000000)
+Do vars.$cols.$add('folder',kCharacter,kSimplechar,100000000)
+Do vars.$cols.$add('ok',kBoolean) ## kFalse as soon as a step fails: the copy is then no release
+Do vars.$cols.$add('failed',kInteger,k32bitint) ## opening checks that failed (steps 1 and 2)
+Do vars.$cols.$add('dataList',kList,0) ## step 5, kept for the read-back of step 10
+Do vars.$cols.$add('neutralList',kList,0) ## step 6, the same
+Do vars.$cols.$add('cvarsBefore',kInteger,k32bitint)
+Do vars.$cols.$add('cvarsRemoved',kInteger,k32bitint)
+Do vars.$cols.$add('classes',kInteger,k32bitint)
+Do vars.$cols.$add('devDone',kInteger,k32bitint)
+Do vars.$cols.$add('relDone',kInteger,k32bitint)
+Do vars.$cols.$add('refused',kInteger,k32bitint)
+Do vars.$cols.$add('forbid1',kInteger,k32bitint)
+Do vars.$cols.$add('forbid2',kInteger,k32bitint)
+Do vars.$cols.$add('devLeft',kInteger,k32bitint)
+Do vars.$cols.$add('relLeft',kInteger,k32bitint)
+Do vars.$cols.$add('unreached',kInteger,k32bitint)
+Do vars.$cols.$add('lines1',kInteger,k32bitint)
+Do vars.$cols.$add('lines2',kInteger,k32bitint)
+Do vars.$cols.$add('rest',kCharacter,kSimplechar,100000000) ## step 7: the names of the list not yet looked at
+Calculate vars.ok as kTrue
+Calculate vars.failed as 0
+Calculate vars.cvarsBefore as 0
+Calculate vars.cvarsRemoved as 0
+Calculate vars.classes as 0
+Calculate vars.devDone as 0
+Calculate vars.relDone as 0
+Calculate vars.refused as 0
+Calculate vars.forbid1 as 0
+Calculate vars.forbid2 as 0
+Calculate vars.devLeft as 0
+Calculate vars.relLeft as 0
+Calculate vars.unreached as 0
+Calculate vars.lines1 as 0
+Calculate vars.lines2 as 0
+
+# The library must be open, and may not be one of the Executor's own: the Executor is not built this way.
+Set reference ref3 to $root.$libs.$findname(name2)
+Calculate flag1 as len(name2)>0
+If flag1
+   Calculate flag1 as not(isclear(ref3))
+End If
+If flag1
+   Calculate name2 as ref3.$name
+   Calculate flag2 as (low(name2)='executor')|(low(name2)='execscratch')|(low(left(name2,11))='execbackup_')|(low(right(name2,8))='_release')
+   If flag2
+      Calculate result as con(result,'[choose  ]   ',name2,' is one of the Executor''s own libraries, or a release copy - not built. Nothing done.',kCr)
+      Quit method result
+   End If
+Else
+   If len(name2)=0
+      Calculate result as con(result,'[choose  ]   no library named - set the ADAPT HERE line of step 0. Nothing done.',kCr)
+   Else
+      Calculate result as con(result,'[choose  ]   no open library is called ',name2,' - open it, or correct the ADAPT HERE line. Nothing done.',kCr)
+   End If
+   Do $root.$libs.$makelist($ref.$name) Returns list
+   Calculate text as ''
+   For list.$line from 1 to list.$linecount step 1
+      Calculate text as con(text,' ',list.C1)
+   End For
+   Calculate result as con(result,'[choose  ]   open libraries:',text,kCr)
+   Quit method result
+End If
+If len(vars.version)=0
+   Calculate result as con(result,'[choose  ]   no version - set the ADAPT HERE line of step 0. Nothing done.',kCr)
+   Quit method result
+End If
+Calculate result as con(result,'[choose  ]   ',name2,' version ',vars.version,', file ',ref3.$pathname,kCr)
+
+# ====== 1  PLACES — read in YOUR library, before anything is copied
+# This step CHECKS and never writes: the script does not change your library. The copy is meant to
+# hold exactly what you released there, so the version is raised in the library by hand (jump 01),
+# and here the script only asks whether the library says what step 0 says. A FAIL warns in a TRIAL
+# and stops a REAL build before anything is copied.
+# Not to be confused with step 8: $version there is a property of every CLASS, which the script
+# writes into the copy; the version your library reports from a method is checked here.
+# A place is a method and a text that must stand in it (must = kTrue) or must not (must = kFalse).
+# The text is found anywhere in the method, never by line number: lines move, texts do not.
+# Build the text from vars.version, so the version is written once, in step 0.
+# Other places worth a row: a copyright year, a URL, a 'Tested on' line, a build switch left on.
+## ADAPT HERE: class, method, text, must
+Do list.$define()
+Do list.$cols.$add('cls',kCharacter,kSimplechar,255)
+Do list.$cols.$add('meth',kCharacter,kSimplechar,255)
+Do list.$cols.$add('txt',kCharacter,kSimplechar,100000000)
+Do list.$cols.$add('must',kBoolean)
+Do list.$add('Startup_Task','$version',con('Quit method ''',vars.version,''''),kTrue) ## the version the library reports
+Do list.$add('Startup_Task','$changelog',con('# --- ',vars.version,' - '),kTrue) ## a changelog heading for this release
+Do list.$add('Startup_Task','$changelog','# --- Unreleased',kFalse) ## no section left that is not yet a release
+
+Calculate count as 0 ## places that hold
+For list.$line from 1 to list.$linecount step 1
+   Calculate flag1 as kFalse ## the method was found
+   Calculate text as ''
+   Set reference classRef to ref3.$classes.$findname(list.cls)
+   If not(isclear(classRef))
+      Set reference methodRef to classRef.$methods.$findname(list.meth)
+      If not(isclear(methodRef))
+         Calculate flag1 as kTrue
+         Calculate text as methodRef.$methodtext
+      End If
+   End If
+   Calculate flag2 as (pos(list.txt,text)>0)=list.must ## the place is as it should be
+   If flag1&flag2
+      Calculate count as count+1
+      Calculate result as con(result,'[place   ]   ok   ',list.cls,'.',list.meth,pick(list.must,' does not hold ',' holds '),'''',list.txt,'''',kCr)
+   Else If not(flag1)
+      Calculate result as con(result,'[place   ]   FAIL ',list.cls,'.',list.meth,' - method NOT found',kCr)
+   Else
+      Calculate result as con(result,'[place   ]   FAIL ',list.cls,'.',list.meth,pick(list.must,' HOLDS, and must not: ',' does NOT hold: '),'''',list.txt,''' - the script never changes your library: correct it there (Jump view), or correct step 0',kCr)
+   End If
+End For
+Calculate vars.failed as vars.failed+list.$linecount-count
+Calculate result as con(result,'[places  ]   ',count,' of ',list.$linecount,' as they should be',kCr)
+
+# ====== 2  FILES — what ships beside the library, read from execInput/release_template/
+# A script reads its input from execInput/<script name>/ beside the Executor, and never changes it.
+# Every file found there is shipped (step 11); the list below names those that MUST be there.
+## ADAPT HERE: the files that must lie in execInput/release_template/
+Do list2.$define()
+Do list2.$cols.$add('fname',kCharacter,kSimplechar,255)
+Do list2.$add('README.txt')
+
+Calculate vars.input as con(mid(sys(10),1,rpos(sys(9),sys(10))),'execInput',sys(9),'release_template',sys(9))
+If not(FileOps.$doesfileexist(vars.input))
+   Do FileOps.$createdir(vars.input,kTrue)
+   Calculate text as ''
+   For list2.$line from 1 to list2.$linecount step 1
+      Calculate text as con(text,' ',list2.fname)
+   End For
+   Calculate result as con(result,'[files   ]   ',vars.input,pick(FileOps.$doesfileexist(vars.input),' could NOT be made',' made, first run'),kCr)
+   Calculate result as con(result,'[files   ]   lay in the files to ship beside the library:',pick(len(text)>0,' (none required by the list of step 2)',text),', then run again. Nothing done.',kCr)
+   Quit method result
+End If
+Do FileOps.$filelist(kFileOpsIncludeFiles,vars.input,kFileOpsInfoFullName+kFileOpsInfoName) Returns list3 ## columns: name, full name
+Calculate count as 0
+Calculate text as ''
+For list3.$line from 1 to list3.$linecount step 1
+   If left(list3.C1,1)='.'
+      # a hidden file of the system (.DS_Store): not shipped
+   Else
+      Calculate count as count+1
+      Calculate text as con(text,' ',list3.C1)
+   End If
+End For
+Calculate result as con(result,'[files   ]   ',count,' file(s) to ship:',pick(count>0,' none',text),kCr)
+For list2.$line from 1 to list2.$linecount step 1
+   If FileOps.$doesfileexist(con(vars.input,list2.fname))
+      # there
+   Else
+      Calculate vars.failed as vars.failed+1
+      Calculate result as con(result,'[files   ]   FAIL ',list2.fname,' is MISSING in ',vars.input,kCr)
+   End If
+End For
+
+# ====== 3  ASK — TRIAL or REAL; No is the default button, so Return never ships
+Calculate text as vars.version
+Calculate n as vars.failed
+No/Yes message Release build (Icon) {Build the REAL release [text] of [name2]?////Opening checks failed: [n].//No builds a TRIAL copy: failed checks only warn.//Yes builds the copy to ship. Do not open it before it goes out.}
+If flag true
+   Calculate flag3 as kFalse ## REAL
+Else
+   Calculate flag3 as kTrue ## TRIAL
+End If
+Calculate result as con(result,'[build   ]   ',pick(flag3,'REAL','TRIAL'),kCr)
+If vars.failed>0
+   If flag3
+      Calculate result as con(result,'[checks  ]   ',vars.failed,' opening check(s) failed - TRIAL, going on',kCr)
+   Else
+      Calculate result as con(result,'[checks  ]   ',vars.failed,' opening check(s) failed - a REAL build stops here. Nothing built.',kCr)
+      Quit method result
+   End If
+End If
+
+# ====== 4  COPY — the file of the library, opened under a name of its own, without its startup task
+Calculate vars.folder as con(mid(sys(10),1,rpos(sys(9),sys(10))),'execRelease',sys(9),name2,sys(9),vars.version,pick(flag3,'','-trial'),sys(9))
+Calculate text3 as ref3.$pathname
+Calculate name3 as con(vars.folder,mid(text3,rpos(sys(9),text3)+1,len(text3))) ## the copy keeps the file name of your library
+Calculate name as con(name2,'_Release')
+If not(isclear($root.$libs.$findname(name)))
+   Close library [name]
+   Calculate result as con(result,'[copy    ]   ',name,' was still open from an earlier run - closed',kCr)
+End If
+Do FileOps.$createdir(vars.folder,kTrue)
+If FileOps.$doesfileexist(name3)
+   Calculate n as FileOps.$deletefile(name3)
+   Calculate result as con(result,'[copy    ]   the previous copy deleted, code ',n,' where 0 is ok',kCr)
+End If
+Calculate n as FileOps.$copyfile(text3,name3)
+If not(FileOps.$doesfileexist(name3))
+   Calculate result as con(result,'[copy    ]   FAILED, $copyfile code ',n,' - nothing built',kCr)
+   Quit method result
+End If
+Calculate result as con(result,'[copy    ]   ',name3,', code ',n,' where 0 is ok',kCr)
+Open library (Do not close others,Do not open startup task) [name3],[name]
+Set reference ref2 to $root.$libs.$findname(name)
+If isclear(ref2)
+   Calculate result as con(result,'[open    ]   ',name,' did NOT open - nothing built',kCr)
+   Quit method result
+End If
+Calculate result as con(result,'[open    ]   ',name,', startup task ',pick(isclear($itasks.$findname(name)),'STARTED','not started'),kCr)
+
+# ====== from here on the copy is open: no Quit before the close at the end
+# A class of a library under version control that is not checked out refuses changes, and $assign
+# still says YES. Allowed for this run only: a reversible block is undone when the method ends.
+Begin reversible block
+   Calculate $root.$prefs.$alloweditifnotcheckedout as kTrue
+End reversible block
+
+# The class types that carry class variables (and a superclass): the control of step 5 counts over them.
+Calculate vars.cvarsBefore as 0
+Set reference classRef to ref2.$classes.$first()
+While not(isclear(classRef))
+   Calculate n as classRef.$classtype*1
+   If n=kWindow*1|n=kRemoteForm*1|n=kReport*1|n=kMenu*1|n=kToolbar*1|n=kTask*1|n=kRemoteTask*1|n=kObjectclass*1|n=kTable*1
+      Calculate vars.cvarsBefore as vars.cvarsBefore+classRef.$cvardefs.$count
+   End If
+   Set reference classRef to ref2.$classes.$next(classRef)
+End While
+
+# ====== 5  DATA — the developer's data out of the copy
+# A library carries data, not only code. The VALUE of a class variable is saved with its class. Every
+# variable definition, every class and the library itself have a property $userinfo that code can fill
+# with any value - a text, a list, a row - and that is saved as well. A settings class therefore ends
+# up holding what the developer stored last: a private path, the last login, a test server, a log.
+# All of it ships inside the .lbs file unless the release removes it. In MyLib this is oSettings;
+# its method $about says the same from the inside.
+# 'remove' deletes the definition, value and $userinfo with it; 'clear' keeps the variable and empties
+# its $userinfo. Both act on the release COPY only.
+# CAUTION: a removed variable that code still names turns those lines into #???. They still compile
+# as text, but the JSON export of step 12 fails on them (23470). Remove only variables that serve as
+# a store; empty the others.
+## ADAPT HERE: class, class variable, 'remove' or 'clear'
+Do list.$define()
+Do list.$cols.$add('cls',kCharacter,kSimplechar,255)
+Do list.$cols.$add('var',kCharacter,kSimplechar,255)
+Do list.$cols.$add('how',kCharacter,kSimplechar,20)
+Do list.$add('oSettings','cDevPath','remove')
+Do list.$add('oSettings','cLastLogin','clear')
+
+Calculate count as 0 ## rows done
+For list.$line from 1 to list.$linecount step 1
+   Set reference classRef to ref2.$classes.$findname(list.cls)
+   If isclear(classRef)
+      Calculate result as con(result,'[data    ]   FAIL ',list.cls,' NOT found in the copy',kCr)
+   Else
+      Set reference ref to classRef.$cvardefs.$findname(list.var)
+      If isclear(ref)
+         Calculate result as con(result,'[data    ]   FAIL ',list.cls,'.',list.var,' NOT found in the copy',kCr)
+      Else If list.how='remove'
+         Do classRef.$cvardefs.$remove(classRef.$cvardefs.$findname(list.var).$ref)
+         If isclear(classRef.$cvardefs.$findname(list.var))
+            Calculate count as count+1
+            Calculate vars.cvarsRemoved as vars.cvarsRemoved+1
+            Calculate result as con(result,'[data    ]   ',list.cls,'.',list.var,' removed',kCr)
+         Else
+            Calculate result as con(result,'[data    ]   FAIL ',list.cls,'.',list.var,' is still there after $remove',kCr)
+         End If
+      Else If list.how='clear'
+         Do ref.$userinfo.$assign('') Returns flag2
+         If flag2&(len(classRef.$cvardefs.$findname(list.var).$userinfo)=0)
+            Calculate count as count+1
+            Calculate result as con(result,'[data    ]   ',list.cls,'.',list.var,' $userinfo emptied',kCr)
+         Else
+            Calculate result as con(result,'[data    ]   FAIL ',list.cls,'.',list.var,' $userinfo NOT emptied',kCr)
+         End If
+      Else
+         Calculate result as con(result,'[data    ]   FAIL ',list.cls,'.',list.var,': ''',list.how,''' is neither remove nor clear',kCr)
+      End If
+   End If
+End For
+Calculate vars.ok as vars.ok&(count=list.$linecount)
+Calculate vars.dataList as list
+Calculate result as con(result,'[data    ]   ',count,' of ',list.$linecount,' done',kCr)
+
+# ====== 6  NEUTRAL — methods that ship with a neutral text
+# A method you use while developing - to try things out, to fill test data, to print a debug list -
+# should not ship as it is. Removing it would break every line that calls it; a neutral body does not.
+# $methodtext.$assign replaces the whole body at once, and a refused assign changes nothing.
+# Never assign '': an empty text removes the method's local variables too. A text of one comment
+# line keeps them. The same pattern writes any body: a constant, a URL, a switch set to its release value.
+## ADAPT HERE: class, method, the neutral text
+Do list.$define()
+Do list.$cols.$add('cls',kCharacter,kSimplechar,255)
+Do list.$cols.$add('meth',kCharacter,kSimplechar,255)
+Do list.$cols.$add('txt',kCharacter,kSimplechar,100000000)
+Do list.$cols.$add('locals',kInteger,k32bitint) ## filled below, read back in step 10
+Do list.$add('oTools','$playground','# The developer''s playground: empty in a release.',0)
+
+Calculate count as 0 ## methods made neutral
+For list.$line from 1 to list.$linecount step 1
+   Set reference methodRef to ref2.$classes.$findname(list.cls) ## the class first: a path through a missing class raises an error
+   If not(isclear(methodRef))
+      Set reference methodRef to methodRef.$methods.$findname(list.meth)
+   End If
+   If isclear(methodRef)
+      Calculate result as con(result,'[neutral ]   FAIL ',list.cls,'.',list.meth,' NOT found in the copy',kCr)
+   Else If len(list.txt)=0
+      Calculate result as con(result,'[neutral ]   FAIL ',list.cls,'.',list.meth,': the text is empty - it would remove the locals; not touched',kCr)
+   Else
+      Calculate list.locals as methodRef.$lvardefs.$count
+      Do methodRef.$methodtext.$assign(list.txt) Returns flag2
+      If flag2&(methodRef.$lvardefs.$count=list.locals)
+         Calculate count as count+1
+      End If
+      Calculate result as con(result,'[neutral ]   ',list.cls,'.',list.meth,' ',pick(flag2,'REFUSED','neutral'),', ',methodRef.$methodlines.$count,' line(s), locals ',list.locals,' -> ',methodRef.$lvardefs.$count,kCr)
+   End If
+End For
+Calculate vars.ok as vars.ok&(count=list.$linecount)
+Calculate vars.neutralList as list
+
+# ====== 7  CLASSES — the copy against the classes you expect
+# System classes and folders are left out. A class added to the library on purpose is added here;
+# a class found here that is not in the list may be a test class that should not ship.
+## ADAPT HERE: every class of the release, between commas
+Calculate text2 as ',Startup_Task,oSettings,oTools,wTest,'
+
+Do ref2.$classes.$makelist($ref.$name,$ref.$classtype*1) Returns list
+Calculate count as 0 ## expected and found
+Calculate text as '' ## found, not expected
+For list.$line from 1 to list.$linecount step 1
+   If (list.C2=kSystemtable)|(list.C2=kFolder)
+   Else If pos(con(',',list.C1,','),text2)
+      Calculate count as count+1
+   Else
+      Calculate text as con(text,' ',list.C1)
+   End If
+End For
+Calculate n as len(text2)-len(replaceall(text2,',',''))-1 ## the number of names in the list
+Calculate text3 as '' ## expected, not found
+Calculate vars.rest as mid(text2,2,len(text2))
+While pos(',',vars.rest)>0
+   If isclear(ref2.$classes.$findname(mid(vars.rest,1,pos(',',vars.rest)-1)))
+      Calculate text3 as con(text3,' ',mid(vars.rest,1,pos(',',vars.rest)-1))
+   End If
+   Calculate vars.rest as mid(vars.rest,pos(',',vars.rest)+1,len(vars.rest))
+End While
+Calculate result as con(result,'[classes ]   ',count,' of ',n,' expected found; missing:',pick(len(text3)>0,' none',text3),'; not expected:',pick(len(text)>0,' none',text),kCr)
+Calculate vars.ok as vars.ok&(count=n)&(len(text)=0)
+
+# ====== 8  VERSION — the release version into $version of every class of the copy
+# Every class has a property $version, a text (a library has none). Set in the release copy, it tells
+# later which release a class came from; your working library keeps its own values. The same loop can
+# write any class property, e.g. $desc, the description of a class.
+# The version your library reports from a method (Startup_Task.$version in MyLib) is NOT written
+# here: step 1 checks it, and you raise it in the library itself.
+# $classdata is a whole class as one binary value: its methods and its $userinfo. Code copies a class
+# with newClass.$classdata.$assign(oldClass.$classdata). Such a copy does NOT carry $version or $desc:
+# set them again after copying.
+## ADAPT HERE: kFalse leaves the class versions alone
+Calculate flag1 as kTrue
+
+Calculate count as 0 ## classes versioned
+Calculate vars.classes as 0 ## classes to version
+If flag1
+   For list.$line from 1 to list.$linecount step 1
+      If (list.C2=kSystemtable)|(list.C2=kFolder)
+      Else
+         Calculate vars.classes as vars.classes+1
+         Set reference classRef3 to ref2.$classes.$findname(list.C1)
+         Do classRef3.$version.$assign(vars.version) Returns flag2
+         Calculate count as count+flag2
+      End If
+   End For
+   Calculate vars.ok as vars.ok&(count=vars.classes)
+   Calculate result as con(result,'[version ]   $version ',vars.version,' set in ',count,' of ',vars.classes,' classes',kCr)
+Else
+   Calculate result as con(result,'[version ]   switched off in step 8',kCr)
+End If
+
+# ====== 9  LINES — developer lines out, release lines in, forbidden texts searched
+# Pass 1 walks the copy in memory and changes it. Then every class is saved, the copy closed and
+# opened again FROM DISK, and pass 2 walks it once more and only counts (step 10).
+# Walked are the class methods of every class with methods, and the methods of every object of a
+# window. Reports, menus, toolbars and remote forms have objects with methods as well: walk them the
+# same way, through classRef.$objs.
+# A forbidden text is searched in the lines that stay ACTIVE after the markers are applied, so
+# '# Breakpoint ## @DEV' is no hit. A runtime ignores Breakpoint; a tester with a design version
+# stops there.
+## ADAPT HERE: the two markers, and the forbidden texts (found in any case)
+Calculate vars.dev as con(' #','# @DEV') ## built so no double hash stands in a literal of this script
+Calculate vars.rel as con(' #','# @RELEASE')
+Do list2.$define()
+Do list2.$cols.$add('txt',kCharacter,kSimplechar,255)
+Do list2.$add('Breakpoint')
+Do list2.$add('Send to trace log')
+
+For n3 from 1 to 2 step 1
+   If n3=2
+      # ====== 10  DISK — save every class, close, open again from disk
+      # Notation changes live in memory until the class is saved; Save class writes only what is pending.
+      Do ref2.$classes.$makelist($ref.$name,$ref.$classtype*1) Returns list
+      Calculate count as 0
+      For list.$line from 1 to list.$linecount step 1
+         If (list.C2=kSystemtable)|(list.C2=kFolder)
+         Else
+            Save class [con(name,'.',list.C1)]
+            Calculate count as count+1
+         End If
+      End For
+      Close library [name]
+      Open library (Do not close others,Do not open startup task) [name3],[name]
+      Set reference ref2 to $root.$libs.$findname(name)
+      Calculate result as con(result,'[disk    ]   ',count,' class(es) saved; the copy opened again from disk ',pick(isclear(ref2),'- ok','- FAILED, nothing read back'),kCr)
+      If isclear(ref2)
+         Calculate vars.ok as kFalse
+         Break to end of loop
+      End If
+   End If
+   Set reference classRef to ref2.$classes.$first()
+   While not(isclear(classRef))
+      Calculate count as classRef.$classtype*1
+      Calculate text as classRef.$name
+      # --- the methods of this class, collected right before its lines are walked
+      Do list.$define()
+      Do list.$cols.$add('path',kCharacter,kSimplechar,100000000)
+      Do list.$cols.$add('orow',kInteger,k32bitint) ## 0 = a class method, else the row of its object in list3
+      Do list.$cols.$add('mname',kCharacter,kSimplechar,255)
+      If count=kWindow*1|count=kRemoteForm*1|count=kReport*1|count=kMenu*1|count=kToolbar*1|count=kTask*1|count=kRemoteTask*1|count=kObjectclass*1|count=kTable*1|count=kCode*1
+         Set reference methodRef to classRef.$methods.$first()
+         While not(isclear(methodRef))
+            Do list.$add(methodRef.$name,0,methodRef.$name)
+            Set reference methodRef to classRef.$methods.$next(methodRef)
+         End While
+      End If
+      # --- the objects of a window, at every depth: tools.$collectObjects walks $objs and $bobjs
+      Do list3.$define()
+      If count=kWindow*1
+         Do tools.$collectObjects(classRef.$ref,list3) Returns n
+      End If
+      For n from 1 to list3.$linecount step 1
+         If not(list3.[n].isBkgnd) ## a background object carries no methods
+            Set reference objRef to list3.[n].objRef().$ref
+            Calculate text3 as list3.[n].objPath
+            If len(list3.[n].objName)=0
+               Calculate text3 as objRef.$fullname ## a nameless object: its $fullname ends in type and ident
+               Calculate text3 as mid(text3,rpos('.',text3)+1,len(text3))
+            End If
+            Set reference methodRef to objRef.$methods.$first()
+            While not(isclear(methodRef))
+               Do list.$add(con(text3,'.',methodRef.$name),n,methodRef.$name)
+               Set reference methodRef to objRef.$methods.$next(methodRef)
+            End While
+         End If
+      End For
+      # --- every line of every method of this class
+      For n from 1 to list.$linecount step 1
+         # found again by the row of its object and its name, right before its lines are walked
+         Calculate n2 as list.[n].orow
+         If n2=0
+            Set reference methodRef to classRef.$methods.$findname(list.[n].mname)
+         Else
+            Set reference objRef to list3.[n2].objRef().$ref
+            Set reference methodRef to objRef.$methods.$findname(list.[n].mname)
+         End If
+         If isclear(methodRef)
+            If n3=1
+               Calculate vars.unreached as vars.unreached+1
+               Calculate result as con(result,'[unreach ]   ',text,' / ',list.[n].path,' - its lines were NOT walked',kCr)
+            End If
+            Jump to start of loop
+         End If
+         Calculate n2 as 0 ## the line number
+         Set reference ref to methodRef.$methodlines.$first()
+         While not(isclear(ref))
+            Calculate n2 as n2+1
+            Calculate text2 as ref.$text
+            If n3=1
+               Calculate vars.lines1 as vars.lines1+1
+               If (pos(vars.dev,text2)>0)&(left(trim(text2),1)<>'#')
+                  Do ref.$text.$assign(con('# ',text2)) Returns flag2
+                  If flag2
+                     Calculate vars.devDone as vars.devDone+1
+                     Calculate result as con(result,'[dev     ]   ',text,' / ',list.[n].path,' / line ',n2,' commented',kCr)
+                  Else
+                     Calculate vars.refused as vars.refused+1
+                     Calculate result as con(result,'[dev     ]   REFUSED ',text,' / ',list.[n].path,' / line ',n2,': ',text2,kCr)
+                  End If
+               Else If (pos(vars.rel,text2)>0)&(left(trim(text2),2)='# ')
+                  Do ref.$text.$assign(mid(trim(text2),3,len(text2))) Returns flag2
+                  If flag2
+                     Calculate vars.relDone as vars.relDone+1
+                     Calculate result as con(result,'[release ]   ',text,' / ',list.[n].path,' / line ',n2,' armed',kCr)
+                  Else
+                     Calculate vars.refused as vars.refused+1
+                     Calculate result as con(result,'[release ]   REFUSED ',text,' / ',list.[n].path,' / line ',n2,' - it does not compile in the copy: ',text2,kCr)
+                  End If
+               End If
+               Calculate text2 as ref.$text ## what stands now
+            Else
+               Calculate vars.lines2 as vars.lines2+1
+            End If
+            # --- in both passes: what stands now
+            If left(trim(text2),1)='#'
+               If n3=2
+                  Calculate vars.relLeft as vars.relLeft+(pos(vars.rel,text2)>0)
+               End If
+            Else
+               If n3=2
+                  Calculate vars.devLeft as vars.devLeft+(pos(vars.dev,text2)>0)
+               End If
+               For list2.$line from 1 to list2.$linecount step 1
+                  If pos(low(list2.txt),low(text2))>0
+                     If n3=1
+                        Calculate vars.forbid1 as vars.forbid1+1
+                        Calculate result as con(result,'[forbid  ]   ',text,' / ',list.[n].path,' / line ',n2,': ',text2,kCr)
+                     Else
+                        Calculate vars.forbid2 as vars.forbid2+1
+                     End If
+                  End If
+               End For
+            End If
+            Set reference ref to methodRef.$methodlines.$next(ref)
+         End While
+      End For
+      Set reference classRef to ref2.$classes.$next(classRef)
+   End While
+   If n3=1
+      Calculate result as con(result,'[lines   ]   ',vars.lines1,' line(s) walked: ',vars.devDone,' developer line(s) commented, ',vars.relDone,' release line(s) armed, ',vars.refused,' refused, ',vars.forbid1,' forbidden, ',vars.unreached,' method(s) not reached',kCr)
+   End If
+End For
+Calculate vars.ok as vars.ok&(vars.refused=0)&(vars.unreached=0)
+If vars.forbid1>0
+   If flag3
+      Calculate result as con(result,'[forbid  ]   ',vars.forbid1,' forbidden line(s) - TRIAL, going on',kCr)
+   Else
+      Calculate vars.ok as kFalse
+      Calculate result as con(result,'[forbid  ]   ',vars.forbid1,' forbidden line(s) - this copy is NOT a release',kCr)
+   End If
+End If
+
+# ====== 10  DISK — steps 5 to 9 read back from the file
+If not(isclear(ref2))
+   # --- 9: the same walk, on disk
+   Calculate flag2 as (vars.lines2=vars.lines1)&(vars.devLeft=0)&(vars.relLeft=0)&(vars.forbid2=vars.forbid1)
+   Calculate vars.ok as vars.ok&flag2
+   Calculate result as con(result,'[disk    ]   lines ',vars.lines2,' (pass 1: ',vars.lines1,'), active developer lines ',vars.devLeft,', commented release lines ',vars.relLeft,', forbidden ',vars.forbid2,pick(flag2,' - NOT as in memory',' - as in memory'),kCr)
+   # --- 5: removed is gone, cleared is empty; the control: every other class variable is still there
+   Calculate list as vars.dataList
+   Calculate count as 0
+   For list.$line from 1 to list.$linecount step 1
+      Calculate flag2 as kFalse
+      Set reference classRef to ref2.$classes.$findname(list.cls)
+      If not(isclear(classRef))
+         Set reference ref to classRef.$cvardefs.$findname(list.var)
+         If list.how='remove'
+            Calculate flag2 as isclear(ref)
+         Else If not(isclear(ref))
+            Calculate flag2 as len(ref.$userinfo)=0
+         End If
+      End If
+      Calculate count as count+flag2
+   End For
+   Calculate count2 as 0 ## class variables on disk
+   Set reference classRef to ref2.$classes.$first()
+   While not(isclear(classRef))
+      Calculate n as classRef.$classtype*1
+      If n=kWindow*1|n=kRemoteForm*1|n=kReport*1|n=kMenu*1|n=kToolbar*1|n=kTask*1|n=kRemoteTask*1|n=kObjectclass*1|n=kTable*1
+         Calculate count2 as count2+classRef.$cvardefs.$count
+      End If
+      Set reference classRef to ref2.$classes.$next(classRef)
+   End While
+   Calculate flag2 as (count=list.$linecount)&(count2=vars.cvarsBefore-vars.cvarsRemoved)
+   Calculate vars.ok as vars.ok&flag2
+   Calculate result as con(result,'[disk    ]   data ',count,' of ',list.$linecount,' as done; class variables ',vars.cvarsBefore,' -> ',count2,', expected ',vars.cvarsBefore-vars.cvarsRemoved,kCr)
+   # --- 6: the neutral text stands at the top, the locals are kept
+   Calculate list as vars.neutralList
+   Calculate count as 0
+   For list.$line from 1 to list.$linecount step 1
+      Set reference classRef to ref2.$classes.$findname(list.cls)
+      If not(isclear(classRef))
+         Set reference methodRef to classRef.$methods.$findname(list.meth)
+         If not(isclear(methodRef))
+            Calculate count as count+((pos(list.txt,methodRef.$methodtext)=1)&(methodRef.$lvardefs.$count=list.locals))
+         End If
+      End If
+   End For
+   Calculate vars.ok as vars.ok&(count=list.$linecount)
+   Calculate result as con(result,'[disk    ]   neutral ',count,' of ',list.$linecount,' with their locals',kCr)
+   # --- 8: the class versions
+   If flag1
+      Do ref2.$classes.$makelist($ref.$name,$ref.$classtype*1,$ref.$version) Returns list3
+      Calculate count as 0
+      Calculate text as ''
+      For list3.$line from 1 to list3.$linecount step 1
+         If (list3.C2=kSystemtable)|(list3.C2=kFolder)
+         Else If list3.C3=vars.version
+            Calculate count as count+1
+         Else
+            Calculate text as con(text,' ',list3.C1,'=',list3.C3)
+         End If
+      End For
+      Calculate vars.ok as vars.ok&(count=vars.classes)&(len(text)=0)
+      Calculate result as con(result,'[disk    ]   $version ',vars.version,' in ',count,' of ',vars.classes,' classes',pick(len(text)>0,'',' - others:'),text,kCr)
+   End If
+End If
+
+# ====== 11  SHIP — every file of execInput/release_template/ beside the copy
+# The input is only read; a file shipped before is replaced.
+Do FileOps.$filelist(kFileOpsIncludeFiles,vars.input,kFileOpsInfoFullName+kFileOpsInfoName) Returns list3
+Calculate count as 0 ## files to ship
+Calculate count2 as 0 ## files copied
+For list3.$line from 1 to list3.$linecount step 1
+   If left(list3.C1,1)='.'
+      # a hidden file of the system: not shipped
+   Else
+      Calculate count as count+1
+      Calculate text as con(vars.folder,list3.C1)
+      If FileOps.$doesfileexist(text)
+         Calculate n as FileOps.$deletefile(text)
+      End If
+      Calculate n as FileOps.$copyfile(list3.C2,text)
+      If FileOps.$doesfileexist(text)
+         Calculate count2 as count2+1
+      Else
+         Calculate result as con(result,'[ship    ]   FAIL ',list3.C1,', $copyfile code ',n,kCr)
+      End If
+   End If
+End For
+Calculate vars.ok as vars.ok&(count2=count)
+Calculate result as con(result,'[ship    ]   ',count2,' of ',count,' file(s) copied beside the copy',kCr)
+
+# ====== 12  JSON — the copy as read back from disk, exported into json/
+# $root.$exportjson writes the library INTO the folder given, and updates a tree already there instead
+# of replacing it: the folder is deleted first. A method line that does not compile fails the export
+# (23470, one row per line, naming neither class nor method); the tree is written all the same, but
+# it does NOT import again. An export of a library opened without its startup task can raise 25216 and
+# still succeed.
+## ADAPT HERE: kFalse skips the export
+Calculate flag2 as kTrue
+
+If flag2&not(isclear(ref2))
+   Calculate text3 as con(vars.folder,'json',sys(9))
+   If FileOps.$doesfileexist(text3)
+      Calculate n as FileOps.$deletefile(text3,kTrue,kTrue)
+   End If
+   Do FileOps.$createdir(text3,kTrue)
+   Do list3.$define()
+   Do list.$define()
+   # the folder WITHOUT its trailing separator: on Windows a trailing \ fails with 23455 (lore 11.5)
+   Do $root.$exportjson(ref2,mid(text3,1,len(text3)-1),list3,list) Returns flag2
+   Calculate result as con(result,'[json    ]   ',text3,' ok ',pick(flag2,'NO','YES'),', ',list3.$linecount,' error row(s), ',list.$linecount,' warning(s); the tree was ',pick(FileOps.$doesfileexist(con(text3,'library.json')),'NOT written (no library.json)','written'),kCr)
+   For n from 1 to list3.$linecount step 1
+      Calculate result as con(result,'[json    ]   ',list3.[n].errorcode,' ',list3.[n].errortext,kCr)
+   End For
+   For n from 1 to list.$linecount step 1
+      Calculate result as con(result,'[warning ]   ',list.[n].C1,' ',list.[n].C2,' ',list.[n].C3,kCr)
+   End For
+   Calculate vars.ok as vars.ok&flag2
+Else If not(flag2)
+   Calculate result as con(result,'[json    ]   switched off in step 12',kCr)
+End If
+
+# ====== 13  CLOSE
+If not(isclear($root.$libs.$findname(name)))
+   Close library [name]
+End If
+Calculate result as con(result,'[close   ]   ',name,' ',pick(isclear($root.$libs.$findname(name)),'still OPEN','closed'),kCr)
+Calculate result as con(result,'[done    ]   ',pick(flag3,'REAL','TRIAL'),' ',pick(vars.ok,'INCOMPLETE - this copy is NOT a release, read the lines above: ','copy built: '),name3,kCr)
+
+Quit method result
+
+## ===== JUMP LINKS 1.0 =====
+# === 1  The library: MyLib, or yours. The script NEVER changes it: rows marked DO are yours ===
+# Copy ## 00 READ FIRST: the version, by hand #> 00 The version, by hand\n\n- The script never changes your library. Rows 01 and 02 open the two places of the version: set both by hand to the version of step 0 at the top of this script, then save.\n- Copy the version first: rows 01 and 02 leave the clipboard alone. Step 1 (PLACES) checks both places.
+# Do MyLib.$classes.Startup_Task.$methods.//$version//.$modify(2) ## 01 DO: set the version by hand, the same as in step 0
+# Do MyLib.$classes.Startup_Task.$methods.//$changelog//.$modify(4) ## 02 DO: set the changelog heading by hand: --- <version of step 0> - <date> ---
+# Do MyLib.$classes.oSettings.$cvardefs.cDevPath ## 03 LOOK: data that must not ship (step 5 removes it in the copy) #> 03 Data that must not ship\n\n- oSettings keeps settings in class variables. Their VALUES are saved with the class, and so is the $userinfo of each variable definition: what the developer stored last travels inside the library file.\n- cDevPath (a private path) and cLastLogin (the last login) are such data; cKeep is data that ships.\n- Step 5 (DATA) removes cDevPath and empties the $userinfo of cLastLogin, in the release copy only. MyLib keeps them.\n- The method $about of oSettings says the same from inside MyLib.
+# Do MyLib.$classes.oTools.$methods.//$playground//.$modify(1) ## 04 LOOK: a method that ships neutral (step 6 does it in the copy) #> 04 A method that ships neutral\n\n- A method to try things out while developing. It must not ship as it is, and removing it would break every call.\n- Step 6 (NEUTRAL) replaces its body by one comment line in the release copy. Its local variables stay.
+# Do MyLib.$classes.oTools.$methods.//$mode//.$modify(2) ## 05 LOOK: developer and release lines (step 9 swaps them in the copy) #> 05 Developer lines and release lines\n\n- Line 2 ends in the developer marker: active while you develop, commented in the release copy.\n- Line 3 is commented and ends in the release marker: active in the release copy.\n- Step 9 (LINES) does both in every class method and every method of a window object.
+# Do MyLib.$classes.wTest.$objs.pbTest.$methods.//$event//.$modify(3) ## 06 DO before REAL: delete the Breakpoint (step 9 reports it) #> 06 A forbidden line\n\n- Line 3 is a Breakpoint without a marker. Step 9 searches the lines that stay active for the forbidden texts of its ADAPT HERE block and reports this one.\n- In a TRIAL it is a warning; a REAL build with it ends INCOMPLETE. Delete the line, save, and build again.
+# === 2  The build ===
+# Copy ## 07 DO: Execute, answer No (TRIAL) #> 07 Execute this script: the TRIAL\n\n- Rows marked Copy open nothing: they only explain. A double-click copies their text.\n- Open the library first (MyLib: execExports/release_templatetest_setup/MyLib.lbs). Switch off Break if error.\n- Press Execute.\n\n    THE CONSOLE WARNS YOU FIRST, AND THAT IS EXPECTED.\n    It lists six danger lines; with Warn on danger on, it asks twice.\n    They all write the release COPY, never your library. Answer to go on.\n    The first line of the protocol says the same.\n\n- The first run makes execInput/release_template/ and stops: lay a README.txt into it and Execute again.\n- Answer No: a TRIAL copy is built in execRelease/<library>/<version>-trial/. The Result field has one line per finding; the last line says copy built or INCOMPLETE.
+# Copy ## 08 DO: test the TRIAL copy #> 08 Test the TRIAL copy\n\n- Close the library first: the copy has the same file name.\n- Open the copy from execRelease/<library>/<version>-trial/ and look: developer lines commented, release lines active, cDevPath gone, the playground empty, every class with the version in $version.\n- json/ beside it holds the JSON export of the copy. Close the copy, open the library again.
+# Copy ## 09 DO: Execute, answer Yes (REAL) #> 09 Execute this script: the REAL build\n\n- Execute again. The console warns as in 07: answer to go on.\n- Answer Yes. The copy goes to execRelease/<library>/<version>/, with the shipped files and json/ beside it.\n- Do not open the REAL copy before it goes out: opening it with its startup task may store state in it.

@@ -1,0 +1,12 @@
+If iMarkerModified
+	Yes/No message Save Markers ?
+	If flag true
+		If $cinst.$markListSave()
+			Calculate iMarkerModified as kFalse
+		Else
+			OK message Could not save Markers ! (Sound bell) {Please try again.}
+			Quit method kFalse
+		End If
+	End If
+End If
+Quit method kTrue

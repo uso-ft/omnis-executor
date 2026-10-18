@@ -1,0 +1,52 @@
+# Expands container pObjRef. The height comes from the kEFposnClient sibling, or from all siblings
+# on the same level when pProportional is set. Nodes with kEFposnClient cannot be assigned.
+# pDryRun: returns the available height without changing anything.
+
+# Help Edge Float: https://www.omnis.net/developers/resources/onlinedocs/index.jsp search for: "Floating Edges for Windows and Fields" or "$minheight"
+
+Calculate containerTree as iContainerTree
+
+# Find node and level to expand/shrink
+Do containerTree.$search(containerTree.c1=pObjRef,kTrue,kFalse,kFalse,kFalse)
+Set reference nodeToExpand to containerTree.c1
+Calculate level as containerTree.level
+
+If pProportional
+	# Select nodes to shrink, exclude nodeToExpand
+	Do containerTree.$search(containerTree.level=level&containerTree.c1<>nodeToExpand,kTrue,kFalse,kTrue,kTrue)
+Else
+	# Select kEFposnClient node to shrink, exclude nodeToExpand
+	Do containerTree.$search(containerTree.level=level&containerTree.c1<>nodeToExpand&containerTree.c1.$edgefloat*1=kEFposnClient*1,kTrue,kFalse,kTrue,kTrue)
+End If
+
+# get the maximal available height to expand pObjRef
+Calculate #1 as containerTree.1.c1.$height
+Calculate #1 as containerTree.2.c1.$height
+
+Calculate totalHeight as containerTree.$totc(containerTree.c1.$height,kTrue)
+Calculate totalMinHeight as containerTree.$totc(containerTree.c1.$minHeight,kTrue)
+Calculate available as min(totalHeight-totalMinHeight,pHeight)
+If pDryRun|available=0
+	Quit method available
+End If
+
+# Sort nodes to expand: First nodes to shrink, then kEFposnClient Node
+Do containerTree.$remove(kListKeepSelected)
+Do containerTree.$sort($ref.c1.$edgefloat*1=kEFposnClient*1,kFalse,$ref.c1=nodeToExpand,kFalse)
+
+# Assign availiable height proportionally
+For containerTree.$line from 1 to containerTree.$linecount step 1
+	
+	Calculate part as available/totalHeight*containerTree.c1.$height
+	If containerTree.c1.$edgefloat*1=kEFposnClient*1
+		Do 1 ## can't assign, debugging purpose only
+	Else If containerTree.c1.$edgefloat*1<>kEFposnClient*1&containerTree.$selected
+		# shrink
+		Calculate containerTree.c1.$height as max(containerTree.c1.$height-part,containerTree.c1.$minHeight)
+		
+	End If
+End For
+
+Calculate nodeToExpand.$height as nodeToExpand.$height+available
+
+Quit method available
